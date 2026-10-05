@@ -1,0 +1,221 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[margin=18mm,top=20mm,bottom=18mm,headsep=7mm]{geometry}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[table]{xcolor}
+\usepackage{array}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{ink}{HTML}{172033}
+\definecolor{accent}{HTML}{334E68}
+\definecolor{pale}{HTML}{E8EEF3}
+\definecolor{mid}{HTML}{B8C7D3}
+\definecolor{rulegray}{HTML}{778899}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\bfseries\color{ink} COL876}
+\fancyhead[R]{\small\sffamily\color{ink} Page \thepage}
+\renewcommand{\headrulewidth}{0.6pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{rulegray}\leaders\hrule height \headrulewidth\hfill}}
+\setlength{\headheight}{20pt}
+
+\titleformat{\section}
+  {\large\bfseries\color{ink}}
+  {}{0pt}{}
+  [\vspace{-0.35em}\color{mid}\titlerule]
+\titlespacing*{\section}{0pt}{0.72em}{0.32em}
+
+\setlist[itemize]{leftmargin=1.25em,itemsep=0.14em,topsep=0.18em,parsep=0pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.3em}
+\renewcommand{\arraystretch}{1.1}
+
+\newcommand{\markcell}{\cellcolor{accent}\color{white}\bfseries\centering\arraybackslash $\bullet$}
+\newcommand{\softcell}{\cellcolor{pale}}
+
+\begin{document}
+
+% Cover page
+\thispagestyle{fancy}
+\vspace*{0.045\textheight}
+
+\begin{center}
+  {\sffamily\small\bfseries\color{accent}\MakeUppercase{Project Proposal}}\\[0.75cm]
+
+  {\fontsize{38}{43}\selectfont\bfseries\color{ink} KILT}\\[0.28cm]
+  {\fontsize{20}{25}\selectfont\bfseries\color{accent} Kripke in Lean Toolkit}\\[0.42cm]
+  {\Large\itshape A Verified LTL Model-Checking Toolkit in Lean}\\[0.72cm]
+
+  {\color{mid}\rule{0.82\textwidth}{0.9pt}}\par
+  \vspace{0.8cm}
+
+  \begin{minipage}[t]{0.28\textwidth}
+    \vspace{0pt}
+    \centering
+    \includegraphics[width=0.92\linewidth]{lean-logo-official.png}\\[0.75cm]
+    {\large\bfseries Yash Rawat}\\[0.18cm]
+    {\large 2023CS50334}\\[0.65cm]
+    {\normalsize COL876: Special Topics\\[-0.02cm]in Formal Methods}\\[0.18cm]
+    {\normalsize September 2026}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.60\textwidth}
+    \vspace{0.08cm}
+    \centering
+    \fcolorbox{mid}{pale}{%
+      \begin{minipage}{0.92\linewidth}
+        \centering\vspace{0.36cm}
+        {\small\sffamily\bfseries\color{accent} A LINEAR-TIME REQUIREMENT}\\[0.3cm]
+        {\Large $\mathbf{G}(\mathit{request}\rightarrow\mathbf{F}\,\mathit{grant})$}\\[0.28cm]
+        {\small\color{ink}Every request is eventually followed by a grant.}\\[0.36cm]
+      \end{minipage}%
+    }\\[0.25cm]
+    {\scriptsize\sffamily\color{accent}An example liveness property for an infinite execution.}
+  \end{minipage}
+\end{center}
+
+\vfill
+\begin{center}
+  \begin{minipage}{0.72\textwidth}
+    \centering\small\color{accent}
+    A Lean development connecting LTL semantics, Büchi automata, finite-state
+    verification, and kernel-checked correctness proofs.
+  \end{minipage}
+\end{center}
+\vspace*{0.06\textheight}
+
+\newpage
+
+% Main proposal
+\section{Motivation and Background}
+
+Linear Temporal Logic (LTL) describes properties of individual, potentially
+infinite executions of a transition system. Operators such as next ($X$),
+eventually ($F$), globally ($G$), and until ($U$) express safety and liveness
+requirements; for example, $G(request\rightarrow F\,grant)$ states that every
+request is eventually granted. LTL is widely used to specify reactive behaviour
+and is commonly checked by translating a property into an automaton over infinite
+words, then analysing its interaction with the system.
+
+\section{Existing Work and Project Gap}
+
+LeanLTL is already a public Lean 4 library and a peer-reviewed ITP 2025 paper. It
+supports LTL reasoning over finite and infinite traces, offers a syntax macro,
+and provides automation for proofs about temporal formulas [1]. Separately,
+CSLib includes automata-theory foundations for finite and infinite words,
+including Büchi automata, products, and omega-language results [2,3]. A second
+Lean 4 project, LeanearTemporalLogic, formalizes LTL syntax, semantics, and
+transition systems; its README lists checked LTL model checking and Büchi
+formalization as ambitious future goals and describes the project as work in
+progress [4]. Veil is another relevant Lean-native verification framework for
+transition systems; I will study its workflow and examples as groundwork, while
+treating it as a reference rather than a required dependency [5].
+
+These projects establish substantial foundations, so the proposal does not
+claim that LTL or Büchi automata are new to Lean, or that no Lean LTL checker is
+under development. The intended contribution is narrower: a CSLib-native,
+reusable path from a bounded LTL fragment through Büchi acceptance and product
+emptiness to a verified model-checking result. I will use LeanLTL as prior work
+and a semantic comparison point, rather than simply wrapping it as the project
+implementation; a small formula layer will be introduced only as needed to
+drive the automata construction and CSLib APIs. Where feasible, I will prove
+that its satisfaction relation agrees with LeanLTL's trace semantics. During
+the initial audit I will inspect LeanearTemporalLogic's current implementation
+and discuss overlap through Lean Zulip, then narrow the module-level contribution
+to a clearly distinct and useful CSLib extension.
+
+\section{Goals and Expected Deliverables}
+
+\begin{itemize}
+  \item Audit LeanLTL, CSLib's automata APIs, LeanearTemporalLogic, and Veil;
+        consult the Lean community about overlap, then select a clearly bounded
+        LTL fragment and design only the formula interface needed for CSLib
+        translation. Prove a compatibility result with LeanLTL's trace
+        semantics where feasible.
+  \item Develop an LTL-to-Büchi (or generalized Büchi) construction for the
+        selected fragment, reusing CSLib's automata interfaces where appropriate.
+  \item Build the product of a finite Kripke structure with the property
+        automaton and an executable emptiness check for accepting infinite runs.
+  \item Prove the central correspondence between the checker and the declared
+        trace semantics. Correctness of the semantic and automata-theoretic core
+        will take priority over extensions.
+  \item If the core is complete, add a lightweight Lean metaprogramming frontend
+        (notation, macro, or command) to make properties and checks convenient to
+        write. Proof-producing automation and an initial CTL* study are further
+        directions, not required deliverables.
+  \item Deliver organized Lean source, examples/tests (including representative
+        safety and liveness properties), and a short write-up of the design,
+        proofs, trust boundary, and limitations.
+\end{itemize}
+
+\textbf{Division of labour.} This is an individual project. I will undertake
+the formal design, implementation, correctness proofs, interface development,
+evaluation, and documentation.
+
+\newpage
+\section{Expected Milestones: 24 September--15 November}
+
+The first week is reserved for research and setup. The dated blocks below show
+the intended progression; the core semantic correspondence and verified
+model-checking result take priority over frontend polish, witness presentation,
+and any CTL* extension.
+
+\footnotesize
+\setlength{\tabcolsep}{2.7pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X *{7}{>{\centering\arraybackslash}p{1.12cm}}}
+  \toprule
+  \textbf{Workstream} & \textbf{24--30 Sep} & \textbf{1--7 Oct} &
+  \textbf{8--14 Oct} & \textbf{15--21 Oct} & \textbf{22--31 Oct} &
+  \textbf{1--7 Nov} & \textbf{8--15 Nov} \\
+  \midrule
+  Literature/API audit, Lean setup, scoped design
+    & \markcell & & & & & & \\
+  LTL syntax/semantics and Kripke execution model
+    & & \markcell & \softcell & & & & \\
+  CSLib Büchi interface and formula-to-automaton core
+    & & \softcell & \markcell & \softcell & & & \\
+  Product construction and accepting-run emptiness
+    & & & \softcell & \markcell & \softcell & & \\
+  Correctness theorem and verified examples
+    & & & & \softcell & \markcell & \softcell & \\
+  Lean frontend, evaluation, and write-up
+    & & & & & & \softcell & \markcell \\
+  Optional CTL* feasibility study / extensions
+    & & & & & & & \softcell \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{0.5em}
+\small
+The exact supported fragment and reuse boundary will be fixed after the
+September audit. Witnesses and proof automation will be attempted only after the
+verified checker is working; CTL* is an exploratory extension if the core goals
+are complete.
+
+\section{Selected References}
+\begin{enumerate}[leftmargin=1.5em,itemsep=0.18em,topsep=0.2em]
+  \item E. Vin, K. A. Miller, and D. J. Fremont, ``LeanLTL: A Unifying Framework
+        for Linear Temporal Logics in Lean,'' \emph{ITP 2025}, LIPIcs 352,
+        Article 37. \href{https://doi.org/10.4230/LIPIcs.ITP.2025.37}{doi:10.4230/LIPIcs.ITP.2025.37};
+        code: \url{https://github.com/UCSCFormalMethods/LeanLTL}.
+  \item Leanprover, \emph{CSLib: The Lean Computer Science Library}, automata
+        modules and contribution guide. \url{https://github.com/leanprover/cslib}.
+  \item C.-T. Chou, \emph{Automata Theory in Lean}, results being ported to CSLib.
+        \url{https://github.com/ctchou/AutomataTheory}.
+  \item M. Pawagi, \emph{LeanearTemporalLogic}, Lean 4 LTL formalization (work in
+        progress). \url{https://github.com/mrigankpawagi/LeanearTemporalLogic}.
+  \item Verse Lab, \emph{Veil: A Framework for Automated and Interactive
+        Verification of Transition Systems}. \url{https://github.com/verse-lab/veil}.
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,31 @@
+# Lake build outputs and downloaded dependencies
+/.lake/
+
+# Standalone Lean build outputs
+*.olean
+*.ilean
+*.olean.server
+*.olean.private
+*.trace
+
+# Local editor and OS files
+/.vscode/*
+!/.vscode/extensions.json
+*.code-workspace
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# LaTeX intermediates (keep proposal sources and PDFs)
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc

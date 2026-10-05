@@ -1,0 +1,9 @@
+name = "kilt"
+version = "0.1.0"
+defaultTargets = ["KILT", "Examples"]
+
+[[lean_lib]]
+name = "KILT"
+
+[[lean_lib]]
+name = "Examples"
