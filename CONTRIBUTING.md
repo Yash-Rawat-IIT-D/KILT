@@ -16,6 +16,9 @@ definitions, algorithms, proofs, and worked examples.
   Coordinate dependency changes with the toolchain pin.
 - Keep generated build files and LaTeX intermediates out of Git. Keep proposal
   sources, figures, and the submitted PDF under `Proposal/`.
+- Commit the toolchain pin, dependency lockfile, and shared editor extension
+  recommendations. Keep local editor settings and environment files untracked;
+  an `.env.example` may be committed if it contains only sample values.
 
 The original proposal references `lean-logo-official.png`, which is not yet in
 `Proposal/`. Restore that figure before rebuilding the proposal PDF.

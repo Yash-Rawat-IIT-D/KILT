@@ -11,11 +11,22 @@
 # Local editor and OS files
 /.vscode/*
 !/.vscode/extensions.json
+/.idea/
+/.history/
 *.code-workspace
 *.swp
+*.swo
 *~
 .DS_Store
+._*
 Thumbs.db
+Desktop.ini
+
+# Local environment configuration
+.env
+.env.*
+!.env.example
+/.direnv/
 
 # LaTeX intermediates (keep proposal sources and PDFs)
 *.aux
@@ -29,3 +40,9 @@ Thumbs.db
 *.run.xml
 *.synctex.gz
 *.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+*.xdv
