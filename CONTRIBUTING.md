@@ -15,10 +15,9 @@ definitions, algorithms, proofs, and worked examples.
   `lake update`, and commit both the Lake configuration and `lake-manifest.json`.
   Coordinate dependency changes with the toolchain pin.
 - Keep generated build files and LaTeX intermediates out of Git. Keep proposal
-  sources, figures, and the submitted PDF under `Proposal/`.
+  sources and figures under `Proposal/src/`, and the submitted PDF under
+  `Proposal/build/`. Use `./scripts/compile-proposal.sh` to build the proposal
+  and `--clean` or `--clean-all` to remove generated files.
 - Commit the toolchain pin, dependency lockfile, and shared editor extension
   recommendations. Keep local editor settings and environment files untracked;
   an `.env.example` may be committed if it contains only sample values.
-
-The original proposal references `lean-logo-official.png`, which is not yet in
-`Proposal/`. Restore that figure before rebuilding the proposal PDF.

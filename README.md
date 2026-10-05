@@ -52,6 +52,18 @@ lake build KILT
 Open this folder in VS Code to use the pinned toolchain. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
 
+## Building the proposal
+
+The script uses an available LaTeX compiler and writes the PDF to
+`Proposal/build/KILT_Proposal.pdf`:
+
+```sh
+./scripts/compile-proposal.sh
+./scripts/compile-proposal.sh --clean       # Remove intermediates, keep PDFs
+./scripts/compile-proposal.sh --clean-all   # Also remove the generated PDF
+./scripts/compile-proposal.sh --clean-after # Build and remove intermediates
+```
+
 ## Repository layout
 
 ```text
@@ -59,7 +71,9 @@ KILT.lean               Public library entry point
 KILT/                   Library definitions and proofs
 Examples.lean           Example entry point
 Examples/               Worked examples and regression cases
-Proposal/               Original project proposal (LaTeX and PDF)
+Proposal/src/           Proposal LaTeX source and figures
+Proposal/build/         Submitted PDF and local build outputs
+scripts/                Build and maintenance scripts
 lakefile.toml           Lake package and build targets
 lean-toolchain          Pinned Lean version
 lake-manifest.json      Lake dependency lockfile
@@ -77,8 +91,8 @@ My plan for the semester is:
 | 15–31 October | Product construction, emptiness, central correctness theorem |
 | 1–15 November | Verified examples, evaluation, write-up; frontend if time permits |
 
-See my [project proposal](Proposal/KILT_Proposal-1.pdf) for the full scope and
-schedule, or the [LaTeX source](Proposal/KILT_Proposal.tex).
+See my [project proposal](Proposal/build/KILT_Proposal-1.pdf) for the full scope
+and schedule, or the [LaTeX source](Proposal/src/KILT_Proposal.tex).
 
 ## References
 

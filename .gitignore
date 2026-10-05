@@ -29,6 +29,7 @@ Desktop.ini
 /.direnv/
 
 # LaTeX intermediates (keep proposal sources and PDFs)
+/Proposal/build/KILT_Proposal.pdf
 *.aux
 *.bbl
 *.bcf
