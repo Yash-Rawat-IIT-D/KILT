@@ -26,7 +26,6 @@ Thumbs.db
 Desktop.ini
 
 # Local developer configuration
-.serena/
 .env
 .env.*
 !.env.example
