@@ -1,6 +1,9 @@
 # Lake build outputs and downloaded dependencies
 /.lake/
 
+# Local clones used for research
+/references/
+
 # Standalone Lean build outputs
 *.olean
 *.ilean
