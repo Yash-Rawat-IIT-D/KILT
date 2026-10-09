@@ -41,13 +41,45 @@ and optionally the Lean 4 VS Code extension. From this repository:
 lake build
 ```
 
-The toolchain is pinned in `lean-toolchain` to **Lean 4.32.1**.
+The toolchain is pinned in `lean-toolchain` to **Lean 4.35.0-rc4**, matching
+the CSLib revision in `lakefile.toml`. Dependency revisions are locked in
+`lake-manifest.json`.
 The default build checks both the `KILT` library
 and the `Examples` library. To build just the core:
 
 ```sh
 lake build KILT
 ```
+
+To build while saving the terminal output:
+
+```sh
+./scripts/build.sh                # Open the terminal menu by default
+GUI_LAUNCH=false ./scripts/build.sh  # Build the library and examples directly
+./scripts/build.sh --gui          # Open the menu even if GUI_LAUNCH=false
+./scripts/build.sh --verbose      # Open the menu with verbose output enabled
+./scripts/build.sh Examples       # Build just the examples and their dependencies
+./scripts/build.sh --rebuild      # Clean KILT outputs, then build again
+./scripts/build.sh --clean        # Remove KILT outputs; keep logs
+./scripts/build.sh --clean-logs   # Remove script build logs
+./scripts/build.sh --clean-all    # Remove KILT outputs and script logs
+./scripts/build.sh --help         # Show options and examples
+```
+
+Each run saves a timestamped log under `.lake/logs/`, with the latest available
+at `.lake/logs/latest.log`. The script returns the build's exit status and
+defaults to one Lean thread; use `LEAN_NUM_THREADS=2 ./scripts/build.sh` to change it.
+Build logs remain excluded from Git with the other `.lake` outputs.
+Cleanup preserves downloaded dependencies and their compiled caches. Cleanup
+options run without building; `--rebuild` cleans first and then builds.
+
+The optional menu uses `whiptail` (on Ubuntu, install with
+`sudo apt install whiptail`). Use arrow keys, Tab and Enter to select targets,
+build, rebuild, clean, toggle verbose output, or view the latest log. Esc
+cancels a dialog. `GUI_LAUNCH` defaults to `true`, so running without a target
+or cleanup mode opens the menu. With `GUI_LAUNCH=false`, the script builds
+directly unless `--gui` is supplied. Explicit targets and cleanup modes run
+directly, and command-line builds do not require `whiptail`.
 
 Open this folder in VS Code to use the pinned toolchain. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
