@@ -2,8 +2,16 @@ name = "kilt"
 version = "0.1.0"
 defaultTargets = ["KILT", "Examples"]
 
+[[require]]
+name = "cslib"
+git = "https://github.com/leanprover/cslib.git"
+rev = "a3da622f14ac47924a4ffb293fdb0dad6fcdfae1"
+
 [[lean_lib]]
 name = "KILT"
+# CSLib and Mathlib use the module system; KILT currently uses regular imports.
+allowNonModules = true
 
 [[lean_lib]]
 name = "Examples"
+allowNonModules = true
