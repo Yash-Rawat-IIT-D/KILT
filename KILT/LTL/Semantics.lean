@@ -46,13 +46,12 @@ variable {AP : Type u}
 
 /-- Indexed satisfaction for infinite-word LTL. -/
 def Sat (word : Word AP) : Nat → Formula AP → Prop
-  | _, .falsum => False
+  | _, .falsehood => False
   | i, .atom a => word i a = true
   | i, .neg φ => ¬ Sat word i φ
   | i, .disj φ ψ => Sat word i φ ∨ Sat word i ψ
   | i, .next φ => Sat word (i + 1) φ
-  | i, .until φ ψ =>
-      ∃ j, i ≤ j ∧ Sat word j ψ ∧ ∀ k, i ≤ k → k < j → Sat word k φ
+  | i, .until φ ψ => ∃ j, i ≤ j ∧ Sat word j ψ ∧ ∀ k, i ≤ k → k < j → Sat word k φ
 
 /-- A word satisfies a formula when it holds at position zero. -/
 def WordSat (word : Word AP) (φ : Formula AP) : Prop := Sat word 0 φ
