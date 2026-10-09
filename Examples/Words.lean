@@ -19,7 +19,7 @@ def always : Word Unit := Cslib.ωSequence.const (fun _ => true)
 def never : Word Unit := Cslib.ωSequence.const (fun _ => false)
 def alternating : Word Unit := ⟨fun i _ => i % 2 == 0⟩
 
-example : ¬ WordSat always .falsum := by
+example : ¬ WordSat always .falsehood := by
   intro h
   exact h
 
@@ -36,7 +36,7 @@ example : ¬ WordSat alternating (.next atom) := by
 example : Sat alternating 1 (.next atom) := rfl
 
 -- An until witness at the current position needs no left-operand proof.
-theorem until_now : WordSat never (.until .falsum (.neg atom)) := by
+theorem until_now : WordSat never (.until .falsehood (.neg atom)) := by
   refine ⟨0, Nat.le_refl 0, ?_, ?_⟩
   · intro h
     cases h
@@ -55,7 +55,7 @@ theorem eventually_later : Sat alternating 1 (Formula.eventually atom) := by
   exact h
 
 -- Strong until cannot be satisfied by postponing the right operand forever.
-theorem until_requires_right : ¬ WordSat always (.until atom .falsum) := by
+theorem until_requires_right : ¬ WordSat always (.until atom .falsehood) := by
   intro ⟨_, _, h, _⟩
   exact h
 
@@ -76,7 +76,7 @@ theorem globally_constant : WordSat always (Formula.globally atom) := by
   exact h rfl
 
 -- Release permits its left operand to remain false when the right holds forever.
-theorem release_constant : WordSat always (Formula.release .falsum atom) := by
+theorem release_constant : WordSat always (Formula.release .falsehood atom) := by
   intro ⟨_, _, h, _⟩
   exact h rfl
 
@@ -93,7 +93,7 @@ theorem until_later : WordSat requestThenGrant (.until (.atom false) (.atom true
 
 -- A witness at one cannot skip a false left operand at position zero.
 theorem until_checks_prefix :
-    ¬ WordSat requestThenGrant (.until .falsum (.atom true)) := by
+    ¬ WordSat requestThenGrant (.until .falsehood (.atom true)) := by
   intro ⟨j, _, hj, hprefix⟩
   cases j with
   | zero => cases hj

@@ -12,6 +12,10 @@ strong until. Other connectives expand into this basis; `Formula.size` counts
 nodes after that expansion. Syntax and semantics cover these operators, but
 an executable formula-to-automaton translation is still future work.
 
+Enable temporal shorthand with `open scoped KILT.LTL`: `□ p` is globally,
+`◇ p` is eventually, `𝒩 p` is next, and `p 𝒰 q` is strong until. The unary
+operators bind more tightly than until, which associates to the right.
+
 ## Design reference
 
 These are independently written standard LTL definitions. LeanLTL informed
@@ -27,7 +31,7 @@ universe u
 /-- Future-time LTL formulas over named atomic propositions. -/
 inductive Formula (AP : Type u) where
   /-- Falsehood. -/
-  | falsum
+  | falsehood
   /-- An atomic proposition identifier. -/
   | atom (name : AP)
   /-- Boolean negation. -/
@@ -45,7 +49,7 @@ namespace Formula
 variable {AP : Type u}
 
 /-- Truth, derived from falsehood and negation. -/
-def truth : Formula AP := neg falsum
+def truth : Formula AP := neg falsehood
 
 /-- Conjunction, derived by De Morgan's law. -/
 def conj (φ ψ : Formula AP) : Formula AP := neg (disj (neg φ) (neg ψ))
@@ -64,7 +68,7 @@ def release (φ ψ : Formula AP) : Formula AP := neg (.until (neg φ) (neg ψ))
 
 /-- Number of constructor nodes; each leaf has size one. -/
 def size : Formula AP → Nat
-  | falsum => 1
+  | falsehood => 1
   | atom _ => 1
   | neg φ => 1 + size φ
   | disj φ ψ => 1 + size φ + size ψ
@@ -72,5 +76,11 @@ def size : Formula AP → Nat
   | .until φ ψ => 1 + size φ + size ψ
 
 end Formula
+
+-- Optional temporal notation; ordinary Lean propositions keep their own syntax.
+scoped prefix:75 "□" => Formula.globally
+scoped prefix:75 "◇" => Formula.eventually
+scoped prefix:75 "𝒩" => Formula.next
+scoped infixr:60 " 𝒰 " => Formula.until
 
 end KILT.LTL

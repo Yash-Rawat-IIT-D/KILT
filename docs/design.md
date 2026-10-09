@@ -21,6 +21,20 @@ require neither a finite atom type nor decidable atom equality. Formulas have
 decidable equality when atoms do, and `Formula.size` counts constructor nodes
 after expanding derived operators.
 
+Enable the temporal shorthand with `open scoped KILT.LTL`:
+
+| Notation | Formula |
+| --- | --- |
+| `□ p` | `Formula.globally p` |
+| `◇ p` | `Formula.eventually p` |
+| `𝒩 p` | `Formula.next p` |
+| `p 𝒰 q` | `Formula.until p q` |
+
+Unary operators have precedence 75; until has precedence 60 and associates to
+the right. Thus `𝒩 p 𝒰 ◇ q` means `(𝒩 p) 𝒰 (◇ q)`. For the response property,
+write `□ (Formula.imp request (◇ grant))`. The shorthands expand to the same
+formula definitions, so the existing semantics and laws apply directly.
+
 `Valuation AP` is `AP → Bool`. `Word AP` is
 `Cslib.ωSequence (Valuation AP)`, so CSLib's sequence operations are available
 without an adapter. `Sat word i φ` interprets the formula at position `i`,
@@ -28,7 +42,7 @@ and `WordSat word φ` abbreviates satisfaction at zero.
 
 | Constructor | Meaning at position `i` |
 | --- | --- |
-| `falsum` | False |
+| `falsehood` | False |
 | `atom a` | `word i a = true` |
 | `neg φ` | `φ` does not hold at `i` |
 | `disj φ ψ` | `φ` or `ψ` holds at `i` |
@@ -45,7 +59,31 @@ later work; no decision procedure for arbitrary infinite words is assumed.
 `Examples.Words` checks constant and alternating words, immediate and later
 until witnesses, required left prefixes, and unsatisfied eventualities.
 `Examples.Integration` checks CSLib's sequence, run, and indexed-product APIs.
-All three are imported by `Examples.lean` and checked by `lake build`.
+`Examples.SemanticLaws` exercises the reusable laws, suffix offsets, until
+unfolding, release boundaries, and satisfying/violating request/grant words.
+These modules are imported by `Examples.lean` for checking with `lake build`.
+
+## Semantic-law interface
+
+`KILT.LTL.Basic` supplies simplification lemmas for atoms, falsehood, negation,
+disjunction, next, truth, conjunction, implication, eventually, and globally.
+The named lemmas `sat_until_now` and `sat_eventually_now` express satisfaction
+with a witness at the current position.
+
+`sat_until_unfold` says that `left U right` holds at `i` precisely when `right`
+holds now, or `left` holds now and the until formula holds at `i + 1`. It is not
+a simplification rule because unfolding repeatedly would generate more next
+obligations. This law does not make indefinitely postponing `right` valid.
+
+`sat_release` characterizes `left R right`: at every `j ≥ i`, if `left` was
+false throughout `[i, j)`, then `right` holds at `j`. In particular, `right`
+must hold at the first position where `left` holds; afterward it may be false.
+If `left` never holds, `right` must hold forever.
+
+`sat_drop word n i formula` relates satisfaction on `word.drop n` at `i` to
+satisfaction on `word` at `n + i`. Its proof handles arbitrary temporal
+formulas, including until, by translating witnesses and prefix intervals.
+`wordSat_drop` specializes this correspondence to position zero on the suffix.
 
 ## Module boundaries
 

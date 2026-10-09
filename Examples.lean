@@ -2,6 +2,7 @@ import Examples.Basic
 import Examples.Integration
 import Examples.Syntax
 import Examples.Words
+import Examples.SemanticLaws
 import Examples.RequestGrant
 
 /-!
