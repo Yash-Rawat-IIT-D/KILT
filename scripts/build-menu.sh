@@ -69,10 +69,12 @@ menu_run() {
   if [[ "$gui_verbose" == true ]]; then flags+=(--verbose); fi
   clear
   if GUI_LAUNCH=false "$gui_script" "${flags[@]}" "$@"; then
-    printf '\nCommand completed successfully.\n'
+    printf '\n'
+    print_build_line 'Command completed successfully.'
   else
     status=$?
-    printf '\nCommand failed (exit status %s).\n' "$status"
+    printf '\n'
+    print_build_line "Command failed (exit status $status)."
   fi
   read -r -p 'Press Enter to return to the menu...' _ || return 1
 }

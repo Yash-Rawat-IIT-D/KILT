@@ -4,6 +4,7 @@ import Examples.Syntax
 import Examples.Words
 import Examples.SemanticLaws
 import Examples.RequestGrant
+import Examples.FiniteKripke
 
 /-!
 # Checked KILT examples

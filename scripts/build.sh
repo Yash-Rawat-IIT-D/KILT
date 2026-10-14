@@ -33,6 +33,8 @@ Examples:
   ./scripts/build.sh --clean-logs
 
 Logs: .lake/logs/build-*.log; latest: .lake/logs/latest.log.
+Terminal output uses green for successes, yellow for times/warnings and red
+for failures. Saved logs are plain text. Set NO_COLOR=1 to disable colors.
 LEAN_NUM_THREADS defaults to 1; set it explicitly to use more threads.
 GUI_LAUNCH=true (default) opens the menu when no target or cleanup mode is given.
 GUI_LAUNCH=false runs the CLI by default; --gui still opens the menu.
@@ -83,6 +85,7 @@ fi
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd -- "$repo_dir"
 log_dir="$repo_dir/.lake/logs"
+source "$repo_dir/scripts/build-output.sh"
 
 if [[ "$gui" == true ]]; then
   source "$repo_dir/scripts/build-menu.sh"
@@ -90,7 +93,8 @@ if [[ "$gui" == true ]]; then
   exit $?
 fi
 
-lake_command=(lake)
+# Lake emits plain text; colors are applied only after tee saves the log.
+lake_command=(lake --no-ansi)
 if [[ "$verbose" == true ]]; then lake_command+=(--verbose); fi
 
 clean_build() {
@@ -109,7 +113,7 @@ clean_logs() {
 }
 
 if [[ "$mode" == clean-logs ]]; then
-  clean_logs
+  clean_logs | display_build_output
   exit 0
 fi
 
@@ -119,8 +123,8 @@ if ! command -v lake >/dev/null 2>&1; then
 fi
 
 if [[ "$mode" == clean || "$mode" == clean-all ]]; then
-  clean_build
-  if [[ "$mode" == clean-all ]]; then clean_logs; fi
+  clean_build | display_build_output
+  if [[ "$mode" == clean-all ]]; then clean_logs | display_build_output; fi
   exit 0
 fi
 
@@ -147,21 +151,30 @@ run_build() {
 }
 
 set +e
-run_build 2>&1 | tee "$log_file"
+run_build 2>&1 | tee "$log_file" | display_build_output
 pipeline_status=("${PIPESTATUS[@]}")
 set -e
 
 build_status=${pipeline_status[0]}
 log_status=${pipeline_status[1]}
+display_status=${pipeline_status[2]}
+total_seconds=$((SECONDS - started_at))
+set +e
 {
   printf '\nFinished: %s\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-  printf 'Elapsed: %s seconds\n' "$((SECONDS - started_at))"
+  printf 'Total time: %sm %ss (%s seconds)\n' \
+    "$((total_seconds / 60))" "$((total_seconds % 60))" "$total_seconds"
   printf 'Build exit status: %s\n' "$build_status"
   printf 'Log: %s\n' "$log_file"
-} | tee -a "$log_file"
+} | tee -a "$log_file" | display_build_output
+summary_status=("${PIPESTATUS[@]}")
+set -e
 
-if ((log_status != 0)); then
-  printf 'Failed to capture the complete build log.\n' >&2
-  if ((build_status == 0)); then exit "$log_status"; fi
+if ((log_status != 0 || summary_status[1] != 0)); then
+  print_build_line 'Failed to capture the complete build log.' >&2
+  if ((build_status == 0)); then exit 1; fi
+fi
+if ((build_status == 0 && (display_status != 0 || summary_status[2] != 0))); then
+  exit 1
 fi
 exit "$build_status"
