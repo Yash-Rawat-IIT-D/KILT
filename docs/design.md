@@ -11,8 +11,8 @@ later automata translation and finite-state checker.
 The implemented constructor basis is falsehood, atomic propositions, negation,
 disjunction, next, and strong until. Truth, conjunction, implication,
 eventually, globally, and release are derived. The first model semantics
-does not include fairness.  Deadlocks and seriality will be explicit design
-choices in the Kripke interface rather than implicit conventions.
+does not include fairness. Deadlocks are allowed and seriality is an explicit
+predicate rather than an implicit convention.
 
 ## Implemented LTL interface
 
@@ -95,9 +95,118 @@ formulas, including until, by translating witnesses and prefix intervals.
 
 `KILT.LTL` is independent of the state type of a Kripke structure.
 `KILT.Kripke` consumes the LTL interface to map paths to valuation words and
-state model satisfaction.  `KILT.Automata` will consume both interfaces to
-prove the correspondence with CSLib runs.  This direction prevents an automata
-encoding from changing the underlying temporal semantics.
+state model satisfaction. The `KILT.Automata.Kripke` module consumes both
+interfaces and exposes the CSLib encoding as methods in `KILT.Kripke`. This
+direction prevents an automata encoding from changing the underlying temporal
+semantics.
+
+## Kripke execution semantics
+
+`KILT.Kripke State AP` is a generic relational model. It contains an initial
+predicate, a proof that at least one initial state exists, a step relation, and
+a Boolean valuation for each state. The definition has no finiteness or
+decidability requirements. Those belong to the later executable checker.
+
+Transitions may be partial. `Kripke.Serial M` separately means that every state
+has a successor. Under seriality, `Path.fromState` uses classical choice to
+construct an infinite path from any state, and `Path.exists_initial` combines
+that construction with the model's nonempty initial set. This is a semantic
+existence result rather than an executable successor-selection algorithm.
+
+`Kripke.Path M` contains a CSLib infinite state sequence and a proof that each
+state steps to the next. `Path.IsInitial` is separate from this record. Thus
+`Path.drop n` always remains a valid path, while `Path.drop_isInitial` states
+that the suffix is initial exactly when its state at the cut belongs to the
+model's initial set.
+
+`Path.word` maps the model label over the state sequence. Its position zero is
+the label of the path's first state. `Path.word_drop` proves that observation
+commutes with dropping a prefix, and `Path.wordSat_drop` connects that fact to
+the existing indexed LTL suffix theorem.
+
+`M.Satisfies formula` quantifies over every infinite initial path. No fairness
+filter is applied. If a partial model has no infinite initial path, the
+universal proposition is vacuously true even though the model has a nonempty
+initial set. `Examples.RequestGrant.deadlock_satisfies_vacuously` records this
+boundary explicitly. Meaningful examples establish seriality separately.
+
+## CSLib run encoding
+
+`M.toNA` represents a Kripke model as a CSLib nondeterministic automaton whose
+states are model states and whose symbols are valuations. It preserves the
+initial predicate and defines a transition by
+
+```text
+Tr s valuation t  iff  M.step s t and valuation = M.label s.
+```
+
+The source-state label convention makes automaton symbol zero equal to the
+initial state's observation. `toNA_run_iff` characterizes an arbitrary run by
+an initial first state, valid adjacent steps, and equality of its word with the
+state sequence mapped through the model label. `path_run_iff` specializes this
+to a valid path's own observation word. `satisfies_iff_all_runs` proves that
+Kripke satisfaction is equivalent to satisfaction of every word carried by a
+run of this encoding. These theorems do not assume seriality; they characterize
+the runs that actually exist.
+
+`Examples.RequestGrant` contains a serial two-state cycle. Waiting states label
+`request`, granting states label `grant`, and every request is followed by a
+grant at the next position. Its negative variant adds a waiting self-loop. The
+constant waiting path violates `□ (request ⟹ ◇ grant)`, because KILT makes no
+fairness assumption that would force the enabled granting transition to occur.
+
+These results are a semantic bridge. They do not yet translate LTL formulas to
+Büchi automata or search a finite graph for counterexamples.
+
+## Finite models and executable reachability
+
+`KILT.FiniteKripke State AP` is the executable model layer. It requires
+`Fintype State` and `DecidableEq State`, stores initial states and successors
+as `Finset`s, and keeps the atom type unrestricted. `FiniteKripke.toKripke`
+forgets this storage representation and produces the existing relational
+semantics. Its initial, step, and label equations are definitional contracts,
+so paths, satisfaction, and the CSLib bridge apply without a second semantics.
+
+`KILT.Graph` contains graph algorithms independently of state labels. Starting
+from any finite seed set, `layers` repeatedly takes the union of the discovered
+states and all their successors. `reachableSet` executes
+`Fintype.card State` rounds. `mem_layers_iff` characterizes every intermediate
+round using a bounded finite route, while `mem_reachableSet_iff` proves that
+the final set is exactly reflexive-transitive reachability from a seed.
+Zero-step reachability is intentional: every seed is reachable from itself.
+
+Witness lookup uses a `RouteTable State`, a function assigning at most one
+route to each state. Round zero assigns `[s]` to each seed. At the next round,
+an existing route is retained; an undiscovered target scans a caller-supplied
+`Graph.Enumeration` for the first predecessor discovered in the preceding
+round and appends the target. The enumeration is explicit, complete, and
+duplicate-free. `routeTables_isSome_iff_mem_layers` proves the table and set
+expansion discover the same states at every round. `route?_sound` proves a
+returned list is nonempty, begins at a seed, ends at the requested state, and
+follows successor edges. `route?_isSome_iff` proves lookup succeeds exactly on
+reachable targets. Enumeration order may select a different valid witness;
+it cannot change reachable membership. No shortest-route guarantee is made.
+
+`FiniteKripke.deadlocks` reports all states with no successors, and
+`reachableDeadlocks` restricts the report to computed reachable states.
+`isSerial_eq_true_iff` connects the global Boolean diagnostic to relational
+`Kripke.Serial`. `hasNoReachableDeadlocks_eq_true_iff` characterizes the
+reachable-only diagnostic. Neither operation changes the transition system.
+`path_state_mem_reachableSet` additionally proves that every position of an
+initial infinite path appears in the computed reachable set.
+
+`Examples.FiniteKripke` covers empty and multiple seed sets, branching and
+merging routes, a self-loop, an unreachable component, reachable and
+unreachable deadlocks, and two traversal orders that return different routes
+to the same target. Its labels use `Nat` atoms to demonstrate that atoms need
+not be finite. Finite request/grant adapters are proved equal to the existing
+relational models, so their temporal proofs transfer unchanged.
+
+A one-state deadlock illustrates two distinct claims. It is finitely reachable
+and has the zero-step route `[()]`, but it has no infinite path. Consequently,
+universal infinite-path LTL satisfaction remains vacuous for that model.
+Reachability does not repair this semantic boundary; the seriality diagnostics
+make it visible to a future checker.
 
 ## Sources and attribution
 
@@ -105,6 +214,11 @@ KILT pins [CSLib at `a3da622f14ac47924a4ffb293fdb0dad6fcdfae1`](https://github.c
 and imports its infinite-sequence infrastructure. The dependency lockfile
 preserves CSLib's Mathlib revision `1f414401f69059aa7eead47b53ee40bd38455eeb`
 and its transitive dependency revisions. Both use Lean `v4.35.0-rc4`.
+The Kripke bridge imports CSLib's
+[nondeterministic automaton and run definitions](https://github.com/leanprover/cslib/blob/a3da622f14ac47924a4ffb293fdb0dad6fcdfae1/Cslib/Computability/Automata/NA/Basic.lean)
+and its
+[infinite execution relation](https://github.com/leanprover/cslib/blob/a3da622f14ac47924a4ffb293fdb0dad6fcdfae1/Cslib/Foundations/Semantics/LTS/OmegaExecution.lean)
+directly rather than copying them.
 
 KILT's LTL definitions and examples are independently written standard LTL.
 The separation of syntax and trace semantics is informed by

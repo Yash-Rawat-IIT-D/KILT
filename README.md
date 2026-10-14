@@ -70,6 +70,9 @@ Each run saves a timestamped log under `.lake/logs/`, with the latest available
 at `.lake/logs/latest.log`. The script returns the build's exit status and
 defaults to one Lean thread; use `LEAN_NUM_THREADS=2 ./scripts/build.sh` to change it.
 Build logs remain excluded from Git with the other `.lake` outputs.
+Terminal output highlights successful steps in green, timestamps and durations
+in yellow, and failures in red. The total duration is shown in minutes and
+seconds. Saved logs stay plain text; set `NO_COLOR=1` to disable terminal colors.
 Cleanup preserves downloaded dependencies and their compiled caches. Cleanup
 options run without building; `--rebuild` cleans first and then builds.
 
