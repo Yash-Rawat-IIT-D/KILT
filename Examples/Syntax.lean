@@ -52,6 +52,10 @@ example : (□ request) = Formula.globally request := rfl
 example : (◇ grant) = Formula.eventually grant := rfl
 example : (𝒩 request) = Formula.next request := rfl
 example : (request 𝒰 grant) = Formula.until request grant := rfl
+example : (¬ₗ request) = Formula.neg request := rfl
+example : (request ∧ₗ grant) = Formula.conj request grant := rfl
+example : (request ∨ₗ grant) = Formula.disj request grant := rfl
+example : (request ⟹ grant) = Formula.imp request grant := rfl
 
 -- Unary operators bind tightly; until associates to the right.
 example : (𝒩 request 𝒰 ◇ grant) =
@@ -61,8 +65,20 @@ example : (request 𝒰 grant 𝒰 request) =
 example : (□ ◇ 𝒩 request) =
     Formula.globally (Formula.eventually (Formula.next request)) := rfl
 
+-- Conjunction binds more tightly than disjunction, then implication.
+example : (request ∨ₗ grant ∧ₗ request ⟹ 𝒩 grant) =
+    Formula.imp (Formula.disj request (Formula.conj grant request))
+      (Formula.next grant) := rfl
+example : (request 𝒰 grant ∧ₗ 𝒩 request) =
+    Formula.conj (Formula.until request grant) (Formula.next request) := rfl
+example : (request ⟹ grant ⟹ request) =
+    Formula.imp request (Formula.imp grant request) := rfl
+
 -- Whenever request holds, grant holds now or eventually afterward.
-example : (□ (Formula.imp request (◇ grant))) =
+example : (□ (request ⟹ ◇ grant)) =
     Formula.globally (Formula.imp request (Formula.eventually grant)) := rfl
+
+-- Lean's proposition operators still work in the same scope.
+example (P Q : Prop) : (P ∧ Q) → (P ∨ Q) := fun h => Or.inl h.1
 
 end Examples.Syntax
