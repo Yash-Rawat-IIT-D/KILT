@@ -84,6 +84,25 @@ or cleanup mode opens the menu. With `GUI_LAUNCH=false`, the script builds
 directly unless `--gui` is supplied. Explicit targets and cleanup modes run
 directly, and command-line builds do not require `whiptail`.
 
+The menu also includes a Documentation submenu. The equivalent commands are:
+
+```sh
+./scripts/docs.sh --setup          # Fetch the pinned doc-gen4 dependency once
+./scripts/docs.sh                  # Build KILT and Examples API documentation
+./scripts/docs.sh KILT             # Build library documentation only
+./scripts/docs.sh --rebuild        # Clean generated documentation, then rebuild
+./scripts/docs.sh --serve          # Preview the generated site locally
+./scripts/docs.sh --status         # Show setup, output, and latest-log status
+./scripts/docs.sh --clean          # Remove generated docs; keep dependencies/logs
+./scripts/docs.sh --help           # Show all documentation options
+```
+
+The generated site is under `docbuild/.lake/build/doc/`, and documentation logs
+are stored alongside build logs under `.lake/logs/`. The first build also
+generates pages for imported Lean and Mathlib modules, so later incremental
+builds are much faster. Generated HTML and compiled documentation outputs are
+excluded from Git.
+
 Open this folder in VS Code to use the pinned toolchain. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
 
@@ -109,6 +128,7 @@ Examples/               Worked examples and regression cases
 Proposal/src/           Proposal LaTeX source and figures
 Proposal/build/         Submitted PDF and local build outputs
 scripts/                Build and maintenance scripts
+docbuild/               Pinned doc-gen4 project for local API documentation
 lakefile.toml           Lake package and build targets
 lean-toolchain          Pinned Lean version
 lake-manifest.json      Lake dependency lockfile

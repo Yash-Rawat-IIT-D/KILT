@@ -64,11 +64,17 @@ menu_clean() {
 }
 
 menu_run() {
+  menu_run_script "$gui_script" "$@"
+}
+
+menu_run_script() {
+  local script=$1
+  shift
   local status=0
   local flags=()
   if [[ "$gui_verbose" == true ]]; then flags+=(--verbose); fi
   clear
-  if GUI_LAUNCH=false "$gui_script" "${flags[@]}" "$@"; then
+  if GUI_LAUNCH=false "$script" "${flags[@]}" "$@"; then
     printf '\n'
     print_build_line 'Command completed successfully.'
   else
@@ -77,6 +83,66 @@ menu_run() {
     print_build_line "Command failed (exit status $status)."
   fi
   read -r -p 'Press Enter to return to the menu...' _ || return 1
+}
+
+docs_menu() {
+  local docs_script=$1 selection docs_log
+  docs_log="$log_dir/latest-docs.log"
+  while true; do
+    selection=$(menu_dialog --menu \
+      'Generate searchable API documentation with doc-gen4.' 22 82 10 \
+      setup 'Download or refresh documentation dependencies' \
+      build 'Build KILT and Examples documentation' \
+      rebuild 'Clean documentation output, then rebuild everything' \
+      library 'Build KILT library documentation only' \
+      examples 'Build checked-example documentation only' \
+      serve 'Serve existing HTML at http://127.0.0.1:8000/' \
+      status 'Show setup and generated-output status' \
+      logs 'View the latest documentation log' \
+      clean 'Clean documentation output or logs' \
+      back 'Return to the main menu' \
+      3>&1 1>&2 2>&3) || break
+    case "$selection" in
+      setup)
+        if menu_dialog --yesno \
+            'Set up doc-gen4? This downloads dependencies and updates docbuild/lake-manifest.json.' 10 76; then
+          menu_run_script "$docs_script" --setup || break
+        fi
+        ;;
+      build) menu_run_script "$docs_script" || break ;;
+      rebuild) menu_run_script "$docs_script" --rebuild || break ;;
+      library) menu_run_script "$docs_script" KILT || break ;;
+      examples) menu_run_script "$docs_script" Examples || break ;;
+      serve) menu_run_script "$docs_script" --serve || break ;;
+      status) menu_run_script "$docs_script" --status || break ;;
+      logs)
+        if [[ -f "$docs_log" ]]; then
+          menu_dialog --scrolltext --textbox "$docs_log" 22 82 || true
+        else
+          menu_dialog --msgbox 'No documentation log yet.' 8 64 || true
+        fi
+        ;;
+      clean)
+        local clean_choice
+        clean_choice=$(menu_dialog --menu 'Choose documentation cleanup:' 14 76 3 \
+          output 'Generated HTML and documentation build output' \
+          logs 'Documentation build/setup logs only' \
+          all 'Generated output and documentation logs' \
+          3>&1 1>&2 2>&3) || continue
+        case "$clean_choice" in
+          output) clean_choice=--clean ;;
+          logs) clean_choice=--clean-logs ;;
+          all) clean_choice=--clean-all ;;
+          *) continue ;;
+        esac
+        if menu_dialog --defaultno --yesno \
+            'Remove the selected documentation outputs? Downloaded dependencies are kept.' 10 76; then
+          menu_run_script "$docs_script" "$clean_choice" || break
+        fi
+        ;;
+      back) break ;;
+    esac
+  done
 }
 
 menu_logs() {
@@ -107,10 +173,11 @@ build_menu() {
     if ((${#gui_targets[@]})); then scope="${gui_targets[*]}"; fi
     selection=$(menu_dialog --menu \
       "Targets: $scope | Verbose: $gui_verbose
-Use arrow keys, Tab and Enter. Esc or Cancel exits." 20 80 8 \
+Use arrow keys, Tab and Enter. Esc or Cancel exits." 22 80 9 \
       build 'Build selected targets with logging' \
       rebuild 'Clean KILT outputs, then build selected targets' \
       targets 'Choose library or example targets' \
+      docs 'Build, preview or clean API documentation' \
       clean 'Clean outputs or generated logs' \
       logs 'View the latest build log' \
       verbose 'Toggle verbose build output' \
@@ -121,6 +188,7 @@ Use arrow keys, Tab and Enter. Esc or Cancel exits." 20 80 8 \
       build) menu_run "${gui_targets[@]}" || break ;;
       rebuild) menu_run --rebuild "${gui_targets[@]}" || break ;;
       targets) menu_targets ;;
+      docs) docs_menu "$repo_dir/scripts/docs.sh" || break ;;
       clean) menu_clean || break ;;
       logs) menu_logs ;;
       verbose)

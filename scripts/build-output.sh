@@ -16,12 +16,14 @@ print_build_line() {
   fi
 
   case "$line" in
-    ✖*|error:*|fatal:*|Command\ failed*|Failed\ to\ capture*|Build\ exit\ status:\ [1-9]*)
+    ✖*|error:*|fatal:*|Command\ failed*|Failed\ to\ capture*|Build\ exit\ status:\ [1-9]*|\
+    Documentation\ exit\ status:\ [1-9]*)
       color=31 ;;
     ⚠*|warning:*|Started:*|Finished:*|Elapsed:*|Total\ time:*)
       color=33 ;;
     ✔*|*' Built '*|Build\ completed\ successfully*|Build\ exit\ status:\ 0|\
-    Command\ completed\ successfully*|Cleaned*|Removed\ script\ build\ logs*)
+    Command\ completed\ successfully*|Cleaned*|Removed\ script\ build\ logs*|\
+    Documentation\ dependencies\ are\ ready*|Documentation\ exit\ status:\ 0)
       color=32 ;;
   esac
 

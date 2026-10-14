@@ -38,6 +38,7 @@ for failures. Saved logs are plain text. Set NO_COLOR=1 to disable colors.
 LEAN_NUM_THREADS defaults to 1; set it explicitly to use more threads.
 GUI_LAUNCH=true (default) opens the menu when no target or cleanup mode is given.
 GUI_LAUNCH=false runs the CLI by default; --gui still opens the menu.
+The GUI includes a Documentation submenu for doc-gen4 setup, builds and preview.
 EOF
 }
 
