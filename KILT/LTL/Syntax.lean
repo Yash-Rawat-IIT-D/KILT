@@ -12,9 +12,11 @@ strong until. Other connectives expand into this basis; `Formula.size` counts
 nodes after that expansion. Syntax and semantics cover these operators, but
 an executable formula-to-automaton translation is still future work.
 
-Enable temporal shorthand with `open scoped KILT.LTL`: `□ p` is globally,
-`◇ p` is eventually, `𝒩 p` is next, and `p 𝒰 q` is strong until. The unary
-operators bind more tightly than until, which associates to the right.
+Enable shorthand with `open scoped KILT.LTL`: `□ p` is globally, `◇ p` is
+eventually, `𝒩 p` is next, and `p 𝒰 q` is strong until. Boolean formula
+operators are `¬ₗ`, `∧ₗ`, `∨ₗ`, and `⟹`. Unary operators bind most tightly,
+followed by until, conjunction, disjunction, and implication. Binary operators
+associate to the right. Ordinary Lean proposition notation is unaffected.
 
 ## Design reference
 
@@ -77,10 +79,14 @@ def size : Formula AP → Nat
 
 end Formula
 
--- Optional temporal notation; ordinary Lean propositions keep their own syntax.
+-- Optional formula notation; ordinary Lean propositions keep their own syntax.
 scoped prefix:75 "□" => Formula.globally
 scoped prefix:75 "◇" => Formula.eventually
 scoped prefix:75 "𝒩" => Formula.next
+scoped prefix:75 "¬ₗ" => Formula.neg
 scoped infixr:60 " 𝒰 " => Formula.until
+scoped infixr:35 " ∧ₗ " => Formula.conj
+scoped infixr:30 " ∨ₗ " => Formula.disj
+scoped infixr:25 " ⟹ " => Formula.imp
 
 end KILT.LTL

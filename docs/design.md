@@ -21,7 +21,7 @@ require neither a finite atom type nor decidable atom equality. Formulas have
 decidable equality when atoms do, and `Formula.size` counts constructor nodes
 after expanding derived operators.
 
-Enable the temporal shorthand with `open scoped KILT.LTL`:
+Enable the formula shorthand with `open scoped KILT.LTL`:
 
 | Notation | Formula |
 | --- | --- |
@@ -29,11 +29,17 @@ Enable the temporal shorthand with `open scoped KILT.LTL`:
 | `◇ p` | `Formula.eventually p` |
 | `𝒩 p` | `Formula.next p` |
 | `p 𝒰 q` | `Formula.until p q` |
+| `¬ₗ p` | `Formula.neg p` |
+| `p ∧ₗ q` | `Formula.conj p q` |
+| `p ∨ₗ q` | `Formula.disj p q` |
+| `p ⟹ q` | `Formula.imp p q` |
 
-Unary operators have precedence 75; until has precedence 60 and associates to
-the right. Thus `𝒩 p 𝒰 ◇ q` means `(𝒩 p) 𝒰 (◇ q)`. For the response property,
-write `□ (Formula.imp request (◇ grant))`. The shorthands expand to the same
-formula definitions, so the existing semantics and laws apply directly.
+Unary operators have precedence 75, until 60, conjunction 35, disjunction 30,
+and implication 25. All binary operators associate to the right. Thus
+`𝒩 p 𝒰 ◇ q` means `(𝒩 p) 𝒰 (◇ q)`. For the response property, write
+`□ (request ⟹ ◇ grant)`. The shorthands expand to the same formula definitions,
+so the existing semantics and laws apply directly. Ordinary Lean `→`, `∧`,
+`∨`, and `¬` continue to express propositions in proofs.
 
 `Valuation AP` is `AP → Bool`. `Word AP` is
 `Cslib.ωSequence (Valuation AP)`, so CSLib's sequence operations are available
