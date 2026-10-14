@@ -1,5 +1,6 @@
 # Lake build outputs and downloaded dependencies
 /.lake/
+/docbuild/.lake/
 
 # Local clones used for research
 /references/

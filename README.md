@@ -84,6 +84,8 @@ or cleanup mode opens the menu. With `GUI_LAUNCH=false`, the script builds
 directly unless `--gui` is supplied. Explicit targets and cleanup modes run
 directly, and command-line builds do not require `whiptail`.
 
+The menu also includes a Documentation submenu. The equivalent commands are:
+
 Open this folder in VS Code to use the pinned toolchain. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
 
