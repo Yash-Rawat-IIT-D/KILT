@@ -12,6 +12,7 @@ import Examples.TrafficLight
 import Examples.Normalization
 import Examples.GeneralizedBuchi
 import Examples.Tableau
+import Examples.TwoThreadLock
 
 /-!
 # Checked KILT examples

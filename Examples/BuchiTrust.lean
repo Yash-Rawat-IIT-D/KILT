@@ -3,6 +3,7 @@ import Examples.TrafficLight
 import Examples.Normalization
 import Examples.GeneralizedBuchi
 import Examples.Tableau
+import Examples.TwoThreadLock
 import Lean.Util.CollectAxioms
 
 /-!
@@ -133,6 +134,20 @@ run_cmd auditStandardAxioms #[
   ``Examples.Tableau.postponed_loop,
   ``Examples.Tableau.postponed_word_fails,
   ``Examples.Tableau.postponed_run,
-  ``Examples.Tableau.literal_represents]
+  ``Examples.Tableau.literal_represents,
+  ``Examples.TwoThreadLock.advance_zero_preserves_pc1,
+  ``Examples.TwoThreadLock.advance_one_preserves_pc0,
+  ``Examples.TwoThreadLock.serial,
+  ``Examples.TwoThreadLock.scheduledPath_initial,
+  ``Examples.TwoThreadLock.race_collision,
+  ``Examples.TwoThreadLock.broken_not_mutualExclusion,
+  ``Examples.TwoThreadLock.atomic_step_invariant,
+  ``Examples.TwoThreadLock.atomic_path_invariant,
+  ``Examples.TwoThreadLock.atomic_mutualExclusion,
+  ``Examples.TwoThreadLock.unfair_waits,
+  ``Examples.TwoThreadLock.unfair_not_response,
+  ``Examples.TwoThreadLock.atomic_not_starvationFree,
+  ``Examples.TwoThreadLock.atomic_response_check,
+  ``Examples.TwoThreadLock.atomic_not_starvationFree_from_checker]
 
 end Examples.BuchiTrust
