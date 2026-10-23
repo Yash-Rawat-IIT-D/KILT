@@ -5,6 +5,10 @@ import Examples.Words
 import Examples.SemanticLaws
 import Examples.RequestGrant
 import Examples.FiniteKripke
+import Examples.BuchiGraph
+import Examples.Buchi
+import Examples.BuchiTrust
+import Examples.TrafficLight
 
 /-!
 # Checked KILT examples
