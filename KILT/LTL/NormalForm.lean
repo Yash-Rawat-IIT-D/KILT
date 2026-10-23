@@ -53,6 +53,13 @@ theorem sat_until : Sat w i (.until a b) ↔
 theorem sat_release : Sat w i (.release a b) ↔
     ∀ j, i ≤ j → (∀ k, i ≤ k → k < j → ¬ Sat w k a) → Sat w j b := LTL.sat_release
 
+/-- Unfolding laws are explicit to avoid recursive simplification. -/
+theorem sat_until_unfold : Sat w i (.until a b) ↔
+    Sat w i b ∨ (Sat w i a ∧ Sat w (i + 1) (.until a b)) := LTL.sat_until_unfold
+
+theorem sat_release_unfold : Sat w i (.release a b) ↔
+    Sat w i b ∧ (Sat w i a ∨ Sat w (i + 1) (.release a b)) := LTL.sat_release_unfold
+
 /-- Complement without introducing compound negation. -/
 def negate : NNF AP → NNF AP
   | .truth => .falsehood
