@@ -435,6 +435,42 @@ Until acceptance conditions are therefore essential and remain the next layer.
 No generalized translator with placeholder acceptance or formula checker is
 exposed by this batch. Principal contracts are part of the default axiom audit.
 
+## Two-thread lock walkthrough
+
+`Examples.TwoThreadLock` gives two program counters and a shared Boolean lock.
+Each transition schedules exactly one thread. All reads/writes use a single
+shared value; no weak-memory or timing behavior is represented. Both threads
+start Idle with the lock free. Idle requests when scheduled; Critical releases
+when scheduled; a failed acquisition spins. There is no scheduling fairness.
+
+Broken acquisition separates the free-lock test (Trying → Checked) from the
+unconditional claim (Checked → Critical). The explicit schedule 0,0,1,1,0,1
+lets both threads check before either claims, reaching simultaneous Critical
+at word position six. `broken_not_mutualExclusion` refutes the universal safety
+formula on an actual infinite initial path extending this finite prefix.
+Atomic acquisition combines the test/write in Trying → Critical. Its carrier
+retains Checked for comparison, but `AtomicInvariant` proves it unreachable,
+proves critical threads hold the lock, and excludes simultaneous Critical.
+`atomic_step_invariant` and `atomic_path_invariant` lift the invariant to
+`atomic_mutualExclusion` on every infinite initial path.
+
+`starvationFreedom t` is `□(requesting t ⟹ ◇ inCritical t)`, where requesting
+includes Trying and Checked. `unfairSchedule` lets thread zero request once,
+then schedules only thread one, repeatedly requesting/acquiring/releasing.
+`unfair_not_response` proves thread zero's response property fails;
+`atomic_response_check` establishes the false backend verdict using existing
+checker correctness. Separate `#eval` executes the Boolean product search;
+no native-computation axiom is added. Both models are globally serial by
+construction, so these results do not rely on deadlock vacuity. The shared
+carrier has 32 states; compiled reachability reports 22 broken and 8 atomic
+reachable states. No arbitrary-formula compiler is claimed.
+
+This example independently implements small lock protocols, rather than
+Peterson's algorithm. Its safety/liveness questions follow the standard
+[mutual-exclusion verification setting](https://lamport.azurewebsites.net/tla/peterson.html?back-link=high-level-view.html).
+Program counters, scheduling and observation labels are separate extension
+points for turn-taking protocols and future explicit fairness assumptions.
+
 ## Sources and attribution
 
 KILT pins [CSLib at `a3da622f14ac47924a4ffb293fdb0dad6fcdfae1`](https://github.com/leanprover/cslib/tree/a3da622f14ac47924a4ffb293fdb0dad6fcdfae1)

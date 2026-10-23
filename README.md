@@ -151,6 +151,16 @@ The tableau foundation now provides finite consistent states, local transitions,
 and their semantic compatibility proof; see [Tableau.lean](Examples/Tableau.lean).
 Until acceptance and full formula-to-automaton language correctness are next.
 
+## Two-thread lock example
+
+[TwoThreadLock.lean](Examples/TwoThreadLock.lean) models two interleaved threads
+sharing a lock bit. A split check/claim permits both threads into the critical
+section; atomic test-and-acquire preserves mutual exclusion on every initial
+path. Without scheduler fairness, a requesting thread can still starve. The
+example includes explicit infinite schedules, LTL proofs, finite reachability
+counts, and the existing verified response monitor. Future extensions can add
+turn-taking or a Peterson protocol.
+
 ## Building the proposal
 
 The script uses an available LaTeX compiler and writes the PDF to
