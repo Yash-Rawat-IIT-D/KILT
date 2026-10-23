@@ -395,6 +395,46 @@ by Ching-Tsun Chou (Apache 2.0). KILT uses CSLib's run definitions directly and
 implements its own executable arbitrary-family counter and recurrence proofs;
 CSLib's noncomputable binary intersection is not called by this conversion.
 
+## Tableau local foundation
+
+`KILT.LTL.Tableau` uses `Assignment f = Finset (NNF.Subformula f)` and a
+`State f` subtype carrying a `StaticConsistent` proof. It enumerates subsets
+and filters constant/connective consistency, requiring only decidable atom
+equality. `Holds` is false outside the existing closure; no complementary
+formulas or valuations are enumerated. State enumeration is executable and
+`card_state_le` bounds its size by `2 ^ f.subformulas.card`.
+
+Static consistency applies only to formulas in the closure: true is included,
+false excluded, conjunction membership iff both operands are included, and
+disjunction membership iff either operand is included. It does not guarantee
+temporal realizability. Literal conflicts remain possible in static states,
+but no valuation permits a transition from a state containing both polarities.
+
+`Step s t valuation` checks each closure formula. Literal membership agrees
+exactly with the source valuation. Next membership agrees with operand membership
+in the successor. Until uses `right-now OR (left-now AND until-next)`; release
+uses `right-now AND (left-now OR release-next)`. Release therefore includes its
+right operand at the endpoint. The unfolding theorems are explicit, not recursive
+simp rules. `initials` filters states containing the root; `successors` filters
+states satisfying Step. `toNA` adapts them to CSLib without acceptance conditions.
+The first transition consumes word position zero, preserving source observations.
+
+`Represents` explicitly assumes that membership equals indexed semantic truth
+for every subformula. `step_of_represents` proves consecutive such states obey
+the local transition rules, using subformula closure and the unfolding laws.
+It does not infer semantic falsity from absence in an arbitrary local run.
+
+`Examples.Tableau` reports (closure, raw assignments, consistent states):
+true `(1,2,1)`, repeated conjunction `(2,4,2)`, two-atom conjunction/disjunction
+`(3,8,4)`, and until/release `(3,8,8)`. Computed checks cover literals,
+next-source indexing, immediate and continued until, and release endpoints.
+For `p U q`, a state containing `p` and `p U q` but not `q` can loop locally
+under the valuation making only `p` true. `postponed_run` constructs this initial
+infinite NA run; `postponed_word_fails` proves the word violates strong until.
+Until acceptance conditions are therefore essential and remain the next layer.
+No generalized translator with placeholder acceptance or formula checker is
+exposed by this batch. Principal contracts are part of the default axiom audit.
+
 ## Sources and attribution
 
 KILT pins [CSLib at `a3da622f14ac47924a4ffb293fdb0dad6fcdfae1`](https://github.com/leanprover/cslib/tree/a3da622f14ac47924a4ffb293fdb0dad6fcdfae1)

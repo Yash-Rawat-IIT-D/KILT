@@ -2,6 +2,7 @@ import Examples.Buchi
 import Examples.TrafficLight
 import Examples.Normalization
 import Examples.GeneralizedBuchi
+import Examples.Tableau
 import Lean.Util.CollectAxioms
 
 /-!
@@ -105,6 +106,33 @@ run_cmd auditStandardAxioms #[
   ``Examples.GeneralizedBuchi.reordered,
   ``Examples.GeneralizedBuchi.controller_recurs,
   ``Examples.GeneralizedBuchi.redOnly_does_not_recur,
-  ``Examples.GeneralizedBuchi.controller_has_recurring_path]
+  ``Examples.GeneralizedBuchi.controller_has_recurring_path,
+  ``KILT.LTL.sat_release_unfold,
+  ``KILT.LTL.NNF.sat_until_unfold,
+  ``KILT.LTL.NNF.sat_release_unfold,
+  ``KILT.LTL.Tableau.holds_of_mem,
+  ``KILT.LTL.Tableau.not_holds_of_not_mem,
+  ``KILT.LTL.Tableau.staticConsistent_iff,
+  ``KILT.LTL.Tableau.State.rule,
+  ``KILT.LTL.Tableau.State.truth,
+  ``KILT.LTL.Tableau.State.falsehood,
+  ``KILT.LTL.Tableau.State.conj,
+  ``KILT.LTL.Tableau.State.disj,
+  ``KILT.LTL.Tableau.card_state_le,
+  ``KILT.LTL.Tableau.mem_initials,
+  ``KILT.LTL.Tableau.mem_successors,
+  ``KILT.LTL.Tableau.toNA_start,
+  ``KILT.LTL.Tableau.toNA_transition,
+  ``KILT.LTL.Tableau.step_rule,
+  ``KILT.LTL.Tableau.step_pos,
+  ``KILT.LTL.Tableau.step_negAtom,
+  ``KILT.LTL.Tableau.step_next,
+  ``KILT.LTL.Tableau.step_until,
+  ``KILT.LTL.Tableau.step_release,
+  ``KILT.LTL.Tableau.step_of_represents,
+  ``Examples.Tableau.postponed_loop,
+  ``Examples.Tableau.postponed_word_fails,
+  ``Examples.Tableau.postponed_run,
+  ``Examples.Tableau.literal_represents]
 
 end Examples.BuchiTrust

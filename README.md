@@ -147,8 +147,9 @@ verified finite subformula closure. Normalization preserves truth at every
 word position, including negated formulas. Read
 [Normalization.lean](Examples/Normalization.lean) for the response-formula
 walkthrough, until/release duality, and transfer of traffic-light proofs.
-This prepares the general translator; automatic formula-to-automaton
-construction remains the next stage.
+The tableau foundation now provides finite consistent states, local transitions,
+and their semantic compatibility proof; see [Tableau.lean](Examples/Tableau.lean).
+Until acceptance and full formula-to-automaton language correctness are next.
 
 ## Building the proposal
 

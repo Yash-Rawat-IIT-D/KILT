@@ -111,6 +111,15 @@ theorem sat_until_unfold : Sat word i (.until left right) ↔
       · simpa only [hki] using hleft
       · exact hprefix k (by omega) hhigh
 
+/-- One-step release unfolding, including its right operand at the endpoint. -/
+theorem sat_release_unfold : Sat word i (Formula.release left right) ↔
+    Sat word i right ∧ (Sat word i left ∨
+      Sat word (i + 1) (Formula.release left right)) := by
+  classical
+  conv_lhs => rw [Formula.release, sat_neg, sat_until_unfold]
+  simp only [Formula.release, sat_neg]
+  tauto
+
 /-- Eventually follows immediately from satisfaction at the current position. -/
 theorem sat_eventually_now (h : Sat word i left) :
     Sat word i (Formula.eventually left) :=

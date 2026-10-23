@@ -11,6 +11,7 @@ import Examples.BuchiTrust
 import Examples.TrafficLight
 import Examples.Normalization
 import Examples.GeneralizedBuchi
+import Examples.Tableau
 
 /-!
 # Checked KILT examples

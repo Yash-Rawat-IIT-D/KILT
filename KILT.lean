@@ -1,6 +1,7 @@
 import KILT.LTL.Basic
 import KILT.LTL.NormalForm
 import KILT.LTL.Subformulas
+import KILT.LTL.Tableau
 import KILT.Graph.Reachability
 import KILT.Graph.Routes
 import KILT.Kripke.Semantics
