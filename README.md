@@ -106,6 +106,15 @@ excluded from Git.
 Open this folder in VS Code to use the pinned toolchain. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
 
+## Generalized Büchi conversion
+
+`FiniteGeneralizedBuchi` supports several recurring acceptance obligations and
+an executable, language-preserving `toFiniteBuchi` conversion. Empty families,
+partial transitions and unrestricted symbol types are supported. See
+`Examples/GeneralizedBuchi.lean` for counter traces and traffic-colour recurrence
+through the existing accepted-path backend. General tableau translation remains
+future work.
+
 ## Verified Büchi backend
 
 The library includes finite Büchi automata with symbol-driven successors,
@@ -132,6 +141,14 @@ proofs, reachability/routes, then verified eventuality and response checks.
 The red → green → yellow controller passes; a variant that can stay red
 forever preserves colour safety but fails progress. An explicit all-red path
 explains the failure. These examples run in the default build.
+
+The formula compiler foundation now includes negation normal form and a
+verified finite subformula closure. Normalization preserves truth at every
+word position, including negated formulas. Read
+[Normalization.lean](Examples/Normalization.lean) for the response-formula
+walkthrough, until/release duality, and transfer of traffic-light proofs.
+This prepares the general translator; automatic formula-to-automaton
+construction remains the next stage.
 
 ## Building the proposal
 

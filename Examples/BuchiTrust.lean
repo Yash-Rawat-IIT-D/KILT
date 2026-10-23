@@ -1,5 +1,7 @@
 import Examples.Buchi
 import Examples.TrafficLight
+import Examples.Normalization
+import Examples.GeneralizedBuchi
 import Lean.Util.CollectAxioms
 
 /-!
@@ -62,6 +64,47 @@ run_cmd auditStandardAxioms #[
   ``Examples.TrafficLight.controller_eventually_green,
   ``Examples.TrafficLight.controller_red_responds,
   ``Examples.TrafficLight.stuck_not_eventually_green,
-  ``Examples.TrafficLight.stuck_not_red_responds]
+  ``Examples.TrafficLight.stuck_not_red_responds,
+  ``KILT.LTL.NNF.negate_negate,
+  ``KILT.LTL.NNF.sat_negate,
+  ``KILT.LTL.Formula.sat_normalize,
+  ``KILT.LTL.Formula.sat_normalize_neg,
+  ``KILT.LTL.Formula.wordSat_normalize,
+  ``KILT.LTL.NNF.mem_subformulas_iff,
+  ``KILT.LTL.NNF.mem_subformulas_self,
+  ``KILT.LTL.NNF.child_subformulas_subset,
+  ``KILT.LTL.NNF.subformulas_subset_of_mem,
+  ``KILT.LTL.NNF.child_size_lt,
+  ``KILT.LTL.NNF.size_le_of_mem,
+  ``KILT.LTL.NNF.card_subformulas_le_size,
+  ``Examples.Normalization.model_normalization,
+  ``Examples.Normalization.traffic_safety,
+  ``Examples.Normalization.traffic_ordering,
+  ``Examples.Normalization.traffic_stuck_response,
+  ``Examples.Normalization.until_now,
+  ``Examples.Normalization.no_postponed_until,
+  ``Examples.Normalization.release_forever,
+  ``Examples.Normalization.release_endpoint,
+  ``KILT.Automata.RoundRobin.complete,
+  ``KILT.Automata.RoundRobin.sound,
+  ``KILT.Automata.FiniteGeneralizedBuchi.toNA_start,
+  ``KILT.Automata.FiniteGeneralizedBuchi.toNA_transition,
+  ``KILT.Automata.FiniteGeneralizedBuchi.accepts_family_ext,
+  ``KILT.Automata.FiniteGeneralizedBuchi.converted_start,
+  ``KILT.Automata.FiniteGeneralizedBuchi.converted_transition,
+  ``KILT.Automata.FiniteGeneralizedBuchi.converted_accept,
+  ``KILT.Automata.FiniteGeneralizedBuchi.lift_run,
+  ``KILT.Automata.FiniteGeneralizedBuchi.project_run,
+  ``KILT.Automata.FiniteGeneralizedBuchi.run_eq_lift,
+  ``KILT.Automata.FiniteGeneralizedBuchi.accepts_singleton,
+  ``KILT.Automata.FiniteGeneralizedBuchi.counter_acceptance,
+  ``KILT.Automata.FiniteGeneralizedBuchi.lift_acceptingRun,
+  ``KILT.Automata.FiniteGeneralizedBuchi.toFiniteBuchi_accepts,
+  ``KILT.FiniteKripke.hasAcceptedPath_generalized_iff,
+  ``Examples.GeneralizedBuchi.verdict_correct,
+  ``Examples.GeneralizedBuchi.reordered,
+  ``Examples.GeneralizedBuchi.controller_recurs,
+  ``Examples.GeneralizedBuchi.redOnly_does_not_recur,
+  ``Examples.GeneralizedBuchi.controller_has_recurring_path]
 
 end Examples.BuchiTrust

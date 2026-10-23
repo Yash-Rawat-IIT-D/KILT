@@ -285,6 +285,40 @@ only `propext`, `Classical.choice`, and `Quot.sound`, and rejects missing
 declarations, unfinished-proof dependencies, and additional axioms. All three
 new example modules are included in the default build and existing CI.
 
+## Normalization and finite subformulas
+
+`LTL.NNF` makes truth/falsehood, literal polarity, conjunction/disjunction,
+next, strong until and release explicit. It has no arbitrary negation node.
+`NNF.toFormula` embeds it into the existing public formula basis; `NNF.Sat`
+is an abbreviation for the existing indexed semantics of that embedding.
+`NNF.negate_negate` and `NNF.sat_negate` verify the complement operation.
+In particular, until and release exchange under negation; this preserves the
+strong-until witness requirement and release's inclusive endpoint.
+
+`Formula.normalize` is structural, with no minimization or CNF/DNF expansion.
+`sat_normalize`, `wordSat_normalize`, and `sat_normalize_neg` cover all words
+and indices. Neither the normalizer nor these proofs requires atom equality.
+Named equations describe normalization of derived public operators. Normalized
+syntax is interpreted through the original semantics, not a second trace model.
+
+`NNF.subformulas` includes the root and all descendants in a duplicate-free
+Finset. Only this collection layer needs `[DecidableEq AP]`; AP need not be
+finite. `mem_subformulas_iff` characterizes membership using immediate children;
+`subformulas_subset_of_mem` proves transitive closure. `child_size_lt`,
+`size_le_of_mem`, and `card_subformulas_le_size` bound recursion and collection
+size in terms of the actual NNF node count. `NNF.Subformula f` supplies an
+executable finite carrier, without enumerating words or valuations.
+
+For example, `□(p ⟹ ◇q)` normalizes to `false R (¬p ∨ (true U q))`, with
+seven distinct subformulas. `Examples.Normalization.model_normalization`
+lifts word equivalence to universal Kripke satisfaction, without needing
+seriality; positive traffic-light safety/ordering and a negative response
+result transfer through that equivalence. Other examples exercise duality,
+time-zero, until postponement, release forever and its endpoint, Nat atoms,
+deduplication and finite-carrier computation. Principal results are audited.
+Generalized acceptance is implemented below; tableau construction and formula-input
+checking remain subsequent work. Finite syntax collection is not an automaton compiler.
+
 ## Traffic-light walkthrough
 
 `Examples.TrafficLight` separates colour propositions (`red`, `green`, `yellow`)
@@ -308,6 +342,58 @@ the infinite all-red behaviour. This path is supplied by the example rather
 than extracted by the Boolean checker. General formula compilation, timed
 controllers, multi-road safety and executable lasso extraction remain future
 extensions. New principal example proofs are included in the axiom audit.
+
+## Generalized Büchi acceptance and conversion
+
+`FiniteGeneralizedBuchi` stores finite initial/successor sets and an ordered
+`List (Finset Q)` of acceptance obligations. An accepting run is an infinite
+CSLib initial run visiting every listed set arbitrarily late. Symbols remain
+unrestricted; state types and initial sets may be empty. An empty family accepts
+every existing infinite initial run, whereas a family containing an empty set
+accepts no word. Partial transitions and deadlocks retain their original meaning.
+
+`toFiniteBuchi` uses `Q × Fin (max 1 accepting.length)`, initially counter zero.
+The counter waits for its current set, then advances cyclically using the
+**source** state. The same transition consumes the current input valuation.
+For a nonempty family, acceptance requires counter zero **and membership in
+set zero**. Merely waiting at counter zero must not count as accepting.
+For an empty family, the sole counter value stays zero and every state accepts.
+No transitions are inserted. The carrier has `card Q * max 1 length` states;
+this is a direct construction with no SCC or minimization performance claim.
+
+`RoundRobin.complete` proves recurrent obligations force completed rounds:
+from any counter, either the relevant set is hit or the counter would wait
+forever, contradicting that set's recurrence. Advancing reduces the remaining
+distance to wraparound. `RoundRobin.sound` proves recurring completions force
+each intermediate obligation: if its counter stopped moving, no later completion
+could occur. `counter_acceptance` specializes these arguments to finite sets.
+`lift_run`, `project_run`, and `run_eq_lift` relate the deterministic annotation
+to CSLib runs. `toFiniteBuchi_accepts` proves exact word-language preservation.
+`accepts_family_ext` covers reordering and duplication without altering language.
+These correctness proofs allow classical reasoning; execution uses finite data
+and decidable operations, without classical selection or new trust assumptions.
+
+For example, on the three-state cycle `0,1,2,0,...` with sets `[{0},{1},{2}]`,
+the source counters are `0,1,2,0,...`: every round discharges all obligations.
+A state outside set zero with counter zero, looping forever, is rejected.
+`Examples.GeneralizedBuchi` checks these boundaries, empty families and deadlocks,
+repeated/overlapping obligations, symbol-dependent edges and transient acceptance.
+A traffic monitor requires green and yellow repeatedly. The progressing controller
+has an accepted path; a red-only controller has none. The nondeterministic
+waiting controller still has an accepted progressing path: this is existential
+acceptance, not a claim that all executions progress.
+
+`hasAcceptedPath_generalized_iff` derives this meaning from existing product
+search and language preservation. No seriality assumption is added to the generic
+conversion/search. The public universal property checker retains its seriality
+requirement. Tableau translation will use one generalized acceptance set per
+until obligation, then feed this converter to the verified ordinary backend.
+
+The history-counter idea is also illustrated by CSLib's
+[Büchi intersection construction](https://github.com/leanprover/cslib/blob/a3da622f14ac47924a4ffb293fdb0dad6fcdfae1/Cslib/Computability/Automata/NA/BuchiInter.lean)
+by Ching-Tsun Chou (Apache 2.0). KILT uses CSLib's run definitions directly and
+implements its own executable arbitrary-family counter and recurrence proofs;
+CSLib's noncomputable binary intersection is not called by this conversion.
 
 ## Sources and attribution
 
