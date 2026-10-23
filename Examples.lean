@@ -9,6 +9,8 @@ import Examples.BuchiGraph
 import Examples.Buchi
 import Examples.BuchiTrust
 import Examples.TrafficLight
+import Examples.Normalization
+import Examples.GeneralizedBuchi
 
 /-!
 # Checked KILT examples
