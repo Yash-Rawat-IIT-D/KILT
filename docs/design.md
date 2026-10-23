@@ -1,12 +1,14 @@
 # KILT design notes
 
-## Scope through 18 October
+## Semantic foundation and the 22 October backend
 
 KILT first defines a small LTL syntax over named atomic propositions and its
 infinite-word semantics.  A Kripke path produces a word of Boolean valuations;
 a Kripke model satisfies a formula when every initial path satisfies that word
 formula at position zero.  This establishes the semantic interface needed by a
-later automata translation and finite-state checker.
+automata translation and finite-state checking. The finite Büchi backend now
+checks supplied violation automata; general formula translation remains later
+work.
 
 The implemented constructor basis is falsehood, atomic propositions, negation,
 disjunction, next, and strong until. Truth, conjunction, implication,
@@ -58,8 +60,9 @@ and `WordSat word φ` abbreviates satisfaction at zero.
 Until and eventually permit a witness at the current position. Release is
 defined by the dual `¬(¬φ U ¬ψ)`, so the right operand may hold forever without
 the left operand ever holding. Satisfaction is a structurally recursive
-mathematical proposition. Executable translation and model checking remain
-later work; no decision procedure for arbitrary infinite words is assumed.
+mathematical proposition. General executable translation remains later work;
+the finite backend below checks supplied automata, without assuming a decision
+procedure for arbitrary infinite words.
 
 `Examples.Syntax` checks formula equality, connective expansion, and size.
 `Examples.Words` checks constant and alternating words, immediate and later
@@ -155,8 +158,8 @@ grant at the next position. Its negative variant adds a waiting self-loop. The
 constant waiting path violates `□ (request ⟹ ◇ grant)`, because KILT makes no
 fairness assumption that would force the enabled granting transition to occur.
 
-These results are a semantic bridge. They do not yet translate LTL formulas to
-Büchi automata or search a finite graph for counterexamples.
+These bridge results do not themselves translate LTL formulas. The finite
+backend below adds acceptance search while reusing these conventions.
 
 ## Finite models and executable reachability
 
@@ -206,7 +209,105 @@ A one-state deadlock illustrates two distinct claims. It is finitely reachable
 and has the zero-step route `[()]`, but it has no infinite path. Consequently,
 universal infinite-path LTL satisfaction remains vacuous for that model.
 Reachability does not repair this semantic boundary; the seriality diagnostics
-make it visible to a future checker.
+make it visible to the property-checking interface.
+
+## Finite Büchi backend
+
+`Automata.FiniteBuchi Q Symbol` stores finite initial and accepting state sets
+and `successors : Q → Symbol → Finset Q`. Only states require `Fintype` and
+decidable equality. Symbols and atom identifiers stay unrestricted; the product
+evaluates actual model valuations instead of enumerating all possible ones.
+Empty state types, empty initials, empty acceptance, and missing transitions
+are allowed. `toBuchi` preserves this data as CSLib predicates.
+
+`Graph.HasAcceptingRun` requires an infinite initial sequence with valid edges
+and accepting visits arbitrarily late. `HasAcceptingCycle` requires a reachable
+accepting state `q` with a positive-length return path. The executable
+`hasAcceptingCycle` filters reachable accepting states by membership of `q` in
+`reachableSet (successors q) successors`. Starting the second search from
+successors is essential: zero-step reachability alone would incorrectly accept
+a deadlock. Both `hasAcceptingCycle_eq_true_iff` and
+`hasAcceptingCycle_iff_hasAcceptingRun` are proved.
+
+The infinite-run proof uses finite-state recurrence in one direction and
+CSLib execution concatenation in the other. These are semantic existence
+proofs; the executable search uses finite sets and the existing bounded
+reachability algorithm. It repeats reachability for candidate accepting states;
+it is not an SCC implementation, and it returns no executable lasso.
+
+## Product and property-checking contract
+
+`FiniteKripke.productInitials`, `productSuccessors`, and `productAccepting`
+describe graph data on system/automaton pairs. A transition from `(s, q)` takes
+a system successor of `s` and an automaton successor of `q` on `M.label s`.
+Thus the automaton consumes the initial valuation on the first edge. Only the
+automaton component determines acceptance. Product starts may be empty, so the
+product does not reuse the nonempty-initial Kripke record.
+
+`product_run_iff` characterizes compatible runs. `hasAcceptedPath_eq_true_iff`
+proves that the Boolean accepted-path search succeeds exactly when some initial
+system path's word is accepted by the supplied automaton. Neither theorem
+requires seriality. An accepting product deadlock has no infinite execution.
+
+`M.checkAgainst A hserial` returns the negation of accepted-path existence and
+requires a proof of global `M.toKripke.Serial`. Its principal theorem,
+`checkAgainst_correct`, additionally requires a language specification:
+
+```text
+for every word, A accepts word iff the word violates formula
+```
+
+Under that specification, a true result is equivalent to
+`M.toKripke.Satisfies formula`. No fairness is added, no deadlocks are repaired,
+and no arbitrary formula is automatically compiled. The generic backend still
+supports partial graphs; seriality is the public checker precondition.
+
+## Handwritten languages and regression checks
+
+`Automata.Monitors` supplies three proved constructions: `eventually q`,
+`notEventually q`, and `notResponse p q`. The two-state `guessAndStay` helper
+nondeterministically selects a triggering position, then maintains an obligation
+forever. Its accepting commitment begins at the next state. Response violation
+therefore checks `p ∧ ¬q` at the trigger and `¬q` at all later positions. A grant
+at the request position already answers that request.
+
+`Examples.Buchi` checks the existing alternating and waiting-loop systems and
+derives semantic theorems from their computed verdicts. Further cases cover an
+initial-only grant, no requests, simultaneous request/grant, delayed grants,
+permanent waiting, and a violation after a prefix. Their atom type can be `Nat`.
+`Examples.BuchiGraph` checks empty graphs, accepting deadlocks, self-loops,
+transient acceptance, unreachable cycles, and nondeterministic acceptance.
+
+New concrete assertions use kernel checking, while earlier `native_decide`
+examples remain unchanged. `Examples.BuchiTrust` runs a build-failing transitive
+axiom audit on principal new results and selected existing contracts. It allows
+only `propext`, `Classical.choice`, and `Quot.sound`, and rejects missing
+declarations, unfinished-proof dependencies, and additional axioms. All three
+new example modules are included in the default build and existing CI.
+
+## Traffic-light walkthrough
+
+`Examples.TrafficLight` separates colour propositions (`red`, `green`, `yellow`)
+from controller phases (`stop`, `go`, `caution`). Labels give one-hot Boolean
+valuations. The normal controller cycles red → green → yellow → red, starting
+red; the faulty controller additionally permits a red self-loop. Both are
+serial and have no reachable deadlocks. Steps represent logical ticks, with
+no real-time duration or fairness assumption.
+
+`cyclePath` exhibits state-to-word mapping, initial observations, next, strong
+until, release's inclusive right-operand boundary, and suffix evaluation.
+`controller_safe` and `stuckController_safe` prove exactly one colour is lit
+on every path. `controller_ordered` proves the next-colour transition law.
+These are direct semantic proofs. Finite reachability and a route to caution
+are computed separately.
+
+`controller_eventually_green` and `controller_red_responds` use the verified
+backend and the existing violation-language theorems for eventuality/response.
+Their faulty-model counterparts are refuted; `stuckPath` explicitly witnesses
+the infinite all-red behaviour. This path is supplied by the example rather
+than extracted by the Boolean checker. General formula compilation, timed
+controllers, multi-road safety and executable lasso extraction remain future
+extensions. New principal example proofs are included in the axiom audit.
 
 ## Sources and attribution
 

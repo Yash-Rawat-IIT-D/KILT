@@ -106,6 +106,33 @@ excluded from Git.
 Open this folder in VS Code to use the pinned toolchain. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
 
+## Verified Büchi backend
+
+The library includes finite Büchi automata with symbol-driven successors,
+verified accepting-cycle search, and a finite Kripke/property-automaton product.
+`FiniteKripke.checkAgainst` checks a supplied violation automaton; its correctness
+theorem connects the Boolean verdict to universal LTL satisfaction, given a
+seriality proof and the automaton's language specification.
+
+Handwritten automata cover eventuality and response violations. General LTL
+formula translation is the next stage. See [design notes](docs/design.md) for
+contracts, assumptions, and limitations. Check the examples with:
+
+```sh
+lake build Examples.Buchi Examples.BuchiTrust
+```
+
+The default build also runs these examples and rejects unexpected axioms in
+their principal correctness results.
+
+For a complete worked example, read
+[TrafficLight.lean](Examples/TrafficLight.lean) from top to bottom: colour
+valuations, finite controllers, infinite paths and words, safety and next-step
+proofs, reachability/routes, then verified eventuality and response checks.
+The red → green → yellow controller passes; a variant that can stay red
+forever preserves colour safety but fails progress. An explicit all-red path
+explains the failure. These examples run in the default build.
+
 ## Building the proposal
 
 The script uses an available LaTeX compiler and writes the PDF to
