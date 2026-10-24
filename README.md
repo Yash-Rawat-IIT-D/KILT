@@ -44,8 +44,9 @@ lake build
 The toolchain is pinned in `lean-toolchain` to **Lean 4.35.0-rc4**, matching
 the CSLib revision in `lakefile.toml`. Dependency revisions are locked in
 `lake-manifest.json`.
-The default build checks both the `KILT` library
-and the `Examples` library. To build just the core:
+Plain `lake build` checks both the `KILT` and `Examples` libraries. Our build
+script defaults to the core library so routine builds skip the demos. To build
+just the core with Lake:
 
 ```sh
 lake build KILT
@@ -55,16 +56,25 @@ To build while saving the terminal output:
 
 ```sh
 ./scripts/build.sh                # Open the terminal menu by default
-GUI_LAUNCH=false ./scripts/build.sh  # Build the library and examples directly
+GUI_LAUNCH=false ./scripts/build.sh  # Build the KILT library only
 ./scripts/build.sh --gui          # Open the menu even if GUI_LAUNCH=false
 ./scripts/build.sh --verbose      # Open the menu with verbose output enabled
-./scripts/build.sh Examples       # Build just the examples and their dependencies
+./scripts/build.sh --with-examples  # Build KILT and verify all examples
+./scripts/verify-examples.sh      # Verify examples, proofs, execution tests and audits
+./scripts/verify-examples.sh --verbose  # Same checks with verbose logged commands
 ./scripts/build.sh --rebuild      # Clean KILT outputs, then build again
 ./scripts/build.sh --clean        # Remove KILT outputs; keep logs
 ./scripts/build.sh --clean-logs   # Remove script build logs
 ./scripts/build.sh --clean-all    # Remove KILT outputs and script logs
 ./scripts/build.sh --help         # Show options and examples
 ```
+
+`verify-examples.sh` always runs directly, even when `GUI_LAUNCH=true`. It
+uses the same logging and exit-status handling as `build.sh`. Lake reuses
+up-to-date modules; use `./scripts/verify-examples.sh --rebuild --verbose` to
+clean project outputs and rerun the examples and audits. Dependency caches
+are retained. The full regression build remains available through plain
+`lake build` or `./scripts/build.sh --with-examples`.
 
 Each run saves a timestamped log under `.lake/logs/`, with the latest available
 at `.lake/logs/latest.log`. The script returns the build's exit status and
@@ -77,14 +87,15 @@ Cleanup preserves downloaded dependencies and their compiled caches. Cleanup
 options run without building; `--rebuild` cleans first and then builds.
 
 The optional menu uses `whiptail` (on Ubuntu, install with
-`sudo apt install whiptail`). Use arrow keys, Tab and Enter to select targets,
-build, rebuild, clean, toggle verbose output, or view the latest log. Esc
-cancels a dialog. `GUI_LAUNCH` defaults to `true`, so running without a target
+`sudo apt install whiptail`). The launch page has four entries: **Build**,
+**Build with examples**, **Clean**, and **Help**. Each build submenu offers
+normal/verbose builds, rebuilds, logs and documentation. Use arrow keys, Tab
+and Enter; Esc goes back or exits. `GUI_LAUNCH` defaults to `true`, so running without a target
 or cleanup mode opens the menu. With `GUI_LAUNCH=false`, the script builds
 directly unless `--gui` is supplied. Explicit targets and cleanup modes run
 directly, and command-line builds do not require `whiptail`.
 
-The menu also includes a Documentation submenu. The equivalent commands are:
+Documentation remains available inside the build submenus. The equivalent commands are:
 
 ```sh
 ./scripts/docs.sh --setup          # Fetch the pinned doc-gen4 dependency once
@@ -179,7 +190,8 @@ a proof of its Boolean verdict is needed to derive a theorem as above.
 build-failing execution tests for larger request/grant and traffic properties.
 Compiled outputs are not treated as proofs. Response tests currently take
 seconds even on small products; evaluation and performance work remain.
-False verdicts establish counterexample existence without extracting a lasso.
+False verdicts establish counterexample existence. The separate
+`counterexample?` API below extracts a lasso describing a violating path.
 
 ## Two-thread lock example
 
@@ -242,3 +254,30 @@ and schedule, or the [LaTeX source](Proposal/src/KILT_Proposal.tex).
 - [Automata Theory in Lean](https://github.com/ctchou/AutomataTheory).
 - [LeanearTemporalLogic](https://github.com/mrigankpawagi/LeanearTemporalLogic).
 - [Veil](https://github.com/verse-lab/veil).
+
+## Counterexamples
+
+`M.counterexample? φ hserial order` returns `none` when every initial infinite
+path satisfies `φ`, or a product-state lasso when a violating path exists.
+The model order makes witness selection deterministic; the compiler order is
+generated internally. For example:
+
+```lean
+import KILT
+import Examples.TrafficLight
+open KILT Examples.TrafficLight
+
+-- The traffic example already provides phaseOrder : Graph.Enumeration Phase.
+#eval (stuckController.counterexample? eventuallyGreen
+  stuckController_serial phaseOrder).map fun l =>
+    let system := l.map Prod.fst
+    (system.prefix, system.loop)
+```
+
+Read the result as a prefix followed by the loop repeated forever. The loop is
+nonempty and omits its duplicate closing state. `counterexample?_sound` proves
+that the returned trace itself is initial and violates the formula;
+`counterexample?_eq_none_iff` relates absence to universal satisfaction.
+`#eval` displays computed data; it does not itself create a theorem.
+See [the worked examples](Examples/Counterexample.lean) for request/grant,
+traffic and monitor-based two-thread lock witnesses.

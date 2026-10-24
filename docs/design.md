@@ -234,7 +234,8 @@ The infinite-run proof uses finite-state recurrence in one direction and
 CSLib execution concatenation in the other. These are semantic existence
 proofs; the executable search uses finite sets and the existing bounded
 reachability algorithm. It repeats reachability for candidate accepting states;
-it is not an SCC implementation, and it returns no executable lasso.
+it is not an SCC implementation. This Boolean search returns no witness; the
+separate lasso extractor below reuses its accepting-cycle criterion.
 
 ## Product and property-checking contract
 
@@ -341,9 +342,9 @@ are computed separately.
 backend and the existing violation-language theorems for eventuality/response.
 Their faulty-model counterparts are refuted; `stuckPath` explicitly witnesses
 the infinite all-red behaviour. This path is supplied by the example rather
-than extracted by the Boolean checker. General formula compilation, timed
-controllers, multi-road safety and executable lasso extraction remain future
-extensions. New principal example proofs are included in the axiom audit.
+than extracted by the Boolean checker. The subsequent formula-checker and lasso
+examples add compilation and automatic witnesses. Timed controllers and multi-road
+safety remain extensions. Principal example proofs are included in the axiom audit.
 
 ## Generalized Büchi acceptance and conversion
 
@@ -581,7 +582,8 @@ not an extra prerequisite of the generic product/acceptance correspondence.
 The deadlock regression proves no seriality proof exists and checks the
 lower-level search without inserting transitions or exposing a checker bypass.
 There is no fairness assumption. The result is Boolean, and the false-verdict
-theorem provides semantic existence, not an executable extracted path or lasso.
+theorem provides semantic existence. The separate counterexample? operation
+below adds an executable path description while preserving this Boolean API.
 
 For a response walkthrough, `□(p ⟹ ◇q)` is violated by
 `true U (p ∧ (false R ¬q))`: at some position there is a request with no grant
@@ -644,8 +646,107 @@ budget parameter. Large lock checking remains outside this milestone.
 This supplies the proposal's central checker/trace-semantics correspondence.
 Mathematical review, broader evaluation and the report remain pending. Formal
 compatibility with external LeanLTL and the outstanding audit/community work
-remain separate commitments. Fairness, executable lasso extraction, SCC
-optimization and optional frontend automation are later extensions.
+remain separate commitments. Fairness, SCC optimization and optional frontend automation remain later
+extensions. Executable lasso extraction is described below.
+
+## Executable lasso counterexamples
+
+`Graph.Lasso State` stores a finite prefix, a loop and a proof that the loop
+is nonempty. Its sequence observes each prefix state once, then repeats the
+loop forever. A singleton loop is a real self-loop; it is never inserted to
+repair a deadlock. Mapping the lasso commutes with its infinite sequence.
+
+Validity is checked mathematically by two finite chains: the prefix followed
+by the loop entry starts initially, and the loop followed by its entry closes
+under the edge relation. `Lasso.Valid.initial`, `Valid.step` and
+`frequently_entry` connect these finite contracts to infinite execution and
+recurrence. These are ordinary Lean proofs; CSLib's sequence and acceptance
+interfaces retain their existing meanings.
+
+`Graph.acceptingLasso?` stores routes from the seeds and scans reachable
+accepting states in the supplied explicit enumeration. For candidate q it
+searches for a route from successors(q) back to q. This enforces a positive
+return length, rejecting an accepting deadlock or a transient accepting visit.
+For routes stem (initial to q) and back (successor of q to q), it returns
+`prefix = stem.dropLast` and `loop = q :: back.dropLast`.
+`acceptingLasso?_sound` proves validity and acceptance at the loop entry;
+`acceptingLasso?_isSome_iff` equates success to the existing Boolean search.
+Enumeration changes may select different witnesses but preserve success.
+No shortest-route, simple-cycle or shortest-counterexample guarantee is made.
+
+Route rounds and successor sets are materialized in ordered association lists.
+`storedRouteTables_lookup` proves equality with the existing function-valued
+route tables, preserving their predecessor choices. Lookup remains linear;
+this implementation is not SCC search and carries no scalability claim.
+
+`FiniteKripke.acceptedLasso?` applies extraction to the existing product and
+accepts explicit model and automaton orders. It permits partial models and
+empty automaton initial sets. `productLassoPath` projects the returned sequence
+to a Kripke path, while `productLassoPath_accepts` reuses product-run
+correspondence to prove CSLib acceptance on its actual observation word.
+Position zero and every product edge still consume the source state's label.
+
+`M.counterexample? φ hserial modelOrder` compiles the violation automaton and
+returns an optional product lasso. Compiler enumeration follows root-first,
+left-to-right first-occurrence subformulas, exclude-before-include subsets,
+static-consistency filtering and ascending acceptance counters. Product order
+is model-first. This requires decidable atom equality but neither atom
+ordering, finite atoms nor valuation enumeration. Compilation and extraction
+use no classical selection. The formula carrier still has exponential size.
+
+The main contracts are `counterexample?_sound` (the returned trace itself
+violates φ), `counterexample?_isSome_iff` (success iff check returns false),
+and `counterexample?_eq_none_iff` (none iff universal satisfaction). The Boolean
+checker is unchanged, and extraction does not first run it. Global seriality
+remains required at this public formula boundary. An execution failure is an
+error, never a successful none result. No fairness assumption is added.
+
+For the waiting model and □(request ⟹ ◇grant), compilation searches for an
+unanswered request and a grant-free continuation. A returned system view may
+include waiting in its prefix and again in a singleton loop. Repeating that
+loop yields waiting forever: the request occurs and no grant follows. The
+product trace retains the accepting monitor/compiler state that certifies the
+violation. Acceptance must be proved on the product; a repeated system state
+alone would not certify an LTL violation.
+
+Examples.Counterexample executes formula-input extraction for request/grant
+and traffic, and verified small monitors for lock safety and starvation. The
+lock safety monitor guesses a collision and permits any later symbols; its
+language is proved to be the negation of mutual exclusion. The atomic lock
+can have no safety witness while still having a starvation witness under
+unconstrained scheduling. The witnesses do not claim fair scheduling.
+
+Small graph outputs and formula boundaries are proved by kernel computation.
+Larger build-failing execution checks validate initiality, every finite edge
+including loop closure, and acceptance at the entry, then print system states
+and selected valuations. These checks are tests, not generated proofs; the
+general soundness theorems remain kernel-checked independently.
+
+### Observed extraction costs
+
+Fresh compiled execution in Examples.Counterexample on this machine measured:
+
+| Case | Witness | Product carrier | Prefix / loop length | Extraction |
+| --- | --- | --- | --- | --- |
+| Request cycle, eventual grant | no | 8 | — | 28 ms |
+| Waiting, eventual grant | yes | 8 | 0 / 1 | 16 ms |
+| Request cycle, response | no | 32 | — | 14,222 ms |
+| Waiting, response | yes | 32 | 0 / 1 | 10,430 ms |
+| Traffic cycle, eventual green | no | 12 | — | 95 ms |
+| Stuck red, eventual green | yes | 12 | 0 / 1 | 56 ms |
+| Traffic cycle, red response | no | 48 | — | 64,662 ms |
+| Stuck red, red response | yes | 48 | 0 / 1 | 39,811 ms |
+| Broken lock, mutual exclusion | yes | 64 | 8 / 4 | 8,738 ms |
+| Atomic lock, mutual exclusion | no | 64 | — | 5,473 ms |
+| Atomic lock, thread-zero starvation | yes | 64 | 4 / 3 | 11,416 ms |
+
+Times cover extraction including formula enumeration where applicable, before
+finite validation and printing. The three lock cases use handwritten monitors.
+These are single observations, not reachable-state counts or performance
+guarantees. Even a 48-state carrier is expensive with this reference algorithm;
+materialization does not justify a claim of practical scalability. The unchanged
+Boolean check has different costs. Cached Lake builds replay these measurements
+rather than performing a fresh benchmark.
 
 ## Sources and attribution
 

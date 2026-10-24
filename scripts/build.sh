@@ -8,12 +8,13 @@ usage() {
   cat <<'EOF'
 Usage: ./scripts/build.sh [OPTIONS] [TARGET ...]
 
-Build KILT and its checked examples, displaying and saving terminal output.
-Can be run from any directory. Optional targets are passed to lake build.
+Build the KILT library, displaying and saving terminal output.
+Can be run from any directory. Defaults to KILT; explicit targets go to Lake.
 
 Options:
       --gui         Open the keyboard-operated terminal menu (needs whiptail).
   -v, --verbose     Include the commands Lake executes.
+      --with-examples  Build KILT and all checked examples (including axiom audits).
   -c, --clean       Remove KILT build outputs; keep logs; exit.
       --clean-logs  Remove generated build logs; exit.
   -C, --clean-all   Remove KILT build outputs and script logs; exit.
@@ -29,6 +30,8 @@ Examples:
   GUI_LAUNCH=false ./scripts/build.sh
   ./scripts/build.sh --gui
   ./scripts/build.sh --verbose
+  ./scripts/build.sh --with-examples
+  ./scripts/verify-examples.sh --verbose
   ./scripts/build.sh --rebuild Examples
   ./scripts/build.sh --clean-logs
 
@@ -38,7 +41,9 @@ for failures. Saved logs are plain text. Set NO_COLOR=1 to disable colors.
 LEAN_NUM_THREADS defaults to 1; set it explicitly to use more threads.
 GUI_LAUNCH=true (default) opens the menu when no target or cleanup mode is given.
 GUI_LAUNCH=false runs the CLI by default; --gui still opens the menu.
-The GUI includes a Documentation submenu for doc-gen4 setup, builds and preview.
+The launch menu offers Build, Build with examples, Clean and Help.
+Build submenus include verbose/rebuild actions, logs and documentation.
+Plain lake build still checks both libraries; this script defaults to KILT.
 EOF
 }
 
@@ -55,12 +60,14 @@ select_mode() {
 mode=build
 verbose=false
 gui=false
+with_examples=false
 targets=()
 for argument in "$@"; do
   case "$argument" in
     -h|--help) usage; exit 0 ;;
     --gui) gui=true ;;
     -v|--verbose) verbose=true ;;
+    --with-examples) with_examples=true ;;
     -c|--clean) select_mode clean ;;
     -C|--clean-all) select_mode clean-all ;;
     --clean-logs) select_mode clean-logs ;;
@@ -69,6 +76,10 @@ for argument in "$@"; do
     *) targets+=("$argument") ;;
   esac
 done
+if [[ "$with_examples" == true ]]; then
+  ((${#targets[@]} == 0)) || argument_error '--with-examples cannot be combined with explicit targets.'
+  targets=(KILT Examples)
+fi
 case "$GUI_LAUNCH" in
   true|false) ;;
   *) argument_error 'GUI_LAUNCH must be true or false.' ;;
@@ -129,6 +140,7 @@ if [[ "$mode" == clean || "$mode" == clean-all ]]; then
   exit 0
 fi
 
+if ((${#targets[@]} == 0)); then targets=(KILT); fi
 build_command=("${lake_command[@]}" build "${targets[@]}")
 export LEAN_NUM_THREADS="${LEAN_NUM_THREADS:-1}"
 mkdir -p -- "$log_dir"

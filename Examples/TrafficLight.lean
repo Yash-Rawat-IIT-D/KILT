@@ -13,8 +13,8 @@ Both keep exactly one colour lit; only the first guarantees progress.
 
 States and propositions are separate so later states can carry timers or
 pedestrian requests while keeping the same colour observations. Multi-road
-conflict rules, timed bounds, fairness, general formula translation and printed
-lasso witnesses are future extensions, not claims made by this example.
+conflict rules, timed bounds and fairness remain extensions. Formula checking
+and extracted lasso witnesses are demonstrated in the later checker modules.
 -/
 
 namespace Examples.TrafficLight
