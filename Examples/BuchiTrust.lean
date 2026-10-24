@@ -4,6 +4,7 @@ import Examples.Normalization
 import Examples.GeneralizedBuchi
 import Examples.Tableau
 import Examples.TwoThreadLock
+import Examples.Translation
 import Lean.Util.CollectAxioms
 
 /-!
@@ -29,6 +30,36 @@ def auditStandardAxioms (declarations : Array Lean.Name) : Lean.Elab.Command.Com
     Lean.logInfo m!"Axiom audit passed: {declaration}: {axioms.toList}"
 
 run_cmd auditStandardAxioms #[
+  ``KILT.LTL.Tableau.mem_preorder,
+  ``KILT.LTL.Tableau.untilObligations_nodup,
+  ``KILT.LTL.Tableau.mem_untilObligations,
+  ``KILT.LTL.Tableau.length_untilObligations_le,
+  ``KILT.LTL.Tableau.mem_acceptanceSet,
+  ``KILT.LTL.Tableau.toGeneralizedBuchi_toNA,
+  ``KILT.LTL.Tableau.acceptanceSet_mem,
+  ``KILT.LTL.Tableau.until_witness,
+  ``KILT.LTL.Tableau.acceptingRun_sound,
+  ``KILT.LTL.Tableau.semanticState_represents,
+  ``KILT.LTL.Tableau.semanticRun_accepting,
+  ``KILT.LTL.Tableau.accepts_iff_sat,
+  ``KILT.LTL.Tableau.toFiniteBuchi_accepts,
+  ``KILT.LTL.Formula.toBuchi_accepts,
+  ``KILT.LTL.Formula.card_automatonState_le,
+  ``Examples.Translation.obligation_order,
+  ``Examples.Translation.postponed_run_rejected,
+  ``Examples.Translation.postponed_word_rejected,
+  ``Examples.Translation.until_now,
+  ``Examples.Translation.until_delayed,
+  ``Examples.Translation.release_forever,
+  ``Examples.Translation.release_endpoint,
+  ``Examples.Translation.partial_release_accepting,
+  ``Examples.Translation.partial_release_not_represents,
+  ``Examples.Translation.two_obligations,
+  ``Examples.Translation.only_one_obligation,
+  ``Examples.Translation.eventually_at_zero,
+  ``Examples.Translation.agrees_eventually,
+  ``Examples.Translation.agrees_notEventually,
+  ``Examples.Translation.agrees_notResponse,
   ``KILT.Graph.hasAcceptingCycle_eq_true_iff,
   ``KILT.Graph.hasAcceptingCycle_iff_hasAcceptingRun,
   ``KILT.Graph.hasAcceptingCycle_eq_true_iff_run,
