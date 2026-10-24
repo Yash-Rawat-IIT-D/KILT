@@ -5,6 +5,7 @@ import Examples.GeneralizedBuchi
 import Examples.Tableau
 import Examples.TwoThreadLock
 import Examples.Translation
+import Examples.Checker
 import Lean.Util.CollectAxioms
 
 /-!
@@ -30,6 +31,23 @@ def auditStandardAxioms (declarations : Array Lean.Name) : Lean.Elab.Command.Com
     Lean.logInfo m!"Axiom audit passed: {declaration}: {axioms.toList}"
 
 run_cmd auditStandardAxioms #[
+  ``KILT.LTL.Formula.violationAutomaton_accepts,
+  ``KILT.FiniteKripke.check_correct,
+  ``KILT.FiniteKripke.check_eq_false_iff,
+  ``KILT.FiniteKripke.check_eq_checkAgainst,
+  ``Examples.Checker.singleton_serial,
+  ``Examples.Checker.truth_verdict,
+  ``Examples.Checker.falsehood_verdict,
+  ``Examples.Checker.atom_verdict,
+  ``Examples.Checker.singleton_satisfies_atom,
+  ``Examples.Checker.falsehood_counterexample,
+  ``Examples.Checker.twoState_serial,
+  ``Examples.Checker.initial_atom_verdict,
+  ``Examples.Checker.multiple_initials_verdict,
+  ``Examples.Checker.deadlock_not_serial,
+  ``Examples.Checker.deadlock_no_accepted_path,
+  ``Examples.Checker.waiting_response_verdict,
+  ``Examples.Checker.waiting_response_counterexample,
   ``KILT.LTL.Tableau.mem_preorder,
   ``KILT.LTL.Tableau.untilObligations_nodup,
   ``KILT.LTL.Tableau.mem_untilObligations,
