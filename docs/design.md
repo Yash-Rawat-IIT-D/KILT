@@ -224,8 +224,8 @@ are allowed. `toBuchi` preserves this data as CSLib predicates.
 `Graph.HasAcceptingRun` requires an infinite initial sequence with valid edges
 and accepting visits arbitrarily late. `HasAcceptingCycle` requires a reachable
 accepting state `q` with a positive-length return path. The executable
-`hasAcceptingCycle` filters reachable accepting states by membership of `q` in
-`reachableSet (successors q) successors`. Starting the second search from
+`hasAcceptingCycle` searches reachable accepting states for a return to `q`
+from `successors q`, stopping at its first successful candidate. Starting the second search from
 successors is essential: zero-step reachability alone would incorrectly accept
 a deadlock. Both `hasAcceptingCycle_eq_true_iff` and
 `hasAcceptingCycle_iff_hasAcceptingRun` are proved.
@@ -676,7 +676,8 @@ No shortest-route, simple-cycle or shortest-counterexample guarantee is made.
 
 Route rounds and successor sets are materialized in ordered association lists.
 `storedRouteTables_lookup` proves equality with the existing function-valued
-route tables, preserving their predecessor choices. Lookup remains linear;
+route tables, preserving their predecessor choices. The refined searches stop
+on stability or target discovery, with exact route equality. Lookup remains linear;
 this implementation is not SCC search and carries no scalability claim.
 
 `FiniteKripke.acceptedLasso?` applies extraction to the existing product and
@@ -722,9 +723,10 @@ including loop closure, and acceptance at the entry, then print system states
 and selected valuations. These checks are tests, not generated proofs; the
 general soundness theorems remain kernel-checked independently.
 
-### Observed extraction costs
+### Reference extraction costs before early stopping
 
-Fresh compiled execution in Examples.Counterexample on this machine measured:
+Before the search refinement, fresh execution in Examples.Counterexample on
+this machine measured:
 
 | Case | Witness | Product carrier | Prefix / loop length | Extraction |
 | --- | --- | --- | --- | --- |
@@ -744,9 +746,123 @@ Times cover extraction including formula enumeration where applicable, before
 finite validation and printing. The three lock cases use handwritten monitors.
 These are single observations, not reachable-state counts or performance
 guarantees. Even a 48-state carrier is expensive with this reference algorithm;
-materialization does not justify a claim of practical scalability. The unchanged
-Boolean check has different costs. Cached Lake builds replay these measurements
+materialization alone does not justify a claim of practical scalability. These
+figures describe the original algorithm, retained as acceptingLassoReference?;
+the refined algorithm below has different costs. Cached Lake builds replay these measurements
 rather than performing a fresh benchmark.
+
+## Verified caching and early termination
+
+`Graph.Search` refines the existing bounded engines:
+
+- `reachableSetFast_eq` identifies fixed-point closure with `reachableSet`.
+- `reachable?_eq_true_iff` characterizes a target query by mathematical
+  reachability. A successful target query need not compute the full closure.
+- `storedRoutesFast_lookup` and `routeFast?_eq` preserve the exact routes of
+  `route?`, including enumeration-based predecessor selection.
+
+All searches retain structural fuel bounded by the state cardinality. Full
+closure stops when expansion equals the discovered set. Target queries stop
+when the target is present. Route rounds retain existing routes and stop when
+no previously unknown state gains one; the growth flag compares discovery
+status rather than whole route lists. Absence is reported only after stability
+or the proved cardinality bound. Positive return searches start from immediate
+successors, so accepting deadlocks remain rejected.
+
+Successors are cached once per invocation and shared across initial and return
+searches. Lasso extraction uses the existing ordered association-list cache.
+Boolean checking has no explicit enumeration parameter: `Fintype` supplies a
+finite set, whose conversion to an ordered list is noncomputable. Consequently
+its cache is a finite set of key/successor-set rows, with union-based lookup.
+`prepareSuccessors_lookup` and `prepareSuccessorSet_lookup` prove both cache
+representations agree with the supplied graph. Neither requires atom ordering,
+finite atoms, valuation-function equality, classical executable selection or a
+change to the model representation. Cache lookup remains linear in carrier size.
+Empty seeds or acceptance bypass graph preparation.
+
+`hasAcceptingCycle` uses the short-circuit finite-set existential decision
+procedure instead of filtering all successful candidates before testing
+nonemptiness. `hasAcceptingCycle_eq_reference` proves identical Boolean output
+with the original algorithm. `acceptingLasso?_eq_reference` proves identical
+optional lassos, not merely equal witness presence. The existing actual-trace
+soundness and formula correctness theorems reuse those refinements. `check`,
+`counterexample?`, seriality requirements and source-position-zero observations
+keep their public contracts.
+
+For example, once the waiting state is discovered in its self-loop graph,
+closure stops after one stable expansion. A return query seeded by that state's
+successors already contains the target and stops without any further expansion.
+The selected lasso is still prefix `[]`, loop `[waiting]`. A chain continues
+until its target is discovered, or its final deadlock makes closure stable.
+
+`Benchmarks/Efficiency.lean` and `scripts/benchmark-efficiency.sh` run fresh
+paired measurements independently of the default build. Cache-only and
+combined Boolean timings include cache construction; graph timings start with
+state enumeration, initial and acceptance sets already prepared. Separate
+formula-facing timers include compilation and enumeration. Phase timers report
+ordered-cache construction, initial closure, candidate/return search and stem
+route computation. Lasso total time includes constructing the witness.
+Validation/printing happens after timers. Each operation receives a data argument behind a noinline IO call after the
+clock read, avoiding a constant Unit thunk that could be precomputed. Phase
+measurements are standalone generic entry points rather than an additive
+decomposition of the public API call. In particular standalone product-order
+timing exceeds the measured public counterexample total in these interpreted
+runs. Do not sum these phases or infer compiler/search percentages from them;
+further allocation/native profiling is needed to explain that discrepancy.
+
+Work counts come from a separate instrumented traversal using the supplied
+explicit order. They count expansion rounds, successor requests and candidate
+return queries; its candidate order can differ from the public unordered
+Boolean search. Requests with a cache become lookups; raw successor rows are
+computed once per carrier state. Initial/selected-return route rounds are
+reported separately. Instrumentation is not on the timed production path.
+`/usr/bin/time -v` reports peak RSS for the whole Lean benchmark process,
+including imported modules/runtime, not isolated cache allocation.
+
+These refinements reduce repeated work but still enumerate the complete
+formula carrier, store full route lists, perform linear cache lookup and search
+returns separately. Persistent cross-call caching, indexed adjacency,
+predecessor pointers, bitset tableau states, on-demand generation and SCC search
+remain subsequent measured changes. Exact witness selection is preserved;
+shortest or simplest witnesses and scalability are not claimed.
+
+### Measured search refinement
+
+Three completed single-thread interpreted invocations per case gave these
+medians in milliseconds. Graph inputs already include enumeration, initial
+and accepting sets; cache construction is included in cache-using variants.
+Validation and printing are outside the timers.
+
+| Case | Boolean reference | Cache only | Early exits only | Combined Boolean | Lasso reference | Combined lasso |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Waiting / response | 7,712 | 509 | 264 | 239 | 10,468 | 518 |
+| Traffic cycle / response | 10,390 | 677 | 504 | 363 | 62,950 | 1,758 |
+
+The corresponding full public API medians were 262 / 385 ms for `check`, and
+576 / 1,819 ms for `counterexample?` (waiting / traffic respectively). These
+are measured invocations, not scalability or latency guarantees. The 12-state
+cheap chain illustrates overhead: cache-only Boolean took 1 ms versus a
+reference below 1 ms; combined Boolean stayed below 1 ms. Zero displayed
+milliseconds means below timer resolution, not zero work. Its lasso fell from
+2 ms to 1 ms. No broad claim about arbitrary cheap or dense graphs follows.
+
+The separately instrumented ordered traversal reduced waiting's total expansion
+rounds from 416 to 7 and successor requests from 1,276 to 38; traffic reduced
+528 to 13 rounds and 1,710 to 74 requests. Caching evaluates raw successor rows
+32 / 48 times respectively, converting subsequent requests into lookups. Initial
+route rounds fell from 32 to 2 and 48 to 3. The waiting self-loop return needed
+zero expansions. These counts describe the instrumented explicit order; public
+unordered candidate traversal can use another order.
+
+The completed benchmark process peaked at 2,487,616 KiB RSS (about 2.37 GiB),
+including Lean imports, elaboration and runtime. This exceeds the original
+roughly 1 GiB target; the user subsequently allowed exceeding that soft target.
+It does not isolate cache allocation or establish native-executable memory use.
+The combined JSON report in `.lake/logs/efficiency-summary-20261024T225014Z.json`
+records ranges and exact source logs. Two complete repetitions were retained
+from the interrupted run, and one complete fresh run replaced its unfinished
+third repetition. The replacement harness completed with exit status zero,
+including median/range summaries and finite witness validation.
 
 ## Sources and attribution
 

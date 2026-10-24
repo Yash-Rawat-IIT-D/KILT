@@ -188,8 +188,9 @@ The seriality argument is an explicit precondition. `#eval` executes the check;
 a proof of its Boolean verdict is needed to derive a theorem as above.
 [Checker.lean](Examples/Checker.lean) combines small kernel-computed proofs with
 build-failing execution tests for larger request/grant and traffic properties.
-Compiled outputs are not treated as proofs. Response tests currently take
-seconds even on small products; evaluation and performance work remain.
+Compiled outputs are not treated as proofs. Search caches successors within each
+invocation and stops at fixed points, target discovery and the first accepting
+cycle. The explicit tableau construction still has exponential size.
 False verdicts establish counterexample existence. The separate
 `counterexample?` API below extracts a lasso describing a violating path.
 
@@ -281,3 +282,21 @@ that the returned trace itself is initial and violates the formula;
 `#eval` displays computed data; it does not itself create a theorem.
 See [the worked examples](Examples/Counterexample.lean) for request/grant,
 traffic and monitor-based two-thread lock witnesses.
+
+## Measuring search performance
+
+```bash
+./scripts/verify-examples.sh --verbose
+./scripts/benchmark-efficiency.sh           # Three fresh repetitions
+./scripts/benchmark-efficiency.sh --runs 1  # One paired repetition
+./scripts/benchmark-efficiency.sh --phases-only  # Skip slow reference runs
+```
+
+The benchmark compares reference, cache-only, early-exit-only and combined
+Boolean searches, then checks exact lasso agreement and finite witness validity.
+It reports preparation/search phases, full formula-facing calls, separate work
+counts, median/range timings and process peak RSS in `.lake/logs/efficiency-*.log`.
+Reference lasso runs can take minutes. These interpreted executions exclude Lean
+compilation from operation timings; process RSS includes the Lean runtime.
+Benchmarks are separate from routine builds, and execution failures return a
+nonzero status. See [design notes](docs/design.md) for contracts and limitations.

@@ -1,4 +1,4 @@
-import KILT.Graph.Reachability
+import KILT.Graph.Search
 import Cslib.Computability.Automata.NA.Basic
 
 /-!
@@ -35,16 +35,16 @@ def HasAcceptingCycle (seeds : Finset State) (successors : State → Finset Stat
     Relation.TransGen (Step successors) q q
 
 /-- Search for an accepting cycle. No symbol enumeration or witness choice. -/
-def hasAcceptingCycle (seeds : Finset State) (successors : State → Finset State)
+def hasAcceptingCycleReference (seeds : Finset State) (successors : State → Finset State)
     (accepting : Finset State) : Bool :=
   decide (((reachableSet seeds successors ∩ accepting).filter fun q =>
     q ∈ reachableSet (successors q) successors).Nonempty)
 
-theorem hasAcceptingCycle_eq_true_iff (seeds : Finset State)
+theorem hasAcceptingCycleReference_eq_true_iff (seeds : Finset State)
     (successors : State → Finset State) (accepting : Finset State) :
-    hasAcceptingCycle seeds successors accepting = true ↔
+    hasAcceptingCycleReference seeds successors accepting = true ↔
       HasAcceptingCycle seeds successors accepting := by
-  simp only [hasAcceptingCycle, decide_eq_true_eq, Finset.filter_nonempty_iff,
+  simp only [hasAcceptingCycleReference, decide_eq_true_eq, Finset.filter_nonempty_iff,
     Finset.mem_inter, mem_reachableSet_iff, HasAcceptingCycle]
   constructor
   · rintro ⟨q, ⟨hr, ha⟩, t, ht, hreturn⟩
@@ -52,6 +52,74 @@ theorem hasAcceptingCycle_eq_true_iff (seeds : Finset State)
   · rintro ⟨q, ha, hr, hc⟩
     rcases Relation.TransGen.head'_iff.mp hc with ⟨t, ht, hreturn⟩
     exact ⟨q, ⟨hr, ha⟩, t, ht, hreturn⟩
+
+/-- Short-circuit search with one successor cache shared by all return queries. -/
+def acceptingCycleSearch (order : Enumeration State) (seeds : Finset State)
+    (successors : State → Finset State) (accepting : Finset State) : Bool :=
+  if seeds = ∅ then false else if accepting = ∅ then false else
+  let edges := prepareSuccessors order successors
+  let next := tableLookup ∅ edges
+  let reached := reachableSetFast seeds next
+  order.states.any fun q => decide (q ∈ accepting ∧ q ∈ reached) &&
+    reachable? (next q) next q
+
+theorem acceptingCycleSearch_eq (order : Enumeration State) (seeds : Finset State)
+    (successors : State → Finset State) (accepting : Finset State) :
+    acceptingCycleSearch order seeds successors accepting =
+      hasAcceptingCycleReference seeds successors accepting := by
+  apply Bool.eq_iff_iff.mpr
+  rw [hasAcceptingCycleReference_eq_true_iff]
+  by_cases hs : seeds = ∅
+  · simp [acceptingCycleSearch, hs, HasAcceptingCycle, Reachable]
+  by_cases ha : accepting = ∅
+  · simp [acceptingCycleSearch, ha, HasAcceptingCycle]
+  have heq : tableLookup ∅ (prepareSuccessors order successors) = successors :=
+    funext (prepareSuccessors_lookup order successors)
+  simp only [acceptingCycleSearch, hs, ha, ↓reduceIte, heq, List.any_eq_true,
+    Bool.and_eq_true, decide_eq_true_eq, reachableSetFast_eq, mem_reachableSet_iff,
+    reachable?_eq_true_iff, HasAcceptingCycle]
+  constructor
+  · rintro ⟨q, _, ⟨ha, hr⟩, t, ht, hreturn⟩
+    exact ⟨q, ha, hr, Relation.TransGen.head'_iff.mpr ⟨t, ht, hreturn⟩⟩
+  · rintro ⟨q, ha, hr, hc⟩
+    exact ⟨q, order.complete q, ⟨ha, hr⟩, Relation.TransGen.head'_iff.mp hc⟩
+
+/-- Decide accepting-cycle existence with a shared unordered cache. The bounded
+existential uses Lean's short-circuit finite-set decision procedure. -/
+def hasAcceptingCycle (seeds : Finset State) (successors : State → Finset State)
+    (accepting : Finset State) : Bool :=
+  if seeds = ∅ then false else if accepting = ∅ then false else
+  let rows := prepareSuccessorSet successors
+  let next := successorSetLookup rows
+  let reached := reachableSetFast seeds next
+  decide (∃ q ∈ reached ∩ accepting, reachable? (next q) next q = true)
+
+theorem hasAcceptingCycle_eq_reference (seeds : Finset State)
+    (successors : State → Finset State) (accepting : Finset State) :
+    hasAcceptingCycle seeds successors accepting =
+      hasAcceptingCycleReference seeds successors accepting := by
+  apply Bool.eq_iff_iff.mpr
+  rw [hasAcceptingCycleReference_eq_true_iff]
+  by_cases hs : seeds = ∅
+  · simp [hasAcceptingCycle, hs, HasAcceptingCycle, Reachable]
+  by_cases ha : accepting = ∅
+  · simp [hasAcceptingCycle, ha, HasAcceptingCycle]
+  have heq : successorSetLookup (prepareSuccessorSet successors) = successors :=
+    funext (prepareSuccessorSet_lookup successors)
+  simp only [hasAcceptingCycle, hs, ha, ↓reduceIte, heq, decide_eq_true_eq,
+    reachableSetFast_eq, Finset.mem_inter, mem_reachableSet_iff, reachable?_eq_true_iff,
+    HasAcceptingCycle]
+  constructor
+  · rintro ⟨q, ⟨hr, ha⟩, t, ht, hreturn⟩
+    exact ⟨q, ha, hr, Relation.TransGen.head'_iff.mpr ⟨t, ht, hreturn⟩⟩
+  · rintro ⟨q, ha, hr, hc⟩
+    exact ⟨q, ⟨hr, ha⟩, Relation.TransGen.head'_iff.mp hc⟩
+
+theorem hasAcceptingCycle_eq_true_iff (seeds : Finset State)
+    (successors : State → Finset State) (accepting : Finset State) :
+    hasAcceptingCycle seeds successors accepting = true ↔
+      HasAcceptingCycle seeds successors accepting := by
+  rw [hasAcceptingCycle_eq_reference, hasAcceptingCycleReference_eq_true_iff]
 
 omit [Fintype State] [DecidableEq State] in
 /-- Every finite segment of a valid sequence is reachable. -/
