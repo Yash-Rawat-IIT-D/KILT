@@ -30,20 +30,6 @@ fullscale=black,green
 ' whiptail --title 'KILT' --backtitle 'KILT | Builds, checked examples and logs' "$@"
 }
 
-menu_targets() {
-  local selection
-  selection=$(menu_dialog --menu 'Choose what to build:' 18 76 6 \
-    default 'KILT and all examples' \
-    KILT 'Library only' \
-    Examples 'All checked examples' \
-    Examples.Syntax 'LTL syntax checks' \
-    Examples.Words 'LTL word-semantics checks' \
-    Examples.Integration 'CSLib compatibility checks' \
-    3>&1 1>&2 2>&3) || return 0
-  gui_targets=()
-  if [[ "$selection" != default ]]; then gui_targets=("$selection"); fi
-}
-
 menu_clean() {
   local selection description
   selection=$(menu_dialog --menu 'Choose what to remove:' 14 76 3 \
@@ -157,7 +143,7 @@ build_menu() {
   local gui_script=$1 gui_verbose=$2
   shift 2
   local gui_targets=("$@")
-  local selection scope
+  local selection
 
   if [[ ! -t 0 || ! -t 1 || "${TERM:-dumb}" == dumb ]]; then
     printf 'The --gui menu needs an interactive terminal.\n' >&2
@@ -169,38 +155,56 @@ build_menu() {
   fi
 
   while true; do
-    scope='KILT + Examples'
-    if ((${#gui_targets[@]})); then scope="${gui_targets[*]}"; fi
-    selection=$(menu_dialog --menu \
-      "Targets: $scope | Verbose: $gui_verbose
-Use arrow keys, Tab and Enter. Esc or Cancel exits." 22 80 9 \
-      build 'Build selected targets with logging' \
-      rebuild 'Clean KILT outputs, then build selected targets' \
-      targets 'Choose library or example targets' \
-      docs 'Build, preview or clean API documentation' \
+    selection=$(menu_dialog --cancel-button Exit --menu \
+      'Use arrow keys and Enter. Esc or Exit closes the menu.' 16 80 4 \
+      build 'Build the KILT library' \
+      examples 'Build KILT and verify all examples' \
       clean 'Clean outputs or generated logs' \
-      logs 'View the latest build log' \
-      verbose 'Toggle verbose build output' \
       help 'Show options and keyboard help' \
-      quit 'Exit' \
       3>&1 1>&2 2>&3) || break
     case "$selection" in
-      build) menu_run "${gui_targets[@]}" || break ;;
-      rebuild) menu_run --rebuild "${gui_targets[@]}" || break ;;
-      targets) menu_targets ;;
-      docs) docs_menu "$repo_dir/scripts/docs.sh" || break ;;
-      clean) menu_clean || break ;;
-      logs) menu_logs ;;
-      verbose)
-        if [[ "$gui_verbose" == true ]]; then gui_verbose=false; else gui_verbose=true; fi
+      build)
+        if ((${#gui_targets[@]})); then
+          menu_build "${gui_targets[@]}" || break
+        else
+          menu_build KILT || break
+        fi
         ;;
+      examples) menu_build KILT Examples || break ;;
+      clean) menu_clean || break ;;
       help)
         menu_dialog --scrolltext --msgbox "$(usage)
 
-Keyboard: Up/Down selects, Tab switches buttons, Enter confirms, Esc cancels.
-The log viewer also supports Page Up and Page Down." 23 80 || true
+Keyboard: Up/Down selects, Tab switches buttons, Enter confirms, Esc goes back.
+Build submenus offer verbose output, rebuilds, documentation and the latest log." 23 80 || true
         ;;
-      quit) break ;;
+    esac
+  done
+}
+
+# Keep advanced actions off the launch page, scoped to the chosen build targets.
+menu_build() {
+  local selection default_action=build
+  local build_targets=("$@")
+  while true; do
+    default_action=build
+    if [[ "$gui_verbose" == true ]]; then default_action=verbose; fi
+    selection=$(menu_dialog --cancel-button Back --default-item "$default_action" --menu \
+      "Targets: ${build_targets[*]}" 19 80 6 \
+      build 'Build with normal logging' \
+      verbose 'Build with verbose logging' \
+      rebuild 'Clean project outputs, then build' \
+      rebuild-verbose 'Clean project outputs, then build with verbose logs' \
+      logs 'View the latest build log' \
+      docs 'Build, preview or clean API documentation' \
+      3>&1 1>&2 2>&3) || break
+    case "$selection" in
+      build) gui_verbose=false; menu_run "${build_targets[@]}" || return 1 ;;
+      verbose) gui_verbose=true; menu_run "${build_targets[@]}" || return 1 ;;
+      rebuild) gui_verbose=false; menu_run --rebuild "${build_targets[@]}" || return 1 ;;
+      rebuild-verbose) gui_verbose=true; menu_run --rebuild "${build_targets[@]}" || return 1 ;;
+      logs) menu_logs ;;
+      docs) docs_menu "$repo_dir/scripts/docs.sh" || return 1 ;;
     esac
   done
 }

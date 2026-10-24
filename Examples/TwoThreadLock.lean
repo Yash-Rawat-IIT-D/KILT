@@ -17,7 +17,8 @@ remains in the common carrier for comparison but is unreachable atomically.
 The model separates instructions, scheduler, labels and LTL properties so a
 turn variable, alternative scheduler or Peterson protocol can be added later.
 Uses KILT's current semantics (informed by LeanLTL) and verified monitors;
-it does not depend on LeanLTL or the unfinished general formula translator.
+it uses verified monitors rather than the general formula translator. Extracted
+monitor-based counterexamples are demonstrated in Examples.Counterexample.
 -/
 namespace Examples.TwoThreadLock
 open KILT KILT.LTL KILT.Automata

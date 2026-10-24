@@ -15,6 +15,8 @@ import Examples.Tableau
 import Examples.TwoThreadLock
 import Examples.Translation
 import Examples.Checker
+import Examples.LassoGraph
+import Examples.Counterexample
 
 /-!
 # Checked KILT examples
