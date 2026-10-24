@@ -7,6 +7,7 @@ import KILT.Graph.Reachability
 import KILT.Graph.Routes
 import KILT.Kripke.Semantics
 import KILT.Kripke.Finite
+import KILT.Kripke.Check
 import KILT.Automata.Kripke
 import KILT.Graph.Buchi
 import KILT.Automata.FiniteBuchi

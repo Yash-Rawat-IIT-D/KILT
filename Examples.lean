@@ -14,6 +14,7 @@ import Examples.GeneralizedBuchi
 import Examples.Tableau
 import Examples.TwoThreadLock
 import Examples.Translation
+import Examples.Checker
 
 /-!
 # Checked KILT examples

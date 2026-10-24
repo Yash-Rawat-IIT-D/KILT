@@ -29,6 +29,15 @@ theorem toBuchi_accepts (φ : Formula AP) (word : Word AP) :
   rw [toBuchi, Tableau.toFiniteBuchi_accepts]
   exact φ.wordSat_normalize word
 
+/-- Compile the words that violate the input property. -/
+def violationAutomaton (φ : Formula AP) :
+    Automata.FiniteBuchi (AutomatonState (.neg φ)) (Valuation AP) :=
+  (Formula.neg φ).toBuchi
+
+theorem violationAutomaton_accepts (φ : Formula AP) (word : Word AP) :
+    ωAcceptor.Accepts φ.violationAutomaton.toBuchi word ↔ ¬ WordSat word φ :=
+  (Formula.neg φ).toBuchi_accepts word
+
 /-- At most the raw powerset size times the round-robin counter size. -/
 theorem card_automatonState_le (φ : Formula AP) :
     Fintype.card (AutomatonState φ) ≤

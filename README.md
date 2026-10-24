@@ -124,8 +124,8 @@ theorem connects the Boolean verdict to universal LTL satisfaction, given a
 seriality proof and the automaton's language specification.
 
 Handwritten automata cover eventuality and response violations. General LTL
-formula compilation is available; the public formula-input system checker is next. See [design notes](docs/design.md) for
-contracts, assumptions, and limitations. Check the examples with:
+formula-input checking is available through `FiniteKripke.check`. See
+[design notes](docs/design.md) for contracts, assumptions, and limitations. Check the examples with:
 
 ```sh
 lake build Examples.Buchi Examples.BuchiTrust
@@ -155,7 +155,31 @@ Read [Tableau.lean](Examples/Tableau.lean) for local rules, then
 [Translation.lean](Examples/Translation.lean) for acceptance, compilation, and
 comparisons with the handwritten monitors. This explicit construction enumerates
 exponentially many candidate states; examples intentionally stay small.
-Integration into `check M formula hserial` is the next milestone.
+`FiniteKripke.check` compiles violations and uses the verified product search.
+Its `check_correct` theorem connects a true verdict to universal satisfaction;
+`check_eq_false_iff` connects false to existence of an initial violating path.
+For example:
+
+```lean
+import KILT
+import Examples.TrafficLight
+
+open Examples.TrafficLight
+
+#eval controller.check eventuallyGreen controller_serial -- true
+
+example (h : controller.check eventuallyGreen controller_serial = true) :
+    controller.toKripke.Satisfies eventuallyGreen :=
+  (controller.check_correct eventuallyGreen controller_serial).mp h
+```
+
+The seriality argument is an explicit precondition. `#eval` executes the check;
+a proof of its Boolean verdict is needed to derive a theorem as above.
+[Checker.lean](Examples/Checker.lean) combines small kernel-computed proofs with
+build-failing execution tests for larger request/grant and traffic properties.
+Compiled outputs are not treated as proofs. Response tests currently take
+seconds even on small products; evaluation and performance work remain.
+False verdicts establish counterexample existence without extracting a lasso.
 
 ## Two-thread lock example
 

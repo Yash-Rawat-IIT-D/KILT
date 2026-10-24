@@ -8,7 +8,8 @@ a Kripke model satisfies a formula when every initial path satisfies that word
 formula at position zero.  This establishes the semantic interface needed by an
 automata translation and finite-state checking. The finite Büchi backend now
 checks supplied violation automata. Formula compilation now has a proved
-CSLib word-language equivalence; formula-input system checking is next.
+CSLib word-language equivalence. The public formula-input checker now composes
+that theorem with the finite backend.
 
 The implemented constructor basis is falsehood, atomic propositions, negation,
 disjunction, next, and strong until. Truth, conjunction, implication,
@@ -317,8 +318,8 @@ result transfer through that equivalence. Other examples exercise duality,
 time-zero, until postponement, release forever and its endpoint, Nat atoms,
 deduplication and finite-carrier computation. Principal results are audited.
 Generalized acceptance and tableau language correctness are implemented below.
-Formula-input system checking remains next; the compiler composes normalization,
-tableau construction, and conversion.
+The compiler composes normalization, tableau construction, and conversion;
+the formula-input checker composes its violation language with product search.
 
 ## Traffic-light walkthrough
 
@@ -549,11 +550,102 @@ The construction follows the standard tableau acceptance idea described by
 consistent subsets; it does not implement that paper's optimized on-the-fly
 construction or claim its performance.
 
-Next is the violation-automaton wrapper and `check M formula hserial`, reusing
-`checkAgainst_correct` to relate a finite verdict to all infinite initial paths.
-The present compiler proves word-language correctness, not that final checker
-interface. Lasso output, SCC optimization, fairness, and frontend automation
-remain later work. Formal compatibility with external LeanLTL remains separate.
+## Formula-input checker and end-to-end correctness
+
+`Formula.violationAutomaton φ` compiles `¬φ`, with carrier
+`Formula.AutomatonState (Formula.neg φ)`. `violationAutomaton_accepts` proves
+its CSLib language is exactly `¬ WordSat word φ`. `FiniteKripke.check M φ hserial`
+passes this automaton to the existing `checkAgainst`; product construction,
+reachability and positive-length accepting-cycle search are unchanged.
+
+The public contracts are:
+
+```lean
+M.check φ hserial = true ↔ M.toKripke.Satisfies φ
+M.check φ hserial = false ↔
+  ∃ p : M.toKripke.Path, p.IsInitial ∧ ¬ WordSat p.word φ
+```
+
+`check_correct` proves the first by composing the violation-language theorem
+with `checkAgainst_correct`. `check_eq_false_iff` proves the second through the
+existing accepted-path correspondence. `check_eq_checkAgainst` establishes
+equality with any supplied automaton having the same proved violation language.
+This permits rigorous comparison with handwritten monitors of different state
+types. All state/atom/automaton universes remain independent in these APIs.
+
+Models require an enumerable finite state type and decidable equality; executable
+translation also needs decidable atom equality. Atoms need not be finite, and
+valuations are never enumerated. Global seriality is an explicit public
+precondition retained from the backend API. It is a selected modeling boundary,
+not an extra prerequisite of the generic product/acceptance correspondence.
+The deadlock regression proves no seriality proof exists and checks the
+lower-level search without inserting transitions or exposing a checker bypass.
+There is no fairness assumption. The result is Boolean, and the false-verdict
+theorem provides semantic existence, not an executable extracted path or lasso.
+
+For a response walkthrough, `□(p ⟹ ◇q)` is violated by
+`true U (p ∧ (false R ¬q))`: at some position there is a request with no grant
+then or later. The outer until acceptance prevents postponing that position
+forever. The release equation requires grant to remain false starting at the
+chosen position; a simultaneous request/grant is therefore not a violation.
+Product edges read the source valuation, including word position zero.
+On the alternating request/grant system, no infinite product run can maintain
+the violation, so no reachable accepting cycle exists. `check` returns true,
+and `check_correct` quantifies that result over every initial infinite path.
+The waiting-loop variant has a permanently waiting violating execution, hence
+an accepting cycle and a false verdict. `waiting_response_counterexample`
+demonstrates the existence theorem using a verdict transported from the monitor.
+It is not an independent kernel computation of the general compiler.
+
+### Validation evidence and trust
+
+`Examples.Checker` proves the small verdicts `truth_verdict`,
+`falsehood_verdict`, `atom_verdict`, `initial_atom_verdict`, and
+`multiple_initials_verdict` by kernel computation. `singleton_satisfies_atom`
+and `falsehood_counterexample` derive semantic contracts through the public
+theorems. `deadlock_no_accepted_path` is also kernel computed. Nat atoms and
+multiple initial states exercise the intended interfaces.
+
+The 18 compiled expected-result checks cover four request/grant progress cases,
+four traffic progress cases, safety on both traffic models, and eight boundary
+cases (initial-only eventuality, both next outcomes, until now/later, release
+endpoints, and universal multiple starts). All eight eventuality/response cases
+also compare against actual handwritten-monitor executions. Unexpected verdicts
+or disagreements throw IO errors and fail the default build. Separate negative
+probes confirmed both error paths fail Lean with exit status 1.
+
+These executions are tests of compiled code, not proof terms. The general
+correctness theorems and principal example proofs remain kernel checked and
+covered by the standard-axiom audit. No native-computation axioms are added.
+A cached Lake build may replay the previously successful execution output; the
+reported per-case times below are from the fresh targeted checker build.
+
+| Model/property | Verdict | Negated closure | Automaton carrier | Product carrier | Measured check |
+| --- | --- | --- | --- | --- | --- |
+| Request/grant cycle, eventual grant | true | 3 | 4 | 8 | 10 ms |
+| Waiting variant, eventual grant | false | 3 | 4 | 8 | 12 ms |
+| Request/grant cycle, response | true | 7 | 16 | 32 | 5,525 ms |
+| Waiting variant, response | false | 7 | 16 | 32 | 8,109 ms |
+| Traffic cycle, eventual green | true | 3 | 4 | 12 | 13 ms |
+| Stuck traffic, eventual green | false | 3 | 4 | 12 | 20 ms |
+| Traffic cycle, red response | true | 7 | 16 | 48 | 10,750 ms |
+| Stuck traffic, red response | false | 7 | 16 | 48 | 14,318 ms |
+| Traffic cycle, no red/green overlap | true | 5 | 8 | 24 | 354 ms |
+| Stuck traffic, no red/green overlap | true | 5 | 8 | 24 | 359 ms |
+
+Times measure the compiled check call using a monotonic clock, excluding the
+subsequent count reporting and monitor comparison. They are single observed
+runs on this machine, not reproducible performance guarantees or reachable-state
+counts. The expensive response results show that even small explicit products
+need further evaluation; no efficiency claim is made from correctness alone.
+Timeouts/resources are not mapped to false, and the checker exposes no runtime
+budget parameter. Large lock checking remains outside this milestone.
+
+This supplies the proposal's central checker/trace-semantics correspondence.
+Mathematical review, broader evaluation and the report remain pending. Formal
+compatibility with external LeanLTL and the outstanding audit/community work
+remain separate commitments. Fairness, executable lasso extraction, SCC
+optimization and optional frontend automation are later extensions.
 
 ## Sources and attribution
 
