@@ -1,3 +1,4 @@
+import Examples.Efficiency
 import Examples.Basic
 import Examples.Integration
 import Examples.Syntax

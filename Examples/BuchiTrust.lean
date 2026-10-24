@@ -7,6 +7,7 @@ import Examples.TwoThreadLock
 import Examples.Translation
 import Examples.Checker
 import Examples.Counterexample
+import Examples.Efficiency
 import Lean.Util.CollectAxioms
 
 /-!
@@ -32,6 +33,43 @@ def auditStandardAxioms (declarations : Array Lean.Name) : Lean.Elab.Command.Com
     Lean.logInfo m!"Axiom audit passed: {declaration}: {axioms.toList}"
 
 run_cmd auditStandardAxioms #[
+  ``KILT.Graph.prepareSuccessors_lookup,
+  ``KILT.Graph.prepareSuccessorSet_lookup,
+  ``KILT.Graph.expandRounds_eq_layers,
+  ``KILT.Graph.closureSearch_eq,
+  ``KILT.Graph.reachableSetFast_eq,
+  ``KILT.Graph.targetSearch_eq,
+  ``KILT.Graph.reachable?_eq_true_iff,
+  ``KILT.Graph.routeRounds_retains,
+  ``KILT.Graph.routeGrowth_false,
+  ``KILT.Graph.routeSearch_none,
+  ``KILT.Graph.routeSearch_some,
+  ``KILT.Graph.storedRoutesFast_lookup,
+  ``KILT.Graph.routeFast?_eq,
+  ``KILT.Graph.acceptingCycleSearch_eq,
+  ``KILT.Graph.hasAcceptingCycle_eq_reference,
+  ``KILT.Graph.acceptingLasso?_eq_reference,
+  ``Examples.Efficiency.target_is_seed,
+  ``Examples.Efficiency.first_round,
+  ``Examples.Efficiency.long_chain,
+  ``Examples.Efficiency.unreachable_target,
+  ``Examples.Efficiency.stable_closure,
+  ``Examples.Efficiency.full_chain,
+  ``Examples.Efficiency.zero_fuel,
+  ``Examples.Efficiency.seed_route,
+  ``Examples.Efficiency.first_route,
+  ``Examples.Efficiency.last_route,
+  ``Examples.Efficiency.no_route,
+  ``Examples.Efficiency.no_growth,
+  ``Examples.Efficiency.growth,
+  ``Examples.Efficiency.cached_deadlock,
+  ``Examples.Efficiency.cached_edge,
+  ``Examples.Efficiency.empty_carrier,
+  ``Examples.Efficiency.accepting_deadlock,
+  ``Examples.Efficiency.positive_return,
+  ``Examples.Efficiency.same_lasso_forward,
+  ``Examples.Efficiency.same_lasso_reverse,
+
   ``KILT.Graph.Lasso.map_sequence,
   ``KILT.Graph.Lasso.sequence_at_entry,
   ``KILT.Graph.Lasso.Valid.initial,

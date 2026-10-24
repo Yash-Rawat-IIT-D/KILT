@@ -66,22 +66,83 @@ private theorem candidate_sound (order : Enumeration State) (seeds : Finset Stat
   · simp [candidateLasso?, ha] at h
 
 /-- Return one accepting lasso, retaining the supplied order's route choices. -/
-def acceptingLasso? (order : Enumeration State) (seeds : Finset State)
+def acceptingLassoReference? (order : Enumeration State) (seeds : Finset State)
     (successors : State → Finset State) (accepting : Finset State) : Option (Lasso State) :=
   let edges := materialize order successors
   let next := tableLookup ∅ edges
   let stems := storedRoutes order seeds next
   order.states.findSome? (candidateLasso? order next accepting (tableLookup none stems))
 
-private theorem acceptingLasso?_reference (order : Enumeration State) (seeds : Finset State)
+private theorem acceptingLassoReference?_reference (order : Enumeration State) (seeds : Finset State)
     (successors : State → Finset State) (accepting : Finset State) :
-    acceptingLasso? order seeds successors accepting =
+    acceptingLassoReference? order seeds successors accepting =
       order.states.findSome? (candidateLasso? order successors accepting (route? order seeds successors)) := by
   have heq : tableLookup ∅ (materialize order successors) = successors :=
     funext fun s => tableLookup_materialize _ _ _ s
   have hr : tableLookup none (storedRoutes order seeds successors) = route? order seeds successors :=
     funext fun s => storedRoutes_lookup _ _ _ s
-  simp only [acceptingLasso?, heq, hr]
+  simp only [acceptingLassoReference?, heq, hr]
+
+private def candidateLassoFast? (order : Enumeration State)
+    (successors : State → Finset State) (accepting : Finset State)
+    (stems : RouteTable State) (q : State) : Option (Lasso State) :=
+  if q ∈ accepting then
+    (stems q).bind fun stem =>
+      (routeFast? order (successors q) successors q).map fun back =>
+        ⟨stem.dropLast, q :: back.dropLast, List.cons_ne_nil _ _⟩
+  else none
+
+private theorem candidateLassoFast?_eq (order : Enumeration State)
+    (successors : State → Finset State) (accepting : Finset State)
+    (stems : RouteTable State) (q : State) :
+    candidateLassoFast? order successors accepting stems q =
+      candidateLasso? order successors accepting stems q := by
+  simp only [candidateLassoFast?, routeFast?_eq, candidateLasso?, storedRoutes_lookup]
+  split
+  next => cases stems q <;> rfl
+  next => rfl
+
+/-- Cached extraction stops stable route rounds and return queries at discovery.
+The supplied enumeration still selects exactly the reference witness. -/
+def acceptingLasso? (order : Enumeration State) (seeds : Finset State)
+    (successors : State → Finset State) (accepting : Finset State) : Option (Lasso State) :=
+  if seeds = ∅ ∨ accepting = ∅ then none else
+  let edges := prepareSuccessors order successors
+  let next := tableLookup ∅ edges
+  let stems := storedRoutesFast order seeds next
+  order.states.findSome? (candidateLassoFast? order next accepting (tableLookup none stems))
+
+theorem acceptingLasso?_eq_reference (order : Enumeration State) (seeds : Finset State)
+    (successors : State → Finset State) (accepting : Finset State) :
+    acceptingLasso? order seeds successors accepting =
+      acceptingLassoReference? order seeds successors accepting := by
+  rw [acceptingLassoReference?_reference]
+  by_cases h : seeds = ∅ ∨ accepting = ∅
+  · simp only [acceptingLasso?, h, ↓reduceIte]
+    symm
+    apply List.findSome?_eq_none_iff.mpr
+    intro q _
+    cases hc : candidateLasso? order successors accepting (route? order seeds successors) q with
+    | none => rfl
+    | some l =>
+      have hs := (candidate_isSome order seeds successors accepting q).mp (by simp [hc])
+      rcases h with h | h
+      · simpa [h, Reachable] using hs.2.1
+      · simpa [h] using hs.1
+  · have heq : tableLookup ∅ (prepareSuccessors order successors) = successors :=
+      funext (prepareSuccessors_lookup order successors)
+    have hr : tableLookup none (storedRoutesFast order seeds successors) =
+        route? order seeds successors := funext (storedRoutesFast_lookup order seeds successors)
+    have hc : candidateLassoFast? order successors accepting (route? order seeds successors) =
+        candidateLasso? order successors accepting (route? order seeds successors) :=
+      funext (candidateLassoFast?_eq order successors accepting (route? order seeds successors))
+    simp only [acceptingLasso?, h, ↓reduceIte, heq, hr, hc]
+
+private theorem acceptingLasso?_reference (order : Enumeration State) (seeds : Finset State)
+    (successors : State → Finset State) (accepting : Finset State) :
+    acceptingLasso? order seeds successors accepting =
+      order.states.findSome? (candidateLasso? order successors accepting (route? order seeds successors)) := by
+  rw [acceptingLasso?_eq_reference, acceptingLassoReference?_reference]
 
 theorem acceptingLasso?_sound (order : Enumeration State) (seeds : Finset State)
     (successors : State → Finset State) (accepting : Finset State) {l : Lasso State}
