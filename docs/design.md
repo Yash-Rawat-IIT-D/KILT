@@ -5,10 +5,10 @@
 KILT first defines a small LTL syntax over named atomic propositions and its
 infinite-word semantics.  A Kripke path produces a word of Boolean valuations;
 a Kripke model satisfies a formula when every initial path satisfies that word
-formula at position zero.  This establishes the semantic interface needed by a
+formula at position zero.  This establishes the semantic interface needed by an
 automata translation and finite-state checking. The finite Büchi backend now
-checks supplied violation automata; general formula translation remains later
-work.
+checks supplied violation automata. Formula compilation now has a proved
+CSLib word-language equivalence; formula-input system checking is next.
 
 The implemented constructor basis is falsehood, atomic propositions, negation,
 disjunction, next, and strong until. Truth, conjunction, implication,
@@ -60,9 +60,9 @@ and `WordSat word φ` abbreviates satisfaction at zero.
 Until and eventually permit a witness at the current position. Release is
 defined by the dual `¬(¬φ U ¬ψ)`, so the right operand may hold forever without
 the left operand ever holding. Satisfaction is a structurally recursive
-mathematical proposition. General executable translation remains later work;
-the finite backend below checks supplied automata, without assuming a decision
-procedure for arbitrary infinite words.
+mathematical proposition. Executable compilation produces an automaton with
+that word language; it does not decide satisfaction of arbitrary infinite words.
+The finite system backend below checks supplied violation automata.
 
 `Examples.Syntax` checks formula equality, connective expansion, and size.
 `Examples.Words` checks constant and alternating words, immediate and later
@@ -316,8 +316,9 @@ seriality; positive traffic-light safety/ordering and a negative response
 result transfer through that equivalence. Other examples exercise duality,
 time-zero, until postponement, release forever and its endpoint, Nat atoms,
 deduplication and finite-carrier computation. Principal results are audited.
-Generalized acceptance is implemented below; tableau construction and formula-input
-checking remain subsequent work. Finite syntax collection is not an automaton compiler.
+Generalized acceptance and tableau language correctness are implemented below.
+Formula-input system checking remains next; the compiler composes normalization,
+tableau construction, and conversion.
 
 ## Traffic-light walkthrough
 
@@ -386,8 +387,8 @@ acceptance, not a claim that all executions progress.
 `hasAcceptedPath_generalized_iff` derives this meaning from existing product
 search and language preservation. No seriality assumption is added to the generic
 conversion/search. The public universal property checker retains its seriality
-requirement. Tableau translation will use one generalized acceptance set per
-until obligation, then feed this converter to the verified ordinary backend.
+requirement. Tableau translation uses one generalized acceptance set per
+until obligation, then feeds this converter to the verified ordinary backend.
 
 The history-counter idea is also illustrated by CSLib's
 [Büchi intersection construction](https://github.com/leanprover/cslib/blob/a3da622f14ac47924a4ffb293fdb0dad6fcdfae1/Cslib/Computability/Automata/NA/BuchiInter.lean)
@@ -431,9 +432,9 @@ next-source indexing, immediate and continued until, and release endpoints.
 For `p U q`, a state containing `p` and `p U q` but not `q` can loop locally
 under the valuation making only `p` true. `postponed_run` constructs this initial
 infinite NA run; `postponed_word_fails` proves the word violates strong until.
-Until acceptance conditions are therefore essential and remain the next layer.
-No generalized translator with placeholder acceptance or formula checker is
-exposed by this batch. Principal contracts are part of the default axiom audit.
+Until acceptance conditions are therefore essential. The acceptance layer below
+rejects that loop and proves the complete word language. Principal contracts
+are part of the default axiom audit.
 
 ## Two-thread lock walkthrough
 
@@ -463,13 +464,96 @@ checker correctness. Separate `#eval` executes the Boolean product search;
 no native-computation axiom is added. Both models are globally serial by
 construction, so these results do not rely on deadlock vacuity. The shared
 carrier has 32 states; compiled reachability reports 22 broken and 8 atomic
-reachable states. No arbitrary-formula compiler is claimed.
+reachable states. This example uses the handwritten response monitor; the
+general compiler is documented below.
 
 This example independently implements small lock protocols, rather than
 Peterson's algorithm. Its safety/liveness questions follow the standard
 [mutual-exclusion verification setting](https://lamport.azurewebsites.net/tla/peterson.html?back-link=high-level-view.html).
 Program counters, scheduling and observation labels are separate extension
 points for turn-taking protocols and future explicit fairness assumptions.
+
+## Tableau acceptance and verified formula compilation
+
+`Tableau.untilObligations` traverses the syntax root-first and left-to-right,
+retaining the first occurrence of each distinct until formula. Atom ordering is
+unnecessary. `mem_untilObligations` characterizes the list exactly;
+`untilObligations_nodup` and `length_untilObligations_le` prove that its length
+is at most the closure size. Distinct obligations remain separate even when
+their resulting accepting sets are equal.
+
+For each `a U b`, `acceptanceSet` contains states where the until is absent or
+`b` holds. `toGeneralizedBuchi` reuses the existing starts and local transitions;
+`toGeneralizedBuchi_toNA` proves agreement with the local CSLib adapter. An
+empty obligation family still requires an infinite initial run. Release adds no
+recurrence condition: its local rule preserves the required right operand until
+the left operand holds, including that endpoint, or forever.
+
+For a worked example, let a state contain `p` and `p U q` while omitting `q`.
+Its self-loop under only-p valuations satisfies the local equations. It never
+visits the until accepting set, so `postponed_run_rejected` rejects that run.
+`until_witness` proves the general argument: if the right operand never appears,
+the local rule keeps the until present, contradicting a later accepting visit.
+Choosing the first right-operand occurrence also establishes the left prefix.
+An immediate right operand requires no left prefix.
+
+`acceptingRun_sound` proves each present subformula true at every run position,
+by structural induction with until witnesses and finite release propagation.
+It does not prove that absent formulas are false. The regression
+`partial_release_accepting` records a true release formula as absent on a valid
+accepting run; `partial_release_not_represents` explicitly rules out treating
+all accepting states as exact truth assignments.
+
+Conversely, proof-only `semanticState` filters the closure by actual semantic
+truth. This function is noncomputable because truth of an arbitrary infinite
+word is not executable input. `semanticState_represents` and
+`semanticRun_accepting` use it to construct an accepting run from root truth.
+Consecutive states obey `step_of_represents`. For every until and every bound,
+either it is already absent, or its finite semantic witness supplies an
+accepting position. None of these classical witnesses are called by compilation.
+
+`Tableau.accepts_iff_sat` states generalized acceptance iff `NNF.Sat word 0 f`.
+`Tableau.toFiniteBuchi_accepts` composes this with the existing verified
+round-robin conversion. Finally `Formula.toBuchi` normalizes and converts:
+
+```lean
+Formula.toBuchi_accepts (φ : Formula AP) (word : Word AP) :
+  ωAcceptor.Accepts φ.toBuchi.toBuchi word ↔ WordSat word φ
+```
+
+The first `toBuchi` returns KILT's executable `FiniteBuchi`; the second is its
+CSLib adapter. CSLib supplies run and Büchi acceptance semantics. KILT supplies
+the finite representation, generalized conversion, graph search and compiler;
+this milestone does not replace the existing product or accepting-cycle proofs.
+No seriality or Kripke model is assumed for these word-language results.
+
+Only `DecidableEq AP` is required, with no finite-atom or valuation enumeration.
+For `n` normalized subformulas and `m` distinct until obligations,
+`card_automatonState_le` bounds the converted carrier by `2^n * max 1 m`;
+`m ≤ n`. Enumeration is exponential even before product search. Small checked
+examples report (closure, obligations, converted states): true `(1,0,1)`,
+eventually q `(3,1,4)`, next p `(2,0,4)`, release p q `(3,0,8)`. The eventuality
+automaton has two initial and three accepting carrier states; accepting states
+can still lack an outgoing transition for a particular valuation. These counts
+are measurements of small examples, not performance guarantees.
+
+`Examples.Translation` covers all constructors, derived operators, multiple and
+repeated obligations, source-position-zero input, and word-language equivalence
+with the handwritten eventuality/response monitors. Finite assertions use
+`decide`, infinite-word assertions use semantic proofs, and `#eval` displays
+construction counts. Principal theorems are checked by the default axiom audit.
+
+The construction follows the standard tableau acceptance idea described by
+[Gerth, Peled, Vardi and Wolper](https://www.cs.rice.edu/~vardi/papers/pstv95rj.pdf)
+([alternate PDF](https://spinroot.com/spin/Doc/ltl.pdf)). KILT enumerates explicit
+consistent subsets; it does not implement that paper's optimized on-the-fly
+construction or claim its performance.
+
+Next is the violation-automaton wrapper and `check M formula hserial`, reusing
+`checkAgainst_correct` to relate a finite verdict to all infinite initial paths.
+The present compiler proves word-language correctness, not that final checker
+interface. Lasso output, SCC optimization, fairness, and frontend automation
+remain later work. Formal compatibility with external LeanLTL remains separate.
 
 ## Sources and attribution
 

@@ -112,8 +112,8 @@ Open this folder in VS Code to use the pinned toolchain. See
 an executable, language-preserving `toFiniteBuchi` conversion. Empty families,
 partial transitions and unrestricted symbol types are supported. See
 `Examples/GeneralizedBuchi.lean` for counter traces and traffic-colour recurrence
-through the existing accepted-path backend. General tableau translation remains
-future work.
+through the existing accepted-path backend. The formula compiler below reuses
+this conversion.
 
 ## Verified Büchi backend
 
@@ -124,7 +124,7 @@ theorem connects the Boolean verdict to universal LTL satisfaction, given a
 seriality proof and the automaton's language specification.
 
 Handwritten automata cover eventuality and response violations. General LTL
-formula translation is the next stage. See [design notes](docs/design.md) for
+formula compilation is available; the public formula-input system checker is next. See [design notes](docs/design.md) for
 contracts, assumptions, and limitations. Check the examples with:
 
 ```sh
@@ -147,9 +147,15 @@ verified finite subformula closure. Normalization preserves truth at every
 word position, including negated formulas. Read
 [Normalization.lean](Examples/Normalization.lean) for the response-formula
 walkthrough, until/release duality, and transfer of traffic-light proofs.
-The tableau foundation now provides finite consistent states, local transitions,
-and their semantic compatibility proof; see [Tableau.lean](Examples/Tableau.lean).
-Until acceptance and full formula-to-automaton language correctness are next.
+The tableau now includes until acceptance sets and full language correctness.
+[Compile.lean](KILT/LTL/Compile.lean) exposes `Formula.toBuchi`: an executable
+finite automaton whose CSLib adapter accepts exactly the satisfying words,
+proved by `Formula.toBuchi_accepts`. Only decidable atom equality is required.
+Read [Tableau.lean](Examples/Tableau.lean) for local rules, then
+[Translation.lean](Examples/Translation.lean) for acceptance, compilation, and
+comparisons with the handwritten monitors. This explicit construction enumerates
+exponentially many candidate states; examples intentionally stay small.
+Integration into `check M formula hserial` is the next milestone.
 
 ## Two-thread lock example
 

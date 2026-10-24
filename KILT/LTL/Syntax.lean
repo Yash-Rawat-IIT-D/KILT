@@ -9,8 +9,8 @@ equality. Formula equality is decidable when atom equality is decidable.
 
 The constructor basis is falsehood, atoms, negation, disjunction, next and
 strong until. Other connectives expand into this basis; `Formula.size` counts
-nodes after that expansion. Syntax and semantics cover these operators, but
-an executable formula-to-automaton translation is still future work.
+nodes after that expansion. `KILT.LTL.Compile` supplies an executable translation
+for these operators with a proved CSLib Büchi word-language equivalence.
 
 Enable shorthand with `open scoped KILT.LTL`: `□ p` is globally, `◇ p` is
 eventually, `𝒩 p` is next, and `p 𝒰 q` is strong until. Boolean formula

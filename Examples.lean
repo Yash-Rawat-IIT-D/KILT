@@ -13,6 +13,7 @@ import Examples.Normalization
 import Examples.GeneralizedBuchi
 import Examples.Tableau
 import Examples.TwoThreadLock
+import Examples.Translation
 
 /-!
 # Checked KILT examples
