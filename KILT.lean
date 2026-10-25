@@ -6,6 +6,8 @@ import KILT.LTL.Compile
 import KILT.Graph.Reachability
 import KILT.Graph.Routes
 import KILT.Graph.Search
+import KILT.Graph.IndexedParents
+import KILT.Kripke.IndexedCheck
 import KILT.Kripke.Semantics
 import KILT.Kripke.Finite
 import KILT.Kripke.Check

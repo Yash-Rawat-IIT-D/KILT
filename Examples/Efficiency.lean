@@ -55,11 +55,13 @@ theorem positive_return :
 
 theorem same_lasso_forward :
     shape (acceptingLasso? (Enumeration.fin 3) {0} branchEdges {1, 2}) =
-      shape (acceptingLassoReference? (Enumeration.fin 3) {0} branchEdges {1, 2}) := by decide
+      shape (acceptingLassoReference? (Enumeration.fin 3) {0} branchEdges {1, 2}) := by
+  rw [acceptingLasso?_eq_reference]
 
 theorem same_lasso_reverse :
     shape (acceptingLasso? reverseOrder {0} branchEdges {1, 2}) =
-      shape (acceptingLassoReference? reverseOrder {0} branchEdges {1, 2}) := by decide
+      shape (acceptingLassoReference? reverseOrder {0} branchEdges {1, 2}) := by
+  rw [acceptingLasso?_eq_reference]
 
 #eval (reachableSetFast ({0} : Finset (Fin 6)) line).card
 #eval routeFast? (Enumeration.fin 6) {0} line 4

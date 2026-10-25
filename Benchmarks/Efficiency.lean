@@ -129,7 +129,7 @@ def graphCase (label : String) (order : Graph.Enumeration S) (seeds : Finset S)
   IO.println s!"WORK {label}: initial-route-rounds={routeRounds}, reference={Fintype.card S}"
   let ref ← if phasesOnly then pure none else
     timed s!"{label}/graph/lasso-reference" seeds (fun seeds => Graph.acceptingLassoReference? order seeds next acc)
-  let fast ← timed s!"{label}/graph/lasso-combined" seeds (fun seeds => Graph.acceptingLasso? order seeds next acc)
+  let fast ← timed s!"{label}/graph/lasso-combined" seeds (fun seeds => Graph.acceptingLassoCached? order seeds next acc)
   assertVerdict "lasso" fast.isSome expected
   unless phasesOnly || shape ref == shape fast do throw (IO.userError "witness changed")
   unless built == shape fast do throw (IO.userError "phase witness changed")
@@ -141,7 +141,9 @@ def graphCase (label : String) (order : Graph.Enumeration S) (seeds : Finset S)
       (Graph.materialize order (Graph.initialRouteTable (cached l.entry)))
     IO.println s!"WORK {label}: selected-return-rounds={returnRounds}, reference={Fintype.card S}"
 
-/-- Formula-facing timers include compilation and enumeration inside execute. -/
+/-- Formula-facing timers include compilation and enumeration inside execute.
+They follow the current public backend; graph ablations above retain the
+committed cache/early-exit implementation for historical comparisons. -/
 def formulaCase {State AP : Type} [Fintype State] [DecidableEq State] [DecidableEq AP]
     (label : String) (M : FiniteKripke State AP) (φ : Formula AP)
     (serial : M.toKripke.Serial) (order : Graph.Enumeration State) (expected : Bool) (phasesOnly : Bool) : IO Unit := do

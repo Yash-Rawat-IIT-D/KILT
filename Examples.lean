@@ -1,4 +1,5 @@
 import Examples.Efficiency
+import Examples.Indexed
 import Examples.Basic
 import Examples.Integration
 import Examples.Syntax

@@ -15,3 +15,7 @@ allowNonModules = true
 [[lean_lib]]
 name = "Examples"
 allowNonModules = true
+
+[[lean_exe]]
+name = "benchmark-indexed"
+root = "Benchmarks.IndexedStorage"

@@ -864,6 +864,76 @@ from the interrupted run, and one complete fresh run replaced its unfinished
 third repetition. The replacement harness completed with exit status zero,
 including median/range summaries and finite witness validation.
 
+## Experimental reachable indexed storage
+
+`prepareReachable order seeds successors` discovers a successor-closed graph
+from the seeds. Each discovered source supplies one cached row; an unprocessed
+pending state is distinct from a processed deadlock with an empty row. Queue
+invariants prove no duplicate sources, termination within the original finite
+cardinality, and exact agreement with mathematical reachability. Completed
+rows are converted to sparse arrays of bounded dense vertex IDs. The decoder
+is injective and preserves initial membership, edges, finite paths and positive
+return paths. A prepared graph stores its source enumeration and each vertex's
+rank, separately from discovery IDs. Dense IDs are not witness tie-breakers.
+
+Preparation currently uses a verified list work queue and finite membership
+checks, then an integer-keyed `Std.ExtTreeMap` for adjacency conversion. It does
+not yet use that dictionary as the discovery visited set. Rank lookup scans the
+complete enumeration. These setup costs are explicit; reachable-only storage
+does not imply linear-time preparation or eliminate compiler enumeration.
+There is no atom ordering, Hashable-state requirement or valuation enumeration.
+
+Boolean return searches store a visited array and the newly discovered frontier.
+The invariant says that all edges behind the frontier have already been covered.
+An accepting candidate in a prepared graph is already initial-reachable, so its
+positive return query starts directly from its successor IDs. Empty acceptance
+or seeds short-circuit preparation at the public graph wrappers.
+
+Witness searches store an unseen/root marker or a parent ID and discovery depth.
+The synchronous pointer engine is a proof reference; the executable frontier
+engine ignores earlier-level predecessors. A theorem proves those predecessors
+cannot reach an undiscovered target, so filtering them preserves the first
+predecessor in the original enumeration. Target queries finish the discovery
+level before returning, resolving ties. Queries stop on target discovery or no
+new parent entries. Parent depth decreases strictly, and bounded reconstruction
+uses an accumulator. Complete route lists appear only in proof specifications
+and successful witness reconstruction, not in expansion entries.
+
+The current frontier implementations still scan the vertex domain to produce
+the next array and test sparse-row membership. They are not adjacency-linear
+queue algorithms and are not SCC algorithms. Allocation and setup overhead need
+measurement. The graph, decoder, source order and rank arrays are reusable for
+queries inside the stored carrier. Seeds outside it require new preparation.
+
+`route?_transport` proves exact route preservation under reachable reindexing.
+`PreparedReachable.acceptingLasso?_eq_reference` and
+`Graph.acceptingLasso?_eq_reference` prove exact optional-lasso preservation,
+including the selected prefix, loop and time indices. The old cached backend
+remains `acceptingLassoCached?` for comparison, and the original full-round
+backend remains `acceptingLassoReference?`. Existing actual-returned-trace
+soundness and no-counterexample equivalences continue through these equalities.
+
+`hasAcceptedPathIndexed` agrees with `hasAcceptedPath`. The formula-facing
+`checkIndexed formula hserial modelOrder` agrees with `check`, including its
+universal satisfaction and false-verdict theorems. Seriality remains explicit at
+the formula boundary; generic graph preparation and acceptance allow deadlocks.
+CSLib acceptance, source-label timing and no-fairness semantics are unchanged.
+
+Some concrete branching rank-sort expressions do not normalize in `decide`.
+Their displays and expected-result assertions run as build-failing execution
+tests; they are not promoted to proof. Small pointer/visited-array verdicts are
+kernel computed. Previous small formula-witness results are transported through
+the exact cached-backend equality and kernel-computed reference results. The
+general representation and algorithm theorems remain kernel checked using only
+the allowed standard axioms. A reduction limitation is distinct from a false
+verdict or a missing proof, and user mathematical review is still pending.
+
+Native/interpreted benchmark support is outside the routine targets. By user
+instruction, completed performance comparisons and backend retirement are later
+work on `feature-indexed-graph`. No indexed speedup or scalability guarantee is
+claimed by successful builds. Existing cache measurements above concern the
+earlier implementation and are not measurements of this branch.
+
 ## Sources and attribution
 
 KILT pins [CSLib at `a3da622f14ac47924a4ffb293fdb0dad6fcdfae1`](https://github.com/leanprover/cslib/tree/a3da622f14ac47924a4ffb293fdb0dad6fcdfae1)

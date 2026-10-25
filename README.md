@@ -300,3 +300,23 @@ Reference lasso runs can take minutes. These interpreted executions exclude Lean
 compilation from operation timings; process RSS includes the Lean runtime.
 Benchmarks are separate from routine builds, and execution failures return a
 nonzero status. See [design notes](docs/design.md) for contracts and limitations.
+
+## Experimental indexed backend
+
+The `feature-indexed-graph` branch prepares only seed-reachable graph rows,
+using dense vertex IDs, Boolean visited arrays and parent-pointer witnesses.
+The ordinary `check` interface remains available. Supply a model enumeration
+to select the indexed checker:
+
+```lean
+#eval M.checkIndexed property serialProof modelOrder
+```
+
+`checkIndexed_eq_check` proves identical verdicts. `counterexample?` uses the
+indexed extractor and preserves exactly the reference lasso for the same order.
+See [indexed regressions](Examples/Indexed.lean) and the design notes for the
+proof contracts and representation costs.
+
+`./scripts/benchmark-indexed.sh` prepares native and interpreted comparisons
+outside default build targets. Benchmarking this experimental backend is
+pending; no latency or memory improvement is claimed for it yet.
