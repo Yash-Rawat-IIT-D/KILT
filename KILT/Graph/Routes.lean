@@ -197,6 +197,13 @@ private theorem routeTables_sound (order : Enumeration State)
               rcases ih hprior with ⟨initial, hinitial, hchain⟩
               exact ⟨initial, hinitial, hchain.snoc hedge⟩
 
+/-- A finite-round route is valid, before applying the cardinality bound. -/
+theorem routeTables_valid (order : Enumeration State) (seeds : Finset State)
+    (successors : State → Finset State) {rounds : Nat} {target : State} {nodes : List State}
+    (hroute : routeTables order seeds successors rounds target = some nodes) :
+    ∃ source ∈ seeds, nodes.IsChainFromTo (Step successors) source target :=
+  routeTables_sound order seeds successors hroute
+
 /-- A returned route is nonempty, starts at a seed, ends at the requested
 state, and every adjacent pair is an edge. These facts are the fields of
 `List.IsChainFromTo`. -/

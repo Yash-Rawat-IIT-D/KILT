@@ -16,6 +16,7 @@ open KILT KILT.LTL KILT.Automata Cslib.Automata
 open scoped KILT.LTL
 set_option maxRecDepth 16384
 set_option maxHeartbeats 2000000
+set_option synthInstance.maxSize 1024
 
 def unitOrder : Graph.Enumeration Unit := Examples.LassoGraph.unitOrder
 def boolOrder : Graph.Enumeration Bool := Graph.Enumeration.ofList [false, true] (by decide)
@@ -30,20 +31,32 @@ theorem true_no_counterexample :
 
 theorem false_counterexample :
     (Examples.Checker.singleton.counterexample? .falsehood
-      Examples.Checker.singleton_serial unitOrder).isSome = true := by decide
+      Examples.Checker.singleton_serial unitOrder).isSome = true := by
+  unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
+  rw [Graph.acceptingLasso?_eq_cached]
+  decide
 
 /-- Source labels are read at zero; p holds there even though it immediately disappears. -/
 theorem initial_eventuality :
     (Examples.Checker.twoState false |>.counterexample? (◇ Examples.Checker.p)
-      (Examples.Checker.twoState_serial false) boolOrder).isSome = false := by decide
+      (Examples.Checker.twoState_serial false) boolOrder).isSome = false := by
+  unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
+  rw [Graph.acceptingLasso?_eq_cached]
+  decide
 
 theorem next_counterexample :
     (Examples.Checker.twoState false |>.counterexample? (𝒩 Examples.Checker.p)
-      (Examples.Checker.twoState_serial false) boolOrder).isSome = true := by decide
+      (Examples.Checker.twoState_serial false) boolOrder).isSome = true := by
+  unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
+  rw [Graph.acceptingLasso?_eq_cached]
+  decide
 
 theorem next_successor :
     (Examples.Checker.twoState false |>.counterexample? (𝒩 Examples.Checker.q)
-      (Examples.Checker.twoState_serial false) boolOrder).isSome = false := by decide
+      (Examples.Checker.twoState_serial false) boolOrder).isSome = false := by
+  unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
+  rw [Graph.acceptingLasso?_eq_cached]
+  decide
 
 /-- A small computed witness is connected to its own path by the generic theorem. -/
 theorem extracted_false_trace :
@@ -60,7 +73,10 @@ theorem extracted_false_trace :
 theorem deadlock_no_lasso :
     (Examples.Checker.deadlock.acceptedLasso?
       (Formula.falsehood : Formula Nat).violationAutomaton unitOrder
-      (Formula.neg (.falsehood : Formula Nat)).automatonOrder).isSome = false := by decide
+      (Formula.neg (.falsehood : Formula Nat)).automatonOrder).isSome = false := by
+  unfold FiniteKripke.acceptedLasso?
+  rw [Graph.acceptingLasso?_eq_cached]
+  decide
 
 /-- Finite boundary validation for compiled execution tests; not a proof oracle. -/
 def edgesValid {S : Type} [DecidableEq S] (successors : S → Finset S) (nodes : List S) : Bool :=
