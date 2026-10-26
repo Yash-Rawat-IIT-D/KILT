@@ -1,12 +1,7 @@
-import KILT.Graph.IndexedLasso
+import KILT.Graph.LassoExtraction
+import KILT.Graph.Buchi
 
-/-!
-# Reachable indexed lasso extraction
-
-The original algorithms remain available as acceptingLassoCached? and
-acceptingLassoReference?. The default prepares only seed-reachable rows and
-stores predecessor IDs and depths, preserving the exact reference witness.
--/
+/-! Canonical accepting-lasso extraction with reachable arrays and parent chains. -/
 namespace KILT.Graph
 universe u
 variable {State : Type u} [Fintype State] [DecidableEq State]
@@ -16,37 +11,26 @@ def acceptingLasso? (order : Enumeration State) (seeds : Finset State)
   if seeds = ∅ ∨ accepting = ∅ then none else
     (prepareReachable order seeds successors).acceptingLasso? order accepting
 
-theorem acceptingLasso?_eq_reference (order : Enumeration State) (seeds : Finset State)
+theorem acceptingLasso?_eq_spec (order : Enumeration State) (seeds : Finset State)
     (successors : State → Finset State) (accepting : Finset State) :
-    acceptingLasso? order seeds successors accepting =
-      acceptingLassoReference? order seeds successors accepting := by
+    acceptingLasso? order seeds successors accepting = lassoSpec? order seeds successors accepting := by
   by_cases h : seeds = ∅ ∨ accepting = ∅
-  · have hz : acceptingLassoCached? order seeds successors accepting = none := by
-      simp [acceptingLassoCached?, h]
-    rw [acceptingLassoCached?_eq_reference] at hz
-    simp [acceptingLasso?, h, hz]
+  · simp [acceptingLasso?, h, lassoSpec?_empty _ _ _ _ h]
   · simp only [acceptingLasso?, h, ↓reduceIte]
-    exact PreparedReachable.acceptingLasso?_eq_reference _ _ _
-
-theorem acceptingLasso?_eq_cached (order : Enumeration State) (seeds : Finset State)
-    (successors : State → Finset State) (accepting : Finset State) :
-    acceptingLasso? order seeds successors accepting =
-      acceptingLassoCached? order seeds successors accepting := by
-  rw [acceptingLasso?_eq_reference, acceptingLassoCached?_eq_reference]
+    exact PreparedReachable.acceptingLasso?_eq_spec _ _ _
 
 theorem acceptingLasso?_sound (order : Enumeration State) (seeds : Finset State)
     (successors : State → Finset State) (accepting : Finset State) {l : Lasso State}
     (h : acceptingLasso? order seeds successors accepting = some l) :
     l.Valid seeds successors ∧ l.entry ∈ accepting := by
-  rw [acceptingLasso?_eq_cached] at h
-  exact acceptingLassoCached?_sound _ _ _ _ h
+  rw [acceptingLasso?_eq_spec] at h
+  exact lassoSpec?_sound _ _ _ _ h
 
 theorem acceptingLasso?_isSome_iff (order : Enumeration State) (seeds : Finset State)
     (successors : State → Finset State) (accepting : Finset State) :
     (acceptingLasso? order seeds successors accepting).isSome = true ↔
       hasAcceptingCycle seeds successors accepting = true := by
-  rw [acceptingLasso?_eq_cached]
-  exact acceptingLassoCached?_isSome_iff _ _ _ _
+  rw [acceptingLasso?_eq_spec, lassoSpec?_isSome_iff, hasAcceptingCycle_eq_true_iff]
 
 theorem acceptingLasso?_iff_run (order : Enumeration State) (seeds : Finset State)
     (successors : State → Finset State) (accepting : Finset State) :

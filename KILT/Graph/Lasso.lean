@@ -1,4 +1,4 @@
-import KILT.Graph.Buchi
+import KILT.Graph.Acceptance
 
 /-!
 # Finite descriptions of infinite executions

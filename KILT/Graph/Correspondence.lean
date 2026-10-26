@@ -1,4 +1,5 @@
-import KILT.Graph.IndexedPrepare
+import KILT.Graph.Prepare
+import KILT.Graph.Acceptance
 
 /-! Preservation of finite paths and Büchi cycles by reachable graph storage. -/
 namespace KILT.Graph.PreparedReachable

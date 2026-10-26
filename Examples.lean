@@ -1,5 +1,5 @@
 import Examples.Efficiency
-import Examples.Indexed
+import Examples.GraphStorage
 import Examples.Basic
 import Examples.Integration
 import Examples.Syntax

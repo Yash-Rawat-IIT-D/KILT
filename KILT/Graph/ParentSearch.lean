@@ -1,13 +1,14 @@
-import KILT.Graph.IndexedParents
+import KILT.Graph.Parents
+import KILT.Graph.Specification.Rounds
 
 /-! Stability and target stopping without storing complete routes. -/
-namespace KILT.Graph.IndexedGraph
+namespace KILT.Graph.FiniteGraph
 
-def Parents.grows {g : IndexedGraph} (previous expanded : Parents g) : Bool :=
+def Parents.grows {g : FiniteGraph} (previous expanded : Parents g) : Bool :=
   (List.finRange g.size).any (fun i =>
     (previous.get i).depth.isNone && (expanded.get i).depth.isSome)
 
-theorem Parents.no_growth_fixed {g : IndexedGraph} (p : Parents g)
+theorem Parents.no_growth_fixed {g : FiniteGraph} (p : Parents g)
     {routes : RouteTable g.Vertex} (h : p.Represents routes) (order : Enumeration g.Vertex)
     (hg : p.grows (p.round order) = false) : expandRouteTable order g.successors routes = routes := by
   have hexp := p.round_represents h order
@@ -21,7 +22,7 @@ theorem Parents.no_growth_fixed {g : IndexedGraph} (p : Parents g)
     have ht := hg target (by simp)
     cases hp : (p.get target).depth <;> simp_all
 
-def Parents.search {g : IndexedGraph} (order : Enumeration g.Vertex)
+def Parents.search {g : FiniteGraph} (order : Enumeration g.Vertex)
     (target : Option g.Vertex) : Nat → Parents g → Parents g
   | 0, p => p
   | fuel + 1, p =>
@@ -31,7 +32,7 @@ def Parents.search {g : IndexedGraph} (order : Enumeration g.Vertex)
 
 /-- The proof-only routes may be a stopped prefix. A full query has the full
 reference table; a target query has the exact reference route at its target. -/
-theorem Parents.search_spec {g : IndexedGraph} (order : Enumeration g.Vertex)
+theorem Parents.search_spec {g : FiniteGraph} (order : Enumeration g.Vertex)
     (target : Option g.Vertex) (fuel : Nat) (p : Parents g)
     (routes : RouteTable g.Vertex) (h : p.Represents routes) :
     ∃ result, (p.search order target fuel).Represents result ∧
@@ -64,22 +65,22 @@ theorem Parents.search_spec {g : IndexedGraph} (order : Enumeration g.Vertex)
           routeRounds_fixed order g.successors (fuel + 1) routes hf
         exact ⟨routes, h, fun _ => hall.symm, fun q _ => congrFun hall.symm q⟩
 
-def parentRouteFast? (g : IndexedGraph) (order : Enumeration g.Vertex)
+def parentRouteFast? (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (target : g.Vertex) : Option (List g.Vertex) :=
   let p := (Parents.initial g seeds).search order (some target) g.size
   p.unwind (g.size + 1) target []
 
-theorem parentRouteFast?_eq (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem parentRouteFast?_eq (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (target : g.Vertex) :
-    parentRouteFast? g order seeds target = route? order seeds g.successors target := by
+    parentRouteFast? g order seeds target = routeSpec? order seeds g.successors target := by
   let p := (Parents.initial g seeds).search order (some target) g.size
   obtain ⟨routes, hrep, _, htarget⟩ := Parents.search_spec order (some target) g.size
     (Parents.initial g seeds) (initialRouteTable seeds) (Parents.initial_represents g seeds)
   change p.Represents routes at hrep
-  have ht : routes target = route? order seeds g.successors target := by
-    simpa only [routeRounds_initial, route?, Fintype.card_fin] using htarget target rfl
+  have ht : routes target = routeSpec? order seeds g.successors target := by
+    simpa only [routeRounds_initial, routeSpec?, Fintype.card_fin] using htarget target rfl
   change p.unwind (g.size + 1) target [] = _
-  cases hr : route? order seeds g.successors target with
+  cases hr : routeSpec? order seeds g.successors target with
   | none =>
     have he : p.get target = .unseen := by
       have hp := hrep target
@@ -96,7 +97,7 @@ theorem parentRouteFast?_eq (g : IndexedGraph) (order : Enumeration g.Vertex)
     let full := Parents.rounds g order seeds g.size
     have hfull := Parents.rounds_represents g order seeds g.size
     have hr' : routeTables order seeds g.successors g.size target = some path := by
-      simpa only [route?, Fintype.card_fin] using hr
+      simpa only [routeSpec?, Fintype.card_fin] using hr
     have hn := full.represents_nonempty hfull target hr'
     have hd := full.represents_depth hfull target hr'
     have hb := Parents.rounds_depth g order seeds g.size target
@@ -107,13 +108,13 @@ theorem parentRouteFast?_eq (g : IndexedGraph) (order : Enumeration g.Vertex)
     have bound : path.length ≤ g.size + 1 := by omega
     simpa using p.unwind_correct hrep (g.size + 1) target [] path hp bound
 
-def Parents.forest (g : IndexedGraph) (order : Enumeration g.Vertex)
+def Parents.forest (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) : Parents g :=
   (Parents.initial g seeds).search order none g.size
 
-theorem Parents.forest_represents (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem Parents.forest_represents (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) :
-    (Parents.forest g order seeds).Represents (route? order seeds g.successors) := by
+    (Parents.forest g order seeds).Represents (routeSpec? order seeds g.successors) := by
   obtain ⟨routes, hrep, hfull, _⟩ := Parents.search_spec order none g.size
     (Parents.initial g seeds) (initialRouteTable seeds) (Parents.initial_represents g seeds)
   have heq := hfull rfl
@@ -121,16 +122,16 @@ theorem Parents.forest_represents (g : IndexedGraph) (order : Enumeration g.Vert
   subst routes
   intro i
   have hi := hrep i
-  simpa only [Parents.Represents, Graph.route?, Fintype.card_fin, Parents.forest] using hi
+  simpa only [Parents.Represents, Graph.routeSpec?, Fintype.card_fin, Parents.forest] using hi
 
-theorem Parents.forest_unwind (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem Parents.forest_unwind (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (target : g.Vertex) :
     (Parents.forest g order seeds).unwind (g.size + 1) target [] =
-      route? order seeds g.successors target := by
+      routeSpec? order seeds g.successors target := by
   let p := Parents.forest g order seeds
-  have hrep : p.Represents (route? order seeds g.successors) := Parents.forest_represents g order seeds
+  have hrep : p.Represents (routeSpec? order seeds g.successors) := Parents.forest_represents g order seeds
   change p.unwind (g.size + 1) target [] = _
-  cases hr : route? order seeds g.successors target with
+  cases hr : routeSpec? order seeds g.successors target with
   | none =>
     have he : p.get target = .unseen := by
       have ht := hrep target
@@ -146,7 +147,7 @@ theorem Parents.forest_unwind (g : IndexedGraph) (order : Enumeration g.Vertex)
     let full := Parents.rounds g order seeds g.size
     have hfull := Parents.rounds_represents g order seeds g.size
     have hr' : routeTables order seeds g.successors g.size target = some path := by
-      simpa only [route?, Fintype.card_fin] using hr
+      simpa only [routeSpec?, Fintype.card_fin] using hr
     have hn := full.represents_nonempty hfull target hr'
     have hd := full.represents_depth hfull target hr'
     have hb := Parents.rounds_depth g order seeds g.size target
@@ -157,15 +158,15 @@ theorem Parents.forest_unwind (g : IndexedGraph) (order : Enumeration g.Vertex)
     have bound : path.length ≤ g.size + 1 := by omega
     simpa using p.unwind_correct hrep (g.size + 1) target [] path hr bound
 
-theorem Parents.target_isSome (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem Parents.target_isSome (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (target : g.Vertex) :
     (((Parents.initial g seeds).search order (some target) g.size).get target).depth.isSome =
-      (route? order seeds g.successors target).isSome := by
+      (routeSpec? order seeds g.successors target).isSome := by
   obtain ⟨routes, hrep, _, htarget⟩ := Parents.search_spec order (some target) g.size
     (Parents.initial g seeds) (initialRouteTable seeds) (Parents.initial_represents g seeds)
   have h := ((Parents.initial g seeds).search order (some target) g.size).isSome_iff hrep target
-  have heq : routes target = route? order seeds g.successors target := by
-    simpa only [routeRounds_initial, route?, Fintype.card_fin] using htarget target rfl
+  have heq : routes target = routeSpec? order seeds g.successors target := by
+    simpa only [routeRounds_initial, routeSpec?, Fintype.card_fin] using htarget target rfl
   simpa only [heq] using h
 
-end KILT.Graph.IndexedGraph
+end KILT.Graph.FiniteGraph

@@ -11,27 +11,27 @@ def shape {S : Type} (result : Option (Lasso S)) : Option (List S × List S) :=
 
 theorem empty_states :
     (acceptingLasso? (Enumeration.fin 0) ∅ (fun _ => ∅) ∅).isSome = false := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 theorem empty_seeds :
     (acceptingLasso? unitOrder ∅ (fun _ => {()}) {()}).isSome = false := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 theorem empty_acceptance :
     (acceptingLasso? unitOrder {()} (fun _ => {()}) ∅).isSome = false := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 theorem accepting_deadlock :
     (acceptingLasso? unitOrder {()} (fun _ => ∅) {()}).isSome = false := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 theorem accepting_self_loop :
     shape (acceptingLasso? unitOrder {()} (fun _ => {()}) {()}) = some ([], [()]) := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 def chainEdges (s : Fin 5) : Finset (Fin 5) :=
@@ -41,28 +41,30 @@ def chainEdges (s : Fin 5) : Finset (Fin 5) :=
 theorem prefix_and_cycle :
     shape (acceptingLasso? (Enumeration.fin 5) {0} chainEdges {1}) =
       some ([0], [1, 2]) := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 theorem transient_acceptance :
     (acceptingLasso? (Enumeration.fin 5) {0} chainEdges {0}).isSome = false := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 theorem unreachable_cycle :
     (acceptingLasso? (Enumeration.fin 5) {0} chainEdges {3}).isSome = false := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 theorem multiple_initials :
     shape (acceptingLasso? (Enumeration.fin 5) {0, 3} chainEdges {3}) =
       some ([], [3]) := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
-theorem materialized_round :
-    tableLookup none (storedRouteTables (Enumeration.fin 5) {0} chainEdges 2) 2 =
-      some [0, 1, 2] := by decide
+abbrev chainGraph : FiniteGraph := ⟨5, #[#[1], #[2], #[1], #[3], #[]], rfl⟩
+
+theorem parent_round :
+    (FiniteGraph.Parents.rounds chainGraph (Enumeration.fin 5) {0} 2).unwind 6 2 [] =
+      some [0, 1, 2] := by decide +kernel
 
 def branchEdges (s : Fin 3) : Finset (Fin 3) := if s = 0 then {1, 2} else {s}
 def reverseOrder : Enumeration (Fin 3) := Enumeration.ofList [2, 1, 0] (by decide)
@@ -70,19 +72,19 @@ def reverseOrder : Enumeration (Fin 3) := Enumeration.ofList [2, 1, 0] (by decid
 theorem first_branch :
     shape (acceptingLasso? (Enumeration.fin 3) {0} branchEdges {1, 2}) =
       some ([0], [1]) := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 theorem second_branch :
     shape (acceptingLasso? reverseOrder {0} branchEdges {1, 2}) =
       some ([0], [2]) := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 /-- An accepting branch suffices even though the other branch rejects. -/
 theorem existential_branch :
     (acceptingLasso? (Enumeration.fin 3) {0} branchEdges {2}).isSome = true := by
-  rw [acceptingLasso?_eq_cached]
+  rw [acceptingLasso?_eq_spec]
   decide
 
 def replayExample : Lasso Nat := ⟨[0], [1, 2], by decide⟩

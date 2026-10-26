@@ -1,4 +1,4 @@
-import KILT.Graph.Routes
+import KILT.Graph.Specification.Routes
 import Mathlib.Data.List.FinRange
 
 /-! Explicit traversal orders, with executable products, subtypes and powersets. -/
@@ -59,5 +59,38 @@ private theorem mem_subsetList (states : List State) (s : Finset State)
 
 def finset (order : Enumeration State) : Enumeration (Finset State) :=
   ofList (subsetList order.states) (fun s => mem_subsetList _ s (fun a _ => order.complete a))
+
+/-- Evaluate an order-independent result on the finite carrier's list quotient.
+No list is chosen from an unordered set: permutation invariance makes the
+quotient elimination well-defined. Witness-producing APIs still take an order.
+The fallback extends the lift to incomplete lists; completeness of Fintype.univ
+proves that branch unreachable for this carrier. Execution failures are not caught. -/
+def runInvariant [Fintype State] {Result : Type*} (fallback : Result)
+    (operation : Enumeration State → Result)
+    (invariant : ∀ a b, operation a = operation b) : Result :=
+  Quotient.liftOn (Finset.univ : Finset State).val
+    (fun xs => if h : ∀ s, s ∈ xs then operation (ofList xs h) else fallback)
+    (by
+      intro xs ys perm
+      have complete : (∀ s, s ∈ xs) ↔ (∀ s, s ∈ ys) :=
+        forall_congr' (fun s => perm.mem_iff)
+      by_cases hx : ∀ s, s ∈ xs
+      · rw [dif_pos hx, dif_pos (complete.mp hx)]
+        exact invariant _ _
+      · rw [dif_neg hx, dif_neg (fun hy => hx (complete.mpr hy))])
+
+theorem runInvariant_eq [Fintype State] {Result : Type*} (fallback : Result)
+    (operation : Enumeration State → Result)
+    (invariant : ∀ a b, operation a = operation b) (specification : Result)
+    (correct : ∀ order, operation order = specification) :
+    runInvariant fallback operation invariant = specification := by
+  unfold runInvariant
+  generalize hm : (Finset.univ : Finset State).val = m
+  have complete : ∀ s, s ∈ m := by intro s; rw [← hm]; simp
+  induction m using Quotient.inductionOn with
+  | h xs =>
+    have hx : ∀ s, s ∈ xs := by simpa using complete
+    simp only [Quotient.lift_mk, dif_pos hx]
+    exact correct _
 
 end KILT.Graph.Enumeration

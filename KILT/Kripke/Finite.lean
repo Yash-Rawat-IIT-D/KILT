@@ -1,5 +1,6 @@
  import KILT.Kripke.Semantics
 import KILT.Graph.Routes
+import KILT.Graph.Reachability
 
 /-!
 # Executable finite Kripke structures

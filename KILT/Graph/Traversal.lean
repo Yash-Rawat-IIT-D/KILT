@@ -1,31 +1,32 @@
-import KILT.Graph.IndexedCorrect
+import KILT.Graph.Correspondence
+import KILT.Graph.Specification.Rounds
 
 /-! Boolean visited arrays and new-discovery frontiers. -/
-namespace KILT.Graph.IndexedGraph
+namespace KILT.Graph.FiniteGraph
 
-structure Visits (g : IndexedGraph) where
+structure Visits (g : FiniteGraph) where
   bits : Array Bool
   size_eq : bits.size = g.size
   frontier : List g.Vertex
 
-def Visits.get {g : IndexedGraph} (v : Visits g) (i : g.Vertex) : Bool :=
+def Visits.get {g : FiniteGraph} (v : Visits g) (i : g.Vertex) : Bool :=
   v.bits[i.val]'(by simpa only [v.size_eq] using i.isLt)
 
-def Visits.view {g : IndexedGraph} (v : Visits g) : Finset g.Vertex :=
+def Visits.view {g : FiniteGraph} (v : Visits g) : Finset g.Vertex :=
   Finset.univ.filter (fun i => v.get i)
 
-@[simp] theorem Visits.mem_view {g : IndexedGraph} (v : Visits g) (i : g.Vertex) :
+@[simp] theorem Visits.mem_view {g : FiniteGraph} (v : Visits g) (i : g.Vertex) :
     i ∈ v.view ↔ v.get i = true := by simp [view]
 
-structure Visits.Valid {g : IndexedGraph} (v : Visits g) : Prop where
+structure Visits.Valid {g : FiniteGraph} (v : Visits g) : Prop where
   covered : ∀ i ∈ v.frontier, v.get i = true
   past : ∀ i, v.get i = true → i ∉ v.frontier → ∀ j ∈ g.successors i, v.get j = true
 
-def Visits.initial (g : IndexedGraph) (seeds : Finset g.Vertex) : Visits g :=
+def Visits.initial (g : FiniteGraph) (seeds : Finset g.Vertex) : Visits g :=
   ⟨Array.ofFn (fun i => decide (i ∈ seeds)), by simp,
     (List.finRange g.size).filter (fun i => decide (i ∈ seeds))⟩
 
-theorem Visits.initial_valid (g : IndexedGraph) (seeds : Finset g.Vertex) :
+theorem Visits.initial_valid (g : FiniteGraph) (seeds : Finset g.Vertex) :
     (Visits.initial g seeds).Valid := by
   constructor
   · intro i hi
@@ -34,26 +35,26 @@ theorem Visits.initial_valid (g : IndexedGraph) (seeds : Finset g.Vertex) :
     have hm : i ∈ seeds := by simpa [initial, get] using hi
     exact (hnot (by simp [initial, hm])).elim
 
-@[simp] theorem Visits.initial_view (g : IndexedGraph) (seeds : Finset g.Vertex) :
+@[simp] theorem Visits.initial_view (g : FiniteGraph) (seeds : Finset g.Vertex) :
     (Visits.initial g seeds).view = seeds := by
   ext i
   simp [initial, get]
 
-def Visits.advance {g : IndexedGraph} (v : Visits g) : Visits g :=
+def Visits.advance {g : FiniteGraph} (v : Visits g) : Visits g :=
   let bits := Array.ofFn (fun target => v.get target || v.frontier.any
     (fun source => g.edge source target))
   ⟨bits, by simp [bits], (List.finRange g.size).filter
     (fun i => !v.get i && bits[i.val]'(by simpa [bits] using i.isLt))⟩
 
-theorem Visits.get_advance {g : IndexedGraph} (v : Visits g) (i : g.Vertex) :
+theorem Visits.get_advance {g : FiniteGraph} (v : Visits g) (i : g.Vertex) :
     v.advance.get i = (v.get i || v.frontier.any (fun source => decide (i ∈ g.successors source))) := by
   simp [advance, get, edge_eq_decide]
 
-theorem Visits.mem_advance_frontier {g : IndexedGraph} (v : Visits g) (i : g.Vertex) :
+theorem Visits.mem_advance_frontier {g : FiniteGraph} (v : Visits g) (i : g.Vertex) :
     i ∈ v.advance.frontier ↔ v.get i = false ∧ v.advance.get i = true := by
   simp [advance, get, edge_eq_decide]
 
-theorem Visits.advance_valid {g : IndexedGraph} (v : Visits g) (h : v.Valid) : v.advance.Valid := by
+theorem Visits.advance_valid {g : FiniteGraph} (v : Visits g) (h : v.Valid) : v.advance.Valid := by
   constructor
   · intro i hi
     exact ((v.mem_advance_frontier i).mp hi).2
@@ -68,7 +69,7 @@ theorem Visits.advance_valid {g : IndexedGraph} (v : Visits g) (h : v.Valid) : v
       exact List.any_eq_true.mpr ⟨i, hf, by simpa using hj⟩
     · exact Or.inl (h.past i hold hf j hj)
 
-theorem Visits.advance_view {g : IndexedGraph} (v : Visits g) (h : v.Valid) :
+theorem Visits.advance_view {g : FiniteGraph} (v : Visits g) (h : v.Valid) :
     v.advance.view = expand g.successors v.view := by
   ext target
   simp only [mem_view, get_advance, Bool.or_eq_true_iff, List.any_eq_true, decide_eq_true_eq,
@@ -83,19 +84,19 @@ theorem Visits.advance_view {g : IndexedGraph} (v : Visits g) (h : v.Valid) :
       · exact Or.inr ⟨source, hf, he⟩
       · exact Or.inl (h.past source hs hf target he)
 
-theorem Visits.empty_fixed {g : IndexedGraph} (v : Visits g) (h : v.Valid)
+theorem Visits.empty_fixed {g : FiniteGraph} (v : Visits g) (h : v.Valid)
     (he : v.frontier = []) : expand g.successors v.view = v.view := by
   rw [← v.advance_view h]
   ext i
   simp [get_advance, he]
 
-def Visits.search {g : IndexedGraph} (target : g.Vertex) : Nat → Visits g → Bool
+def Visits.search {g : FiniteGraph} (target : g.Vertex) : Nat → Visits g → Bool
   | 0, v => v.get target
   | fuel + 1, v =>
     if v.get target then true else
       if v.frontier.isEmpty then false else Visits.search target fuel v.advance
 
-theorem Visits.search_eq {g : IndexedGraph} (target : g.Vertex) (fuel : Nat)
+theorem Visits.search_eq {g : FiniteGraph} (target : g.Vertex) (fuel : Nat)
     (v : Visits g) (h : v.Valid) :
     v.search target fuel = decide (target ∈ expandRounds g.successors fuel v.view) := by
   induction fuel generalizing v with
@@ -118,13 +119,13 @@ theorem Visits.search_eq {g : IndexedGraph} (target : g.Vertex) (fuel : Nat)
         rfl
 
 /-- Boolean reachability with no parent or complete-route allocation. -/
-def reachable? (g : IndexedGraph) (seeds : Finset g.Vertex) (target : g.Vertex) : Bool :=
+def reachable? (g : FiniteGraph) (seeds : Finset g.Vertex) (target : g.Vertex) : Bool :=
   (Visits.initial g seeds).search target g.size
 
-theorem reachable?_eq (g : IndexedGraph) (seeds : Finset g.Vertex) (target : g.Vertex) :
-    g.reachable? seeds target = Graph.reachable? seeds g.successors target := by
+theorem reachable?_eq_spec (g : FiniteGraph) (seeds : Finset g.Vertex) (target : g.Vertex) :
+    g.reachable? seeds target = decide (target ∈ reachableSetSpec seeds g.successors) := by
   rw [reachable?, Visits.search_eq _ _ _ (Visits.initial_valid g seeds), Visits.initial_view,
-    Graph.reachable?, targetSearch_eq]
-  simp only [Fintype.card_fin]
+    expandRounds_eq_layers]
+  simp only [reachableSetSpec, Fintype.card_fin]
 
-end KILT.Graph.IndexedGraph
+end KILT.Graph.FiniteGraph

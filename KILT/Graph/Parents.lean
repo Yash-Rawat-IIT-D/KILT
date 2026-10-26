@@ -1,4 +1,4 @@
-import KILT.Graph.IndexedCorrect
+import KILT.Graph.Correspondence
 
 /-!
 # Parent storage and reconstruction
@@ -7,7 +7,7 @@ Entries contain only a root marker or a predecessor ID and depth. The
 representation predicate is proof-only: complete routes are not stored in the
 executable forest. Reconstruction follows predecessor IDs with an accumulator.
 -/
-namespace KILT.Graph.IndexedGraph
+namespace KILT.Graph.FiniteGraph
 
 inductive Parent (n : Nat) where
   | unseen
@@ -20,22 +20,22 @@ def Parent.depth : Parent n → Option Nat
   | .root => some 0
   | .via _ d => some d
 
-structure Parents (g : IndexedGraph) where
+structure Parents (g : FiniteGraph) where
   entries : Array (Parent g.size)
   size_eq : entries.size = g.size
 
-def Parents.get {g : IndexedGraph} (p : Parents g) (i : g.Vertex) : Parent g.size :=
+def Parents.get {g : FiniteGraph} (p : Parents g) (i : g.Vertex) : Parent g.size :=
   p.entries[i.val]'(by simpa only [p.size_eq] using i.isLt)
 
 /-- A proof-only relationship to a route specification. -/
-def Parents.Represents {g : IndexedGraph} (p : Parents g) (routes : RouteTable g.Vertex) : Prop :=
+def Parents.Represents {g : FiniteGraph} (p : Parents g) (routes : RouteTable g.Vertex) : Prop :=
   ∀ i, match p.get i with
   | .unseen => routes i = none
   | .root => routes i = some [i]
   | .via source depth => ∃ path, routes source = some path ∧
       routes i = some (path ++ [i]) ∧ path.length = depth
 
-theorem Parents.represents_nonempty {g : IndexedGraph} (p : Parents g)
+theorem Parents.represents_nonempty {g : FiniteGraph} (p : Parents g)
     {routes : RouteTable g.Vertex} (h : p.Represents routes) (i : g.Vertex)
     {path : List g.Vertex} (hp : routes i = some path) : path ≠ [] := by
   have hi := h i
@@ -51,7 +51,7 @@ theorem Parents.represents_nonempty {g : IndexedGraph} (p : Parents g)
     have := Option.some.inj (hp.symm.trans hr)
     simp [this]
 
-theorem Parents.represents_depth {g : IndexedGraph} (p : Parents g)
+theorem Parents.represents_depth {g : FiniteGraph} (p : Parents g)
     {routes : RouteTable g.Vertex} (h : p.Represents routes) (i : g.Vertex)
     {path : List g.Vertex} (hp : routes i = some path) :
     (p.get i).depth = some (path.length - 1) := by
@@ -68,7 +68,7 @@ theorem Parents.represents_depth {g : IndexedGraph} (p : Parents g)
     have hx := Option.some.inj (hp.symm.trans hr)
     simp [Parent.depth, hx, hd]
 
-def Parents.unwind {g : IndexedGraph} (p : Parents g) :
+def Parents.unwind {g : FiniteGraph} (p : Parents g) :
     Nat → g.Vertex → List g.Vertex → Option (List g.Vertex)
   | 0, _, _ => none
   | fuel + 1, target, suffix =>
@@ -79,7 +79,7 @@ def Parents.unwind {g : IndexedGraph} (p : Parents g) :
 
 /-- Following pointers reconstructs the specification route. The complete route
 appears only in the theorem and the successful output, not in parent entries. -/
-theorem Parents.unwind_correct {g : IndexedGraph} (p : Parents g)
+theorem Parents.unwind_correct {g : FiniteGraph} (p : Parents g)
     {routes : RouteTable g.Vertex} (h : p.Represents routes)
     (fuel : Nat) (target : g.Vertex) (suffix : List g.Vertex)
     (path : List g.Vertex) (hp : routes target = some path) (bound : path.length ≤ fuel) :
@@ -108,7 +108,7 @@ theorem Parents.unwind_correct {g : IndexedGraph} (p : Parents g)
         ih source (target :: suffix) prior hprior hb
 
 /-- Any represented parent points to a strictly smaller discovery depth. -/
-theorem Parents.parent_depth_lt {g : IndexedGraph} (p : Parents g)
+theorem Parents.parent_depth_lt {g : FiniteGraph} (p : Parents g)
     {routes : RouteTable g.Vertex} (h : p.Represents routes)
     (target source : g.Vertex) (depth : Nat) (he : p.get target = .via source depth) :
     ∃ sourceDepth, (p.get source).depth = some sourceDepth ∧ sourceDepth < depth := by
@@ -120,16 +120,16 @@ theorem Parents.parent_depth_lt {g : IndexedGraph} (p : Parents g)
   have hl := List.length_pos_iff.mpr hn
   omega
 
-def Parents.initial (g : IndexedGraph) (seeds : Finset g.Vertex) : Parents g :=
+def Parents.initial (g : FiniteGraph) (seeds : Finset g.Vertex) : Parents g :=
   ⟨Array.ofFn (fun i => if i ∈ seeds then .root else .unseen), by simp⟩
 
-theorem Parents.initial_represents (g : IndexedGraph) (seeds : Finset g.Vertex) :
+theorem Parents.initial_represents (g : FiniteGraph) (seeds : Finset g.Vertex) :
     (Parents.initial g seeds).Represents (initialRouteTable seeds) := by
   intro i
   simp only [initial, get, Array.getElem_ofFn]
   by_cases hi : i ∈ seeds <;> simp [hi, initialRouteTable]
 
-theorem Parents.isSome_iff {g : IndexedGraph} (p : Parents g)
+theorem Parents.isSome_iff {g : FiniteGraph} (p : Parents g)
     {routes : RouteTable g.Vertex} (h : p.Represents routes) (i : g.Vertex) :
     (p.get i).depth.isSome = (routes i).isSome := by
   have hi := h i
@@ -141,12 +141,12 @@ theorem Parents.isSome_iff {g : IndexedGraph} (p : Parents g)
     obtain ⟨_, _, hr, _⟩ := hi
     simp [Parent.depth, hr]
 
-def Parents.predecessor? {g : IndexedGraph} (p : Parents g)
+def Parents.predecessor? {g : FiniteGraph} (p : Parents g)
     (order : Enumeration g.Vertex) (target : g.Vertex) : Option g.Vertex :=
   order.states.find? (fun source => (p.get source).depth.isSome &&
     g.edge source target)
 
-theorem Parents.predecessor?_eq {g : IndexedGraph} (p : Parents g)
+theorem Parents.predecessor?_eq {g : FiniteGraph} (p : Parents g)
     {routes : RouteTable g.Vertex} (h : p.Represents routes)
     (order : Enumeration g.Vertex) (target : g.Vertex) :
     p.predecessor? order target = Graph.predecessor? order g.successors routes target := by
@@ -157,7 +157,7 @@ theorem Parents.predecessor?_eq {g : IndexedGraph} (p : Parents g)
 
 /-- Reference synchronous parent round. This establishes the storage refinement
 before replacing the round schedule by edge-frontier traversal. -/
-def Parents.round {g : IndexedGraph} (p : Parents g) (order : Enumeration g.Vertex) : Parents g :=
+def Parents.round {g : FiniteGraph} (p : Parents g) (order : Enumeration g.Vertex) : Parents g :=
   ⟨Array.ofFn (fun target =>
     match p.get target with
     | .unseen =>
@@ -166,7 +166,7 @@ def Parents.round {g : IndexedGraph} (p : Parents g) (order : Enumeration g.Vert
       | some source => .via source ((p.get source).depth.getD 0 + 1)
     | entry => entry), by simp⟩
 
-theorem Parents.round_represents {g : IndexedGraph} (p : Parents g)
+theorem Parents.round_represents {g : FiniteGraph} (p : Parents g)
     {routes : RouteTable g.Vertex} (h : p.Represents routes) (order : Enumeration g.Vertex) :
     (p.round order).Represents (expandRouteTable order g.successors routes) := by
   intro target
@@ -210,19 +210,19 @@ theorem Parents.round_represents {g : IndexedGraph} (p : Parents g)
     obtain ⟨prior, hs, ht, hd⟩ := ht
     exact ⟨prior, by simp [expandRouteTable, hs], by simp [expandRouteTable, ht], hd⟩
 
-def Parents.rounds (g : IndexedGraph) (order : Enumeration g.Vertex)
+def Parents.rounds (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) : Nat → Parents g
   | 0 => Parents.initial g seeds
   | n + 1 => (Parents.rounds g order seeds n).round order
 
-theorem Parents.rounds_represents (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem Parents.rounds_represents (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (n : Nat) :
     (Parents.rounds g order seeds n).Represents (routeTables order seeds g.successors n) := by
   induction n with
   | zero => exact Parents.initial_represents g seeds
   | succ n ih => exact Parents.round_represents _ ih order
 
-theorem Parents.rounds_depth (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem Parents.rounds_depth (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (n : Nat) (i : g.Vertex) :
     ((Parents.rounds g order seeds n).get i).depth.getD 0 ≤ n := by
   induction n generalizing i with
@@ -251,17 +251,17 @@ theorem Parents.rounds_depth (g : IndexedGraph) (order : Enumeration g.Vertex)
       omega
 
 /-- Reconstruct just the requested route from a cardinality-bounded forest. -/
-def parentRoute? (g : IndexedGraph) (order : Enumeration g.Vertex)
+def parentRoute? (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (target : g.Vertex) : Option (List g.Vertex) :=
   (Parents.rounds g order seeds g.size).unwind (g.size + 1) target []
 
-theorem parentRoute?_eq (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem parentRoute?_eq (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (target : g.Vertex) :
-    parentRoute? g order seeds target = route? order seeds g.successors target := by
+    parentRoute? g order seeds target = routeSpec? order seeds g.successors target := by
   let p := Parents.rounds g order seeds g.size
   have hr : p.Represents (routeTables order seeds g.successors g.size) :=
     Parents.rounds_represents g order seeds g.size
-  simp only [parentRoute?, route?, Fintype.card_fin]
+  simp only [parentRoute?, routeSpec?, Fintype.card_fin]
   change p.unwind (g.size + 1) target [] = routeTables order seeds g.successors g.size target
   cases ht : routeTables order seeds g.successors g.size target with
   | none =>
@@ -286,4 +286,4 @@ theorem parentRoute?_eq (g : IndexedGraph) (order : Enumeration g.Vertex)
     have bound : path.length ≤ g.size + 1 := by omega
     simpa using p.unwind_correct hr (g.size + 1) target [] path ht bound
 
-end KILT.Graph.IndexedGraph
+end KILT.Graph.FiniteGraph

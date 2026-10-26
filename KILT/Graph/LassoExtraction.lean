@@ -1,13 +1,13 @@
-import KILT.Graph.IndexedTransport
-import KILT.Graph.IndexedFrontier
-import KILT.Graph.CachedLasso
+import KILT.Graph.RouteTransport
+import KILT.Graph.Frontier
+import KILT.Graph.Specification.Lasso
 
 /-! Accepting lasso extraction with parent storage and exact route transport. -/
 namespace KILT.Graph
 
-namespace IndexedGraph
+namespace FiniteGraph
 
-private def parentCandidate? (g : IndexedGraph) (order : Enumeration g.Vertex)
+private def parentCandidate? (g : FiniteGraph) (order : Enumeration g.Vertex)
     (accepting : Finset g.Vertex) (stems : Parents g) (q : g.Vertex) : Option (Lasso g.Vertex) :=
   if q ∈ accepting then
     if (stems.get q).depth.isSome then
@@ -22,36 +22,36 @@ private def parentCandidate? (g : IndexedGraph) (order : Enumeration g.Vertex)
 
 /-- Keep only parent forests during expansion; reconstruct lists for the first
 successful candidate. This synchronous implementation is the storage reference. -/
-def acceptingLasso? (g : IndexedGraph) (order : Enumeration g.Vertex)
+def acceptingLasso? (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds accepting : Finset g.Vertex) : Option (Lasso g.Vertex) :=
   let stems := Parents.frontierForest g order seeds
   order.states.findSome? (parentCandidate? g order accepting stems)
 
-theorem acceptingLasso?_eq_reference (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem acceptingLasso?_eq_spec (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds accepting : Finset g.Vertex) :
     g.acceptingLasso? order seeds accepting =
-      Graph.acceptingLassoReference? order seeds g.successors accepting := by
-  rw [Graph.acceptingLassoReference?_eq_findSome]
+      Graph.lassoSpec? order seeds g.successors accepting := by
+  rw [Graph.lassoSpec?_eq_findSome]
   dsimp only [acceptingLasso?]
   apply congrArg (fun f => order.states.findSome? f)
   funext q
   let stems := Parents.frontierForest g order seeds
   let returns := (Parents.initial g (g.successors q)).frontierSearch order (some q) g.size 0
-  have hs : stems.unwind (g.size + 1) q [] = route? order seeds g.successors q :=
+  have hs : stems.unwind (g.size + 1) q [] = routeSpec? order seeds g.successors q :=
     by
       dsimp only [stems]
       rw [Parents.frontierForest_eq]
       exact Parents.forest_unwind g order seeds q
-  have hr : returns.unwind (g.size + 1) q [] = route? order (g.successors q) g.successors q :=
+  have hr : returns.unwind (g.size + 1) q [] = routeSpec? order (g.successors q) g.successors q :=
     by
       dsimp only [returns]
       rw [Parents.frontierTarget_eq]
       exact parentRouteFast?_eq g order (g.successors q) q
-  have hsk : (stems.get q).depth.isSome = (route? order seeds g.successors q).isSome := by
+  have hsk : (stems.get q).depth.isSome = (routeSpec? order seeds g.successors q).isSome := by
     dsimp only [stems]
     rw [Parents.frontierForest_eq]
     exact (Parents.forest g order seeds).isSome_iff (Parents.forest_represents g order seeds) q
-  have hrk : (returns.get q).depth.isSome = (route? order (g.successors q) g.successors q).isSome := by
+  have hrk : (returns.get q).depth.isSome = (routeSpec? order (g.successors q) g.successors q).isSome := by
     dsimp only [returns]
     rw [Parents.frontierTarget_eq]
     exact Parents.target_isSome g order (g.successors q) q
@@ -65,11 +65,11 @@ theorem acceptingLasso?_eq_reference (g : IndexedGraph) (order : Enumeration g.V
     else none else none else none) = _
   rw [hs, hr, hsk, hrk]
   split
-  · cases route? order seeds g.successors q <;>
-      cases route? order (g.successors q) g.successors q <;> rfl
+  · cases routeSpec? order seeds g.successors q <;>
+      cases routeSpec? order (g.successors q) g.successors q <;> rfl
   · rfl
 
-end IndexedGraph
+end FiniteGraph
 
 private theorem findSome_filterMap_map {α β γ δ : Type*} (xs : List α)
     (index : α → Option β) (candidate : β → Option γ) (decode : γ → δ) :
@@ -105,22 +105,22 @@ def acceptingLasso? (p : PreparedReachable seeds next) (original : Enumeration S
     (accepting : Finset State) : Option (Lasso State) :=
   (p.graph.acceptingLasso? (p.order original) p.initials (p.accepting accepting)).map (Lasso.map p.decode)
 
-theorem acceptingLasso?_eq_reference (p : PreparedReachable seeds next)
+theorem acceptingLasso?_eq_spec (p : PreparedReachable seeds next)
     (original : Enumeration State) (accepting : Finset State) :
-    p.acceptingLasso? original accepting = Graph.acceptingLassoReference? original seeds next accepting := by
+    p.acceptingLasso? original accepting = Graph.lassoSpec? original seeds next accepting := by
   unfold acceptingLasso?
-  rw [IndexedGraph.acceptingLasso?_eq_reference,
-    Graph.acceptingLassoReference?_eq_findSome, Graph.acceptingLassoReference?_eq_findSome]
+  rw [FiniteGraph.acceptingLasso?_eq_spec,
+    Graph.lassoSpec?_eq_findSome, Graph.lassoSpec?_eq_findSome]
   let localCandidate := fun q : p.graph.Vertex =>
     if q ∈ p.accepting accepting then
-      (route? (p.order original) p.initials p.graph.successors q).bind fun stem =>
-        (route? (p.order original) (p.graph.successors q) p.graph.successors q).map fun back =>
+      (routeSpec? (p.order original) p.initials p.graph.successors q).bind fun stem =>
+        (routeSpec? (p.order original) (p.graph.successors q) p.graph.successors q).map fun back =>
           (⟨stem.dropLast, q :: back.dropLast, List.cons_ne_nil _ _⟩ : Lasso p.graph.Vertex)
     else none
   let originalCandidate := fun s : State =>
     if s ∈ accepting then
-      (route? original seeds next s).bind fun stem =>
-        (route? original (next s) next s).map fun back =>
+      (routeSpec? original seeds next s).bind fun stem =>
+        (routeSpec? original (next s) next s).map fun back =>
           (⟨stem.dropLast, s :: back.dropLast, List.cons_ne_nil _ _⟩ : Lasso State)
     else none
   change ((original.states.filterMap p.index?).findSome? localCandidate).map (Lasso.map p.decode) =
@@ -130,36 +130,36 @@ theorem acceptingLasso?_eq_reference (p : PreparedReachable seeds next)
   funext s
   cases hi : p.index? s with
   | none =>
-    have hs : route? original seeds next s = none :=
+    have hs : routeSpec? original seeds next s = none :=
       p.outside_routes original seeds (fun s hs => ⟨s, hs, .refl⟩) (Fintype.card State) s hi
     simp [hi, originalCandidate, hs]
   | some q =>
     have hd := (p.index?_eq_some_iff s q).mp hi
-    have hs := p.route?_transport original seeds (fun s hs => ⟨s, hs, .refl⟩) q
+    have hs := p.routeSpec?_transport original seeds (fun s hs => ⟨s, hs, .refl⟩) q
     rw [← p.initials_eq_query] at hs
     have covered : ∀ t ∈ next (p.decode q), Reachable seeds next t := by
       intro t ht
       obtain ⟨start, hstart, path⟩ := p.decode_reachable q
       exact ⟨start, hstart, path.tail ht⟩
-    have hr := p.route?_transport original (next (p.decode q)) covered q
+    have hr := p.routeSpec?_transport original (next (p.decode q)) covered q
     rw [← p.successors_eq_query q] at hr
     cases hd
     simp only [hi, Option.bind_some]
     by_cases ha : p.decode q ∈ accepting
     · simp only [localCandidate, originalCandidate, mem_accepting, ha, ↓reduceIte]
-      cases ht : route? (p.order original) p.initials p.graph.successors q with
+      cases ht : routeSpec? (p.order original) p.initials p.graph.successors q with
       | none =>
-        have hs' : route? original seeds next (p.decode q) = none := by simpa [ht] using hs.symm
+        have hs' : routeSpec? original seeds next (p.decode q) = none := by simpa [ht] using hs.symm
         simp [ht, hs']
       | some stem =>
-        have hs' : route? original seeds next (p.decode q) = some (stem.map p.decode) := by
+        have hs' : routeSpec? original seeds next (p.decode q) = some (stem.map p.decode) := by
           simpa [ht] using hs.symm
-        cases hb : route? (p.order original) (p.graph.successors q) p.graph.successors q with
+        cases hb : routeSpec? (p.order original) (p.graph.successors q) p.graph.successors q with
         | none =>
-          have hr' : route? original (next (p.decode q)) next (p.decode q) = none := by simpa [hb] using hr.symm
+          have hr' : routeSpec? original (next (p.decode q)) next (p.decode q) = none := by simpa [hb] using hr.symm
           simp [ht, hs', hb, hr']
         | some back =>
-          have hr' : route? original (next (p.decode q)) next (p.decode q) = some (back.map p.decode) := by
+          have hr' : routeSpec? original (next (p.decode q)) next (p.decode q) = some (back.map p.decode) := by
             simpa [hb] using hr.symm
           simp [ht, hs', hb, hr', Lasso.map, List.map_dropLast]
     · simp [localCandidate, originalCandidate, ha]

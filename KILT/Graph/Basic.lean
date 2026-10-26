@@ -1,10 +1,9 @@
 import KILT.Graph.Enumeration
-import KILT.Graph.Buchi
 import Mathlib.Data.Finset.Sort
 import Std.Data.ExtTreeMap.Lemmas
 
 /-!
-# Indexed finite graphs
+# Finite graphs with bounded adjacency arrays
 
 Rows contain only dense vertex IDs. Bounds are carried by the vertex type, and
 the outer array has exactly one row per vertex. The representation makes no
@@ -13,36 +12,36 @@ assumption that IDs agree with a user's witness-selection order.
 namespace KILT.Graph
 
 /-- A finite graph with checked, sparse adjacency arrays. -/
-structure IndexedGraph where
+structure FiniteGraph where
   size : Nat
   adjacency : Array (Array (Fin size))
   adjacency_size : adjacency.size = size
 
-namespace IndexedGraph
+namespace FiniteGraph
 
-abbrev Vertex (g : IndexedGraph) := Fin g.size
+abbrev Vertex (g : FiniteGraph) := Fin g.size
 
 /-- Direct row lookup: no original-state equality or dictionary lookup. -/
-def row (g : IndexedGraph) (i : g.Vertex) : Array g.Vertex :=
+def row (g : FiniteGraph) (i : g.Vertex) : Array g.Vertex :=
   g.adjacency[i.val]'(by simpa only [g.adjacency_size] using i.isLt)
 
 /-- Finite-set view for the existing mathematical graph contracts. -/
-def successors (g : IndexedGraph) (i : g.Vertex) : Finset g.Vertex :=
+def successors (g : FiniteGraph) (i : g.Vertex) : Finset g.Vertex :=
   (g.row i).toList.toFinset
 
-@[simp] theorem mem_successors (g : IndexedGraph) (i j : g.Vertex) :
+@[simp] theorem mem_successors (g : FiniteGraph) (i j : g.Vertex) :
     j ∈ g.successors i ↔ j ∈ (g.row i).toList := by
   simp [successors]
 
 /-- Executable adjacency test without constructing the finite-set proof view. -/
-def edge (g : IndexedGraph) (i j : g.Vertex) : Bool := (g.row i).contains j
+def edge (g : FiniteGraph) (i j : g.Vertex) : Bool := (g.row i).contains j
 
-theorem edge_eq_decide (g : IndexedGraph) (i j : g.Vertex) :
+theorem edge_eq_decide (g : FiniteGraph) (i j : g.Vertex) :
     g.edge i j = decide (j ∈ g.successors i) := by
   apply Bool.eq_iff_iff.mpr
   simp [edge, successors]
 
-end IndexedGraph
+end FiniteGraph
 
 universe u
 variable {State : Type u} [DecidableEq State]
@@ -165,7 +164,7 @@ theorem rankIndex?_eq_denseIndex? (order : Enumeration State) (states : Array St
 queries consume only the indexed graph, decoder and seed IDs. -/
 structure PreparedReachable [Fintype State] (seeds : Finset State)
     (next : State → Finset State) where
-  graph : IndexedGraph
+  graph : FiniteGraph
   states : Array State
   states_size : states.size = graph.size
   nodup : states.toList.Nodup

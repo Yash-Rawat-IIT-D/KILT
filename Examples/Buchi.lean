@@ -26,13 +26,21 @@ abbrev requestAtom := Examples.Syntax.Atom.request
 abbrev grantAtom := Examples.Syntax.Atom.grant
 
 theorem cycle_eventually_check :
-    cycleSystem.checkAgainst (Monitors.notEventually grantAtom) cycleSerial = true := by decide
+    cycleSystem.checkAgainst (Monitors.notEventually grantAtom) cycleSerial = true := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 theorem waiting_eventually_check :
-    waitingSystem.checkAgainst (Monitors.notEventually grantAtom) waitingSerial = false := by decide
+    waitingSystem.checkAgainst (Monitors.notEventually grantAtom) waitingSerial = false := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 theorem cycle_response_check :
-    cycleSystem.checkAgainst (Monitors.notResponse requestAtom grantAtom) cycleSerial = true := by decide
+    cycleSystem.checkAgainst (Monitors.notResponse requestAtom grantAtom) cycleSerial = true := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 theorem waiting_response_check :
-    waitingSystem.checkAgainst (Monitors.notResponse requestAtom grantAtom) waitingSerial = false := by decide
+    waitingSystem.checkAgainst (Monitors.notResponse requestAtom grantAtom) waitingSerial = false := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 
 /-- The computed verdict entails the original universal temporal contract. -/
 theorem cycle_response_from_checker :
@@ -76,13 +84,25 @@ theorem linearSerial (requests grants : Finset (Fin 4)) :
   exact ⟨if state = 3 then 3 else state + 1, by simp [FiniteKripke.toKripke, linear]⟩
 
 /-- Initial-position grant must be observed, even if grant never recurs. -/
-example : (linear ∅ {0}).checkAgainst (Monitors.notEventually 1) (linearSerial ∅ {0}) = true := by decide
-example : (linear ∅ ∅).checkAgainst (Monitors.notResponse 0 1) (linearSerial ∅ ∅) = true := by decide
-example : (linear {0} {0}).checkAgainst (Monitors.notResponse 0 1) (linearSerial {0} {0}) = true := by decide
-example : (linear {0} {2}).checkAgainst (Monitors.notResponse 0 1) (linearSerial {0} {2}) = true := by decide
-example : (linear {0} ∅).checkAgainst (Monitors.notResponse 0 1) (linearSerial {0} ∅) = false := by decide
+example : (linear ∅ {0}).checkAgainst (Monitors.notEventually 1) (linearSerial ∅ {0}) = true := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : (linear ∅ ∅).checkAgainst (Monitors.notResponse 0 1) (linearSerial ∅ ∅) = true := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : (linear {0} {0}).checkAgainst (Monitors.notResponse 0 1) (linearSerial {0} {0}) = true := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : (linear {0} {2}).checkAgainst (Monitors.notResponse 0 1) (linearSerial {0} {2}) = true := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : (linear {0} ∅).checkAgainst (Monitors.notResponse 0 1) (linearSerial {0} ∅) = false := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 example : (linear {0, 2} {1}).checkAgainst (Monitors.notResponse 0 1)
-    (linearSerial {0, 2} {1}) = false := by decide
+    (linearSerial {0, 2} {1}) = false := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 
 /-- The first edge uses the source's request/grant valuation. -/
 example : (1, ()) ∉ (linear ∅ {0}).productSuccessors (Monitors.notEventually 1) (0, ()) := by decide
@@ -98,10 +118,16 @@ def emptyStates : FiniteBuchi (Fin 0) (LTL.Valuation Nat) where
   successors _ _ := ∅
   accepting := ∅
 
-example : (linear ∅ ∅).hasAcceptedPath emptyInitials = false := by decide
-example : (linear ∅ ∅).hasAcceptedPath emptyStates = false := by decide
+example : (linear ∅ ∅).hasAcceptedPath emptyInitials = false := by
+  simp only [FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : (linear ∅ ∅).hasAcceptedPath emptyStates = false := by
+  simp only [FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 example : Examples.FiniteKripke.deadlockFinite.hasAcceptedPath
-    (Monitors.notEventually grantAtom) = false := by decide
+    (Monitors.notEventually grantAtom) = false := by
+  simp only [FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 
 #eval cycleSystem.checkAgainst (Monitors.notResponse requestAtom grantAtom) cycleSerial
 #eval waitingSystem.checkAgainst (Monitors.notResponse requestAtom grantAtom) waitingSerial
