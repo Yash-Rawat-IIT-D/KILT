@@ -14,12 +14,29 @@ abbrev PreparedProduct (M : FiniteKripke State AP) (A : FiniteBuchi Q (Valuation
   Graph.PreparedSearch (order.product automatonOrder)
     (M.productInitials A) (M.productSuccessors A) (productAccepting A)
 
+/-- A reachable product vertex is accepting exactly when its automaton state is. -/
+theorem productAcceptingMask_eq (M : FiniteKripke State AP) (A : FiniteBuchi Q (Valuation AP))
+    (p : Graph.PreparedReachable (M.productInitials A) (M.productSuccessors A)) :
+    (Finset.univ.filter fun i : p.graph.Vertex => (p.decode i).2 ∈ A.accepting) =
+      p.accepting (productAccepting A) := by
+  ext i
+  simp [Graph.PreparedReachable.accepting, productAccepting]
+
 /-- Prepare product adjacency, acceptance and order once for either kind of query. -/
 def prepareProduct (M : FiniteKripke State AP) (A : FiniteBuchi Q (Valuation AP))
     (order : Graph.Enumeration State) (automatonOrder : Graph.Enumeration Q) :
-    M.PreparedProduct A order automatonOrder :=
-  Graph.prepareSearch (order.product automatonOrder)
-    (M.productInitials A) (M.productSuccessors A) (productAccepting A)
+    M.PreparedProduct A order automatonOrder := by
+  if hi : A.initials = ∅ then
+    exact .empty (Or.inl (by simp [productInitials, hi]))
+  else if ha : A.accepting = ∅ then
+    exact .empty (Or.inr (by simp [productAccepting, ha]))
+  else
+    let carrier := Graph.prepareReachable (order.product automatonOrder)
+      (M.productInitials A) (M.productSuccessors A)
+    let mask := Finset.univ.filter (fun i : carrier.graph.Vertex => (carrier.decode i).2 ∈ A.accepting)
+    have hm : mask = carrier.accepting (productAccepting A) :=
+      M.productAcceptingMask_eq A carrier
+    exact .ready ⟨carrier, carrier.order (order.product automatonOrder), rfl, mask, hm⟩
 
 theorem prepareProduct_hasAcceptingCycle_eq (M : FiniteKripke State AP)
     (A : FiniteBuchi Q (Valuation AP))

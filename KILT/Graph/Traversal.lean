@@ -128,4 +128,28 @@ theorem reachable?_eq_spec (g : FiniteGraph) (seeds : Finset g.Vertex) (target :
     expandRounds_eq_layers]
   simp only [reachableSetSpec, Fintype.card_fin]
 
+/-- Positive return query, skipping array allocation for deadlocks and self-loops. -/
+def canReturn? (g : FiniteGraph) (q : g.Vertex) : Bool :=
+  if (g.row q).size = 0 then false else
+    if g.edge q q then true else g.reachable? (g.successors q) q
+
+theorem canReturn?_eq_reachable (g : FiniteGraph) (q : g.Vertex) :
+    canReturn? g q = g.reachable? (g.successors q) q := by
+  unfold canReturn?
+  split
+  next he =>
+    have hs : g.successors q = ∅ := by
+      simp [successors, Array.eq_empty_of_size_eq_zero he]
+    rw [hs, reachable?_eq_spec]
+    simp
+  next =>
+    split
+    next he =>
+      have hq : q ∈ g.successors q := by simpa [edge_eq_decide] using he
+      rw [reachable?_eq_spec]
+      symm
+      apply decide_eq_true
+      exact mem_reachableSetSpec_iff.mpr ⟨q, hq, .refl⟩
+    next => rfl
+
 end KILT.Graph.FiniteGraph

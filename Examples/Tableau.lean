@@ -36,6 +36,13 @@ example : ¬ Step literal literal off := by decide
 example : ∃ s ∈ initials (.negAtom 0 : NNF Nat), Step s s off := by decide
 example : ¬ ∃ s ∈ initials (.negAtom 0 : NNF Nat), Step s s onlyP := by decide
 
+/-- The source check rejects mismatched literals before considering successors. -/
+theorem literal_compatible : LiteralCompatible literal onlyP := by decide
+theorem literal_incompatible : ¬ LiteralCompatible literal off := by decide
+theorem mismatched_has_no_successors : successors literal off = ∅ :=
+  successors_empty_of_incompatible literal off literal_incompatible
+theorem matching_has_successors : (successors literal onlyP).Nonempty := by decide
+
 /-- Both polarities may be statically present, but no source valuation supports them. -/
 def conflict : NNF Nat := .conj p (.negAtom 0)
 example : ∀ s ∈ initials conflict, ∀ t : State conflict, ¬ Step s t off := by decide
@@ -90,6 +97,18 @@ example : Step continueRelease continueRelease onlyQ := by decide
 example : ¬ Step continueRelease emptyRelease onlyQ := by decide
 example : Step endRelease emptyRelease both := by decide
 example : ¬ Step (state r {r, p} (by decide)) emptyRelease onlyP := by decide
+
+/-- Direct successor-set regressions for literal and temporal boundaries. -/
+def conflictingState : State conflict := state conflict {conflict, p, .negAtom 0} (by decide)
+example : successors conflictingState off = ∅ := by decide
+example : successors conflictingState onlyP = ∅ := by decide
+
+def truthState : State (.truth : NNF Nat) := state .truth {.truth} (by decide)
+example : LiteralCompatible truthState off := by decide
+example : afterNext ∈ successors beforeNext off := by decide
+example : emptyNext ∉ successors beforeNext off := by decide
+example : fulfilled ∈ successors waiting onlyP := by decide
+example : emptyRelease ∉ successors continueRelease onlyQ := by decide
 
 theorem literal_represents (i : Nat) : Represents literal ⟨fun _ => onlyP⟩ i := by
   intro g hg

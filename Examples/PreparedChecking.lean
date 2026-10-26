@@ -103,6 +103,25 @@ theorem partial_empty_product :
     (Checker.deadlock.prepareProduct emptyMonitor unitOrder (Graph.Enumeration.fin 0)).acceptingLasso? = none :=
   by decide
 
+/-- Product short-circuits both empty initials and empty acceptance. -/
+def noInitialMonitor : FiniteBuchi Unit (Valuation Nat) where
+  initials := ∅
+  successors _ _ := {()}
+  accepting := {()}
+
+def noAcceptMonitor : FiniteBuchi Unit (Valuation Nat) where
+  initials := {()}
+  successors _ _ := {()}
+  accepting := ∅
+
+theorem empty_initial_product_skip :
+    (match Checker.singleton.prepareProduct noInitialMonitor unitOrder unitOrder with
+      | .empty _ => true | .ready _ => false) = true := by decide
+
+theorem empty_accept_product_skip :
+    (match Checker.singleton.prepareProduct noAcceptMonitor unitOrder unitOrder with
+      | .empty _ => true | .ready _ => false) = true := by decide
+
 section DerivedFintype
 inductive Switch where | off | on deriving DecidableEq
 

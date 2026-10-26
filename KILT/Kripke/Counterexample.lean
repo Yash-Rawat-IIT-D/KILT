@@ -18,6 +18,10 @@ variable [Fintype State] [DecidableEq State] [Fintype Q] [DecidableEq Q]
 
 variable [DecidableEq AP]
 
+/- Keep product construction opaque only while elaborating these generic proofs. -/
+attribute [local irreducible] prepareProduct
+
+
 /-- Extract a violating lasso; generate compiler order internally. No Boolean precheck. -/
 def counterexample? (M : FiniteKripke State AP) (φ : Formula AP)
     (hserial : M.toKripke.Serial) (order : Graph.Enumeration State) :

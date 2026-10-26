@@ -11,45 +11,34 @@ private def parentCandidate? (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds accepting : Finset g.Vertex) (stems : ParentForest g order seeds) (q : g.Vertex) : Option (Lasso g.Vertex) :=
   if q ∈ accepting then
     if stems.reached q then
-      let returns := g.parentsTo order (g.successors q) q
-      if returns.reached then
-        (stems.route? q).bind fun stem =>
-          returns.route?.map fun back =>
-            ⟨stem.dropLast, q :: back.dropLast, List.cons_ne_nil _ _⟩
-      else none
+      (g.returnRoute? order q).bind fun back =>
+        (stems.route? q).map fun stem =>
+          ⟨stem.dropLast, q :: back.dropLast, List.cons_ne_nil _ _⟩
     else none
   else none
 
-/-- Keep only parent forests during expansion; reconstruct lists for the first
-successful candidate. This synchronous implementation is the storage reference. -/
+/-- Reconstruct only the selected stem/return pair. Empty reachable acceptance
+skips the initial forest entirely; return queries recognize trivial rows. -/
 def acceptingLasso? (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds accepting : Finset g.Vertex) : Option (Lasso g.Vertex) :=
-  let stems := g.parentForest order seeds
-  order.states.findSome? (parentCandidate? g order seeds accepting stems)
+  if accepting = ∅ then none else
+    let stems := g.parentForest order seeds
+    order.states.findSome? (parentCandidate? g order seeds accepting stems)
 
 theorem acceptingLasso?_eq_spec (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds accepting : Finset g.Vertex) :
     g.acceptingLasso? order seeds accepting =
       Graph.lassoSpec? order seeds g.successors accepting := by
-  rw [Graph.lassoSpec?_eq_findSome]
-  dsimp only [acceptingLasso?]
+  by_cases empty : accepting = ∅
+  · rw [acceptingLasso?, if_pos empty]
+    exact (Graph.lassoSpec?_empty order seeds g.successors accepting (Or.inr empty)).symm
+  rw [acceptingLasso?, if_neg empty, Graph.lassoSpec?_eq_findSome]
   apply congrArg (fun f => order.states.findSome? f)
   funext q
   let stems := g.parentForest order seeds
-  let returns := g.parentsTo order (g.successors q) q
-  have hs := stems.route?_eq_spec q
-  have hr := returns.route?_eq_spec
-  have hsk := stems.reached_eq q
-  have hrk := returns.reached_eq
   change parentCandidate? g order seeds accepting stems q = _
   unfold parentCandidate?
-  change (if q ∈ accepting then if stems.reached q then
-    if returns.reached then
-      (stems.route? q).bind (fun stem =>
-        returns.route?.map (fun back =>
-          (⟨stem.dropLast, q :: back.dropLast, List.cons_ne_nil _ _⟩ : Lasso g.Vertex)))
-    else none else none else none) = _
-  rw [hs, hr, hsk, hrk]
+  rw [stems.reached_eq, stems.route?_eq_spec, g.returnRoute?_eq_spec]
   split
   · cases routeSpec? order seeds g.successors q <;>
       cases routeSpec? order (g.successors q) g.successors q <;> rfl

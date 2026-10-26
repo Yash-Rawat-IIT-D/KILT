@@ -179,6 +179,127 @@ theorem prepare_mem_iff (order : Enumeration State) (seeds : Finset State)
 
 end ReachableQueue
 
+
+namespace ReachableQueue
+
+structure Buffer (State : Type u) where
+  nodes : Array State
+  cursor : Nat
+  rows : Array (State × Finset State)
+  seen : Finset State
+
+namespace Buffer
+
+def view (b : Buffer State) : Work State := ⟨b.rows.toList, b.nodes.toList.drop b.cursor⟩
+
+def Valid (b : Buffer State) : Prop :=
+  b.cursor ≤ b.nodes.size ∧ b.cursor = b.rows.size ∧
+  b.rows.toList.map Prod.fst = b.nodes.toList.take b.cursor ∧
+  b.seen = b.nodes.toList.toFinset
+
+def initial (order : Enumeration State) (seeds : Finset State) : Buffer State :=
+  ⟨(order.ranked seeds).toArray, 0, #[], seeds⟩
+
+theorem initial_valid (order : Enumeration State) (seeds : Finset State) :
+    Valid (initial order seeds) := by
+  unfold Valid initial
+  simp only [List.size_toArray, Array.size_empty, Nat.zero_le, List.toList_toArray,
+    Array.toList_empty, List.map_nil, List.take_zero, true_and]
+  constructor
+  · rfl
+  · ext s
+    simp
+
+theorem initial_view (order : Enumeration State) (seeds : Finset State) :
+    (initial order seeds).view = ReachableQueue.initial order seeds := by
+  simp [view, initial, ReachableQueue.initial]
+
+theorem view_nodes (b : Buffer State) (h : b.Valid) : b.view.nodes = b.nodes.toList := by
+  simp only [view, Work.nodes]
+  rw [h.2.2.1, List.take_append_drop]
+
+def advance (order : Enumeration State) (next : State → Finset State)
+    (b : Buffer State) : Buffer State :=
+  if h : b.cursor < b.nodes.size then
+    let source := b.nodes[b.cursor]
+    let edges := next source
+    let fresh := order.ranked (edges \ b.seen)
+    ⟨b.nodes ++ fresh.toArray, b.cursor + 1, b.rows.push (source, edges),
+      b.seen ∪ fresh.toFinset⟩
+  else b
+
+theorem advance_view (order : Enumeration State) (next : State → Finset State)
+    (b : Buffer State) (v : b.Valid) :
+    (b.advance order next).view = ReachableQueue.advance order next b.view := by
+  unfold advance
+  split
+  next h =>
+    have hl : b.cursor < b.nodes.toList.length := by simpa using h
+    have hd := List.drop_eq_getElem_cons hl
+    have hf : b.view.nodes.toFinset = b.seen := by rw [view_nodes b v, ← v.2.2.2]
+    have hf' : (Work.mk b.rows.toList
+        (b.nodes.toList[b.cursor] :: b.nodes.toList.drop (b.cursor + 1))).nodes.toFinset = b.seen := by
+      simpa [view, hd] using hf
+    simp only [view, ReachableQueue.advance, hd, hf', Array.getElem_toList]
+    simp only [Array.toList_push, Array.toList_append, List.toList_toArray]
+    rw [List.drop_append_of_le_length (by simpa using Nat.succ_le_of_lt h)]
+    simp only [Array.getElem_toList] at hf'
+    rw [hf']
+  next h =>
+    have he : b.nodes.toList.drop b.cursor = [] := by
+      apply List.drop_eq_nil_of_le
+      simpa using Nat.le_of_not_gt h
+    simp [view, ReachableQueue.advance, he]
+
+theorem advance_valid (order : Enumeration State) (next : State → Finset State)
+    (b : Buffer State) (v : b.Valid) : (b.advance order next).Valid := by
+  unfold advance
+  split
+  next h =>
+    have hl : b.cursor < b.nodes.toList.length := by simpa using h
+    rcases v with ⟨hbound, hcursor, hrows, hseen⟩
+    simp only [Valid, Array.size_append, List.size_toArray, Array.size_push,
+      Array.toList_push, Array.toList_append, List.toList_toArray, List.map_append,
+      List.map_cons, List.map_nil, List.toFinset_append, List.toFinset_cons, List.toFinset_nil]
+    refine ⟨by omega, by omega, ?_, ?_⟩
+    · rw [List.take_append_of_le_length (by simpa using Nat.succ_le_of_lt h)]
+      rw [List.take_succ_eq_append_getElem hl]
+      simp [hrows]
+    · rw [hseen]
+  next h => exact v
+
+def run (order : Enumeration State) (next : State → Finset State) : Nat → Buffer State → Buffer State
+  | 0, b => b
+  | fuel + 1, b => if b.cursor < b.nodes.size then run order next fuel (b.advance order next) else b
+
+theorem run_view (order : Enumeration State) (next : State → Finset State)
+    (fuel : Nat) (b : Buffer State) (v : b.Valid) :
+    (b.run order next fuel).view = ReachableQueue.run order next fuel b.view := by
+  induction fuel generalizing b with
+  | zero => rfl
+  | succ fuel ih =>
+    simp only [run, ReachableQueue.run]
+    by_cases h : b.cursor < b.nodes.size
+    · have hl : b.cursor < b.nodes.toList.length := by simpa using h
+      have hn : b.view.pending.isEmpty = false := by simp [view, List.drop_eq_getElem_cons hl]
+      simp only [h, ↓reduceIte, hn, Bool.false_eq_true]
+      rw [ih _ (advance_valid order next b v), advance_view order next b v]
+    · have he : b.nodes.toList.drop b.cursor = [] := by
+        apply List.drop_eq_nil_of_le
+        simpa using Nat.le_of_not_gt h
+      simp [h, view, he]
+
+def prepare (order : Enumeration State) (seeds : Finset State) (next : State → Finset State) : Buffer State :=
+  (initial order seeds).run order next (Fintype.card State)
+
+theorem prepare_view (order : Enumeration State) (seeds : Finset State)
+    (next : State → Finset State) : (prepare order seeds next).view = ReachableQueue.prepare order seeds next := by
+  unfold prepare ReachableQueue.prepare
+  rw [run_view _ _ _ _ (initial_valid _ _), initial_view]
+
+end Buffer
+end ReachableQueue
+
 /-- Convert one cached successor set; original successors are not recomputed. -/
 def adjacencyRow (order : Enumeration State) (states : Array State)
     (edges : Finset State) : Array (Fin states.size) :=
@@ -196,12 +317,11 @@ theorem mem_adjacencyRow (order : Enumeration State) (states : Array State)
     exact ⟨states[i.val], (order.mem_ranked edges _).mpr hi,
       (denseIndex?_eq_some_iff states hn _ i).mpr rfl⟩
 
-/-- Build sparse dense-ID adjacency from the completed reachable work queue. -/
-def prepareReachable (order : Enumeration State) (seeds : Finset State)
-    (next : State → Finset State) : PreparedReachable seeds next := by
-  let w := ReachableQueue.prepare order seeds next
-  have hw : ReachableQueue.Invariant seeds next w := ReachableQueue.prepare_invariant order seeds next
-  have hp : w.pending = [] := ReachableQueue.prepare_complete order seeds next
+/-- Construct dense adjacency from a completed, verified work queue. -/
+private def prepareFromWork (order : Enumeration State) (seeds : Finset State)
+    (next : State → Finset State) (w : ReachableQueue.Work State)
+    (hw : ReachableQueue.Invariant seeds next w) (hp : w.pending = [])
+    (hc : ∀ s, s ∈ w.nodes ↔ Reachable seeds next s) : PreparedReachable seeds next := by
   let states := (w.rows.map Prod.fst).toArray
   have hn : states.toList.Nodup := by
     simpa [states, ReachableQueue.Work.nodes, hp] using hw.nodup
@@ -212,9 +332,7 @@ def prepareReachable (order : Enumeration State) (seeds : Finset State)
   refine ⟨graph, states, rfl, hn,
     Finset.univ.filter (fun i => states[i.val] ∈ seeds), ?_, ?_, ?_⟩
   · intro s
-    have hc : s ∈ w.nodes ↔ Reachable seeds next s :=
-      ReachableQueue.prepare_mem_iff order seeds next s
-    simpa [states, ReachableQueue.Work.nodes, hp] using hc
+    simpa [states, ReachableQueue.Work.nodes, hp] using hc s
   · intro i
     simp
   · intro i j
@@ -230,5 +348,30 @@ def prepareReachable (order : Enumeration State) (seeds : Finset State)
     have hstate : states[i.val] = w.rows[i.val].1 := by
       simp only [states, List.getElem_toArray, List.getElem_map]
     simpa only [adjacencyRow, List.toList_toArray, lookup, hrow, hstate] using hm
+
+/-- Mathematical list-queue reference, used only for refinement proofs. -/
+def Specification.prepareReachable (order : Enumeration State) (seeds : Finset State)
+    (next : State → Finset State) : PreparedReachable seeds next :=
+  prepareFromWork order seeds next (ReachableQueue.prepare order seeds next)
+    (ReachableQueue.prepare_invariant order seeds next)
+    (ReachableQueue.prepare_complete order seeds next)
+    (ReachableQueue.prepare_mem_iff order seeds next)
+
+/-- Reachable preparation using the verified incremental buffer. -/
+def prepareReachable (order : Enumeration State) (seeds : Finset State)
+    (next : State → Finset State) : PreparedReachable seeds next := by
+  let w := (ReachableQueue.Buffer.prepare order seeds next).view
+  have hv : w = ReachableQueue.prepare order seeds next := ReachableQueue.Buffer.prepare_view order seeds next
+  have hw : ReachableQueue.Invariant seeds next w := by rw [hv]; exact ReachableQueue.prepare_invariant order seeds next
+  have hp : w.pending = [] := by rw [hv]; exact ReachableQueue.prepare_complete order seeds next
+  have hc : ∀ s, s ∈ w.nodes ↔ Reachable seeds next s := by
+    rw [hv]
+    exact ReachableQueue.prepare_mem_iff order seeds next
+  exact prepareFromWork order seeds next w hw hp hc
+
+theorem prepareReachable_eq_reference (order : Enumeration State) (seeds : Finset State)
+    (next : State → Finset State) :
+    prepareReachable order seeds next = Specification.prepareReachable order seeds next := by
+  simp only [prepareReachable, Specification.prepareReachable, ReachableQueue.Buffer.prepare_view]
 
 end KILT.Graph

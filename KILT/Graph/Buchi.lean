@@ -16,7 +16,7 @@ variable {State : Type u} [Fintype State] [DecidableEq State]
 def PreparedReachable.hasAcceptingCycle {seeds : Finset State}
     {next : State → Finset State} (p : PreparedReachable seeds next) (accepting : Finset State) : Bool :=
   decide (∃ q ∈ p.accepting accepting,
-    p.graph.reachable? (p.graph.successors q) q = true)
+    p.graph.canReturn? q = true)
 
 theorem PreparedReachable.hasAcceptingCycle_eq_spec {seeds : Finset State}
     {next : State → Finset State} (p : PreparedReachable seeds next) (accepting : Finset State) :
@@ -25,13 +25,13 @@ theorem PreparedReachable.hasAcceptingCycle_eq_spec {seeds : Finset State}
   rw [hasAcceptingCycle, decide_eq_true_eq, Graph.hasAcceptingCycleSpec_eq_true_iff]
   constructor
   · rintro ⟨q, hq, hr⟩
-    rw [FiniteGraph.reachable?_eq_spec, decide_eq_true_eq, mem_reachableSetSpec_iff] at hr
+    rw [FiniteGraph.canReturn?_eq_reachable, FiniteGraph.reachable?_eq_spec, decide_eq_true_eq, mem_reachableSetSpec_iff] at hr
     exact (p.acceptingCycle_iff accepting).mp ⟨q, hq,
       (p.reachable_iff q).mpr (p.decode_reachable q), Relation.TransGen.head'_iff.mpr hr⟩
   · intro hc
     obtain ⟨q, hq, _, hr⟩ := (p.acceptingCycle_iff accepting).mpr hc
     refine ⟨q, hq, ?_⟩
-    rw [FiniteGraph.reachable?_eq_spec, decide_eq_true_eq, mem_reachableSetSpec_iff]
+    rw [FiniteGraph.canReturn?_eq_reachable, FiniteGraph.reachable?_eq_spec, decide_eq_true_eq, mem_reachableSetSpec_iff]
     exact Relation.TransGen.head'_iff.mp hr
 
 /-- Ordered reachable preparation followed by acceptance over dense IDs. -/

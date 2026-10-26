@@ -41,7 +41,7 @@ variable {next : State → Finset State} {accepting : Finset State}
 def hasAcceptingCycle : PreparedSearch order seeds next accepting → Bool
   | .empty _ => false
   | .ready data => decide (∃ q ∈ data.mask,
-      data.carrier.graph.reachable? (data.carrier.graph.successors q) q = true)
+      data.carrier.graph.canReturn? q = true)
 
 /-- Parent forests use the cached dense order. No original successor calls or
 Boolean precheck occur during extraction. -/
