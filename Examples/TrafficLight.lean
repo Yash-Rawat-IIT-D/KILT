@@ -175,24 +175,38 @@ def phaseOrder : Graph.Enumeration Phase where
   nodup := by decide
   complete phase := by cases phase <;> simp
 
-example : controller.reachableSet = Finset.univ := by decide
-example : controller.route? phaseOrder .caution = some [.stop, .go, .caution] := by decide
+example : controller.reachableSet = Finset.univ := by
+  simp only [FiniteKripke.reachableSet, Graph.reachableSet_eq_spec]
+  decide
+example : controller.route? phaseOrder .caution = some [.stop, .go, .caution] := by
+  simp only [FiniteKripke.route?, Graph.route?_eq_spec]
+  decide
 example : controller.deadlocks = ∅ := by decide
-example : stuckController.reachableDeadlocks = ∅ := by decide
+example : stuckController.reachableDeadlocks = ∅ := by
+  simp only [FiniteKripke.reachableDeadlocks, FiniteKripke.reachableSet, Graph.reachableSet_eq_spec]
+  decide
 
 -- These decisions use the existing proved violation automata. They are not
 -- yet produced automatically from `eventuallyGreen` or `redResponds`.
 theorem controller_eventually_check :
-    controller.checkAgainst (Monitors.notEventually Colour.green) controller_serial = true := by decide
+    controller.checkAgainst (Monitors.notEventually Colour.green) controller_serial = true := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 
 theorem stuck_eventually_check :
-    stuckController.checkAgainst (Monitors.notEventually Colour.green) stuckController_serial = false := by decide
+    stuckController.checkAgainst (Monitors.notEventually Colour.green) stuckController_serial = false := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 
 theorem controller_response_check :
-    controller.checkAgainst (Monitors.notResponse Colour.red Colour.green) controller_serial = true := by decide
+    controller.checkAgainst (Monitors.notResponse Colour.red Colour.green) controller_serial = true := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 
 theorem stuck_response_check :
-    stuckController.checkAgainst (Monitors.notResponse Colour.red Colour.green) stuckController_serial = false := by decide
+    stuckController.checkAgainst (Monitors.notResponse Colour.red Colour.green) stuckController_serial = false := by
+  simp only [FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 
 /-- Computation entails satisfaction over ALL infinite initial paths. -/
 theorem controller_eventually_green : controller.toKripke.Satisfies eventuallyGreen :=

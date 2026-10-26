@@ -41,18 +41,36 @@ def emptyState : FiniteGeneralizedBuchi Empty Nat where
   successors q := nomatch q
   accepting := []
 
-example : verdict (loop []) 37 = true := by decide
-example : verdict deadlock 0 = false := by decide
-example : verdict noInitial 0 = false := by decide
-example : verdict emptyState 0 = false := by decide
-example : verdict (loop [∅]) 0 = false := by decide
-example : verdict (loop [{()}]) 0 = true := by decide
-example : verdict (loop [{()}, {()}, {()}]) 0 = true := by decide
-example : (loop []).Accepts ⟨fun _ => 37⟩ := (verdict_correct _ _).mp (by decide)
+example : verdict (loop []) 37 = true := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : verdict deadlock 0 = false := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : verdict noInitial 0 = false := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : verdict emptyState 0 = false := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : verdict (loop [∅]) 0 = false := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : verdict (loop [{()}]) 0 = true := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : verdict (loop [{()}, {()}, {()}]) 0 = true := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : (loop []).Accepts ⟨fun _ => 37⟩ := (verdict_correct _ _).mp (by simp only [verdict, Graph.hasAcceptingCycle_eq_spec]; decide)
 example : ¬ deadlock.Accepts ⟨fun _ => 0⟩ := by
-  rw [← verdict_correct]; decide
+  rw [← verdict_correct]
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
 example : ¬ (loop [∅]).Accepts ⟨fun _ => 0⟩ := by
-  rw [← verdict_correct]; decide
+  rw [← verdict_correct]
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
 
 /-- Two obligations with transitions selected by the symbol. -/
 def alternating : FiniteGeneralizedBuchi Bool Nat where
@@ -60,20 +78,34 @@ def alternating : FiniteGeneralizedBuchi Bool Nat where
   successors q a := {if a = 0 then !q else q}
   accepting := [{false}, {true}]
 
-example : verdict alternating 0 = true := by decide
-example : verdict alternating 1 = false := by decide
-example : verdict { alternating with initials := {true} } 1 = false := by decide
+example : verdict alternating 0 = true := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : verdict alternating 1 = false := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : verdict { alternating with initials := {true} } 1 = false := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
 /-- Visiting false once and then remaining true does not discharge false repeatedly. -/
-example : verdict { alternating with successors := fun _ _ => {true} } 0 = false := by decide
-example : verdict { alternating with accepting := [{true}, {false}, {true}] } 0 = true := by decide
-example : verdict { alternating with accepting := [Finset.univ, {true}] } 0 = true := by decide
+example : verdict { alternating with successors := fun _ _ => {true} } 0 = false := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : verdict { alternating with accepting := [{true}, {false}, {true}] } 0 = true := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
+example : verdict { alternating with accepting := [Finset.univ, {true}] } 0 = true := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
 
 /-- A cyclic three-state graph exercises all counter values and wraparound. -/
 def three : FiniteGeneralizedBuchi (Fin 3) Nat where
   initials := {0}
   successors q _ := {q + 1}
   accepting := [{0}, {1}, {2}]
-example : verdict three 0 = true := by decide
+example : verdict three 0 = true := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
 example : (List.range 7).map (fun k => (three.liftSequence
     ⟨fun (j : Nat) => (⟨j % 3, Nat.mod_lt j (by decide)⟩ : Fin 3)⟩ k).2.val) = [0, 1, 2, 0, 1, 2, 0] := by decide
 #eval (List.range 7).map (fun k => (three.liftSequence
@@ -85,7 +117,9 @@ example : (true, (⟨1, by decide⟩ : alternating.Counter)) ∈
     alternating.toFiniteBuchi.successors (false, alternating.zero) 0 := by decide
 /-- With the symbol selecting a self-loop, counter zero can become permanently stuck.
 Accepting every counter-zero state would incorrectly accept this word. -/
-example : verdict { alternating with initials := {true} } 1 = false := by decide
+example : verdict { alternating with initials := {true} } 1 = false := by
+  simp only [verdict, Graph.hasAcceptingCycle_eq_spec]
+  decide
 example : (true, alternating.zero) ∉ alternating.toFiniteBuchi.accepting := by decide
 
 /-- Reordering and repeating obligations changes no word language. -/
@@ -115,11 +149,15 @@ def redOnly : FiniteKripke Unit Colour where
   label _ := label .stop
 
 theorem controller_recurs : controller.hasAcceptedPath recurringColours.toFiniteBuchi = true := by
+  simp only [FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
   decide
 theorem redOnly_does_not_recur : redOnly.hasAcceptedPath recurringColours.toFiniteBuchi = false := by
+  simp only [FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
   decide
 /-- Nondeterministic acceptance asks for some execution: the good cycle remains available. -/
-example : stuckController.hasAcceptedPath recurringColours.toFiniteBuchi = true := by decide
+example : stuckController.hasAcceptedPath recurringColours.toFiniteBuchi = true := by
+  simp only [FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  decide
 
 theorem controller_has_recurring_path :
     ∃ p : controller.toKripke.Path, p.IsInitial ∧ recurringColours.Accepts p.word :=

@@ -1,4 +1,4 @@
-import KILT.Graph.Indexed
+import KILT.Graph.Basic
 
 /-!
 # Reachable-only work queue
@@ -180,14 +180,14 @@ theorem prepare_mem_iff (order : Enumeration State) (seeds : Finset State)
 end ReachableQueue
 
 /-- Convert one cached successor set; original successors are not recomputed. -/
-def indexedRow (order : Enumeration State) (states : Array State)
+def adjacencyRow (order : Enumeration State) (states : Array State)
     (edges : Finset State) : Array (Fin states.size) :=
   ((order.ranked edges).filterMap (denseIndex? states)).toArray
 
-theorem mem_indexedRow (order : Enumeration State) (states : Array State)
+theorem mem_adjacencyRow (order : Enumeration State) (states : Array State)
     (hn : states.toList.Nodup) (edges : Finset State) (i : Fin states.size) :
-    i ∈ (indexedRow order states edges).toList ↔ states[i.val] ∈ edges := by
-  simp only [indexedRow, List.toList_toArray, List.mem_filterMap]
+    i ∈ (adjacencyRow order states edges).toList ↔ states[i.val] ∈ edges := by
+  simp only [adjacencyRow, List.toList_toArray, List.mem_filterMap]
   constructor
   · rintro ⟨s, hs, hi⟩
     have heq := (denseIndex?_eq_some_iff states hn s i).mp hi
@@ -208,7 +208,7 @@ def prepareReachable (order : Enumeration State) (seeds : Finset State)
   let ids := order.rankTableFrom 0 states.toList
   let adjacency := (w.rows.map (fun row =>
     ((order.ranked row.2).filterMap (rankIndex? order states ids)).toArray)).toArray
-  let graph : IndexedGraph := ⟨states.size, adjacency, by simp [adjacency, states]⟩
+  let graph : FiniteGraph := ⟨states.size, adjacency, by simp [adjacency, states]⟩
   refine ⟨graph, states, rfl, hn,
     Finset.univ.filter (fun i => states[i.val] ∈ seeds), ?_, ?_, ?_, order,
     states.map (fun s => (order.rank s).val), by simp [graph], ?_⟩
@@ -227,10 +227,10 @@ def prepareReachable (order : Enumeration State) (seeds : Finset State)
     simp only [adjacency, List.getElem_toArray, List.getElem_map]
     have lookup : rankIndex? order states ids = denseIndex? states :=
       funext (rankIndex?_eq_denseIndex? order states)
-    have hm := mem_indexedRow order states hn w.rows[i.val].2 j
+    have hm := mem_adjacencyRow order states hn w.rows[i.val].2 j
     have hstate : states[i.val] = w.rows[i.val].1 := by
       simp only [states, List.getElem_toArray, List.getElem_map]
-    simpa only [indexedRow, List.toList_toArray, lookup, hrow, hstate] using hm
+    simpa only [adjacencyRow, List.toList_toArray, lookup, hrow, hstate] using hm
   · intro i
     simp only [Array.getElem_map]
 

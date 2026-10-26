@@ -1,4 +1,4 @@
-import KILT.Graph.IndexedParents
+import KILT.Graph.Parents
 
 /-! Exact route selection under reachable-subgraph reindexing. -/
 namespace KILT.Graph.PreparedReachable
@@ -145,7 +145,7 @@ theorem routeTables_fixed_at_card (order : Enumeration State) (seeds : Finset St
 
 theorem routeTables_after_card (order : Enumeration State) (seeds : Finset State)
     (next : State → Finset State) (n : Nat) (bound : Fintype.card State ≤ n) :
-    routeTables order seeds next n = route? order seeds next := by
+    routeTables order seeds next n = routeSpec? order seeds next := by
   obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le bound
   induction k with
   | zero => simp only [Nat.add_zero]; rfl
@@ -155,12 +155,12 @@ theorem routeTables_after_card (order : Enumeration State) (seeds : Finset State
     rw [hn, routeTables, ih']
     exact routeTables_fixed_at_card order seeds next
 
-theorem PreparedReachable.route?_transport {seeds : Finset State} {next : State → Finset State}
+theorem PreparedReachable.routeSpec?_transport {seeds : Finset State} {next : State → Finset State}
     (p : PreparedReachable seeds next) (original : Enumeration State)
     (query : Finset State) (covered : ∀ s ∈ query, Reachable seeds next s)
     (target : p.graph.Vertex) :
-    (route? (p.order original) (p.queryInitials query) p.graph.successors target).map
-      (List.map p.decode) = route? original query next (p.decode target) := by
+    (routeSpec? (p.order original) (p.queryInitials query) p.graph.successors target).map
+      (List.map p.decode) = routeSpec? original query next (p.decode target) := by
   have bound : Fintype.card p.graph.Vertex ≤ Fintype.card State := by
     have hn := List.Nodup.length_le_card p.nodup
     simpa only [Fintype.card_fin, Array.length_toList, p.states_size] using hn

@@ -283,40 +283,36 @@ that the returned trace itself is initial and violates the formula;
 See [the worked examples](Examples/Counterexample.lean) for request/grant,
 traffic and monitor-based two-thread lock witnesses.
 
+## Finite graph backend
+
+The graph layer prepares seed-reachable adjacency arrays, uses Boolean visited
+frontiers for return queries, and reconstructs witnesses from parent IDs and
+depths. `FiniteGraph` is the bounded-ID representation. The ordinary `check`
+API uses this backend. To supply an explicit model-state order:
+
+```lean
+#eval M.checkWithOrder property serialProof modelOrder
+```
+
+`checkWithOrder_eq_check` proves identical verdicts for every complete order.
+`counterexample?` retains its existing arguments and deterministic witness
+selection. Mathematical recurrences under `KILT/Graph/Specification` state the
+reachability and route-selection contracts; cached association-list and stored
+full-route implementations have been removed. See
+[graph regressions](Examples/GraphStorage.lean) and [design notes](docs/design.md).
+
 ## Measuring search performance
 
 ```bash
 ./scripts/verify-examples.sh --verbose
-./scripts/benchmark-efficiency.sh           # Three fresh repetitions
-./scripts/benchmark-efficiency.sh --runs 1  # One paired repetition
-./scripts/benchmark-efficiency.sh --phases-only  # Skip slow reference runs
+./scripts/benchmark-graph.sh                 # Three fresh runs per mode
+./scripts/benchmark-graph.sh --mode native    # Native executable only
 ```
 
-The benchmark compares reference, cache-only, early-exit-only and combined
-Boolean searches, then checks exact lasso agreement and finite witness validity.
-It reports preparation/search phases, full formula-facing calls, separate work
-counts, median/range timings and process peak RSS in `.lake/logs/efficiency-*.log`.
-Reference lasso runs can take minutes. These interpreted executions exclude Lean
-compilation from operation timings; process RSS includes the Lean runtime.
-Benchmarks are separate from routine builds, and execution failures return a
-nonzero status. See [design notes](docs/design.md) for contracts and limitations.
-
-## Experimental indexed backend
-
-The `feature-indexed-graph` branch prepares only seed-reachable graph rows,
-using dense vertex IDs, Boolean visited arrays and parent-pointer witnesses.
-The ordinary `check` interface remains available. Supply a model enumeration
-to select the indexed checker:
-
-```lean
-#eval M.checkIndexed property serialProof modelOrder
-```
-
-`checkIndexed_eq_check` proves identical verdicts. `counterexample?` uses the
-indexed extractor and preserves exactly the reference lasso for the same order.
-See [indexed regressions](Examples/Indexed.lean) and the design notes for the
-proof contracts and representation costs.
-
-`./scripts/benchmark-indexed.sh` prepares native and interpreted comparisons
-outside default build targets. Benchmarking this experimental backend is
-pending; no latency or memory improvement is claimed for it yet.
+The optional harness measures canonical preparation, search, reconstruction and
+formula checking, validating verdict agreement, selected routes and finite lasso
+certificates. Compilation precedes measurement; logs include latency medians,
+ranges and whole-process RSS. Phase timings are independent measurements, not
+an additive breakdown. Benchmarks remain separate from ordinary builds.
+Historical cached/indexed comparisons describe earlier revisions; their timings
+must not be presented as fresh results for later refactors.

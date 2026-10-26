@@ -173,14 +173,15 @@ so paths, satisfaction, and the CSLib bridge apply without a second semantics.
 
 `KILT.Graph` contains graph algorithms independently of state labels. Starting
 from any finite seed set, `layers` repeatedly takes the union of the discovered
-states and all their successors. `reachableSet` executes
-`Fintype.card State` rounds. `mem_layers_iff` characterizes every intermediate
+states and all their successors. This `reachableSetSpec` recurrence executes
+`Fintype.card State` rounds as a proof specification; public `reachableSet`
+computes the carrier through reachable graph preparation. `mem_layers_iff` characterizes every intermediate
 round using a bounded finite route, while `mem_reachableSet_iff` proves that
 the final set is exactly reflexive-transitive reachability from a seed.
 Zero-step reachability is intentional: every seed is reachable from itself.
 
-Witness lookup uses a `RouteTable State`, a function assigning at most one
-route to each state. Round zero assigns `[s]` to each seed. At the next round,
+The witness specification uses a `RouteTable State`, a function assigning at most one
+route to each state; executable lookup instead uses parent IDs/depths. Round zero assigns `[s]` to each seed. At the next round,
 an existing route is retained; an undiscovered target scans a caller-supplied
 `Graph.Enumeration` for the first predecessor discovered in the preceding
 round and appends the target. The enumeration is explicit, complete, and
@@ -674,11 +675,13 @@ For routes stem (initial to q) and back (successor of q to q), it returns
 Enumeration changes may select different witnesses but preserve success.
 No shortest-route, simple-cycle or shortest-counterexample guarantee is made.
 
-Route rounds and successor sets are materialized in ordered association lists.
-`storedRouteTables_lookup` proves equality with the existing function-valued
-route tables, preserving their predecessor choices. The refined searches stop
-on stability or target discovery, with exact route equality. Lookup remains linear;
-this implementation is not SCC search and carries no scalability claim.
+Successor rows are stored only for seed-reachable states, in bounded-ID arrays.
+Parent forests retain one predecessor and depth per discovered vertex; complete
+routes are reconstructed only for requested witnesses. Mathematical route-table
+recurrences remain under `Graph/Specification` and fix the enumeration-based
+choice. No association-list cache or stored full-route backend remains. The
+array/parent refinement proves equality with those specifications, rather than
+requiring the retired executable implementation.
 
 `FiniteKripke.acceptedLasso?` applies extraction to the existing product and
 accepts explicit model and automaton orders. It permits partial models and
@@ -747,86 +750,57 @@ finite validation and printing. The three lock cases use handwritten monitors.
 These are single observations, not reachable-state counts or performance
 guarantees. Even a 48-state carrier is expensive with this reference algorithm;
 materialization alone does not justify a claim of practical scalability. These
-figures describe the original algorithm, retained as acceptingLassoReference?;
-the refined algorithm below has different costs. Cached Lake builds replay these measurements
+figures describe the retired original algorithm;
+the current array/parent implementation has different costs. Cached Lake builds replay these measurements
 rather than performing a fresh benchmark.
 
-## Verified caching and early termination
+## Canonical graph backend and proof specifications
 
-`Graph.Search` refines the existing bounded engines:
+`Graph.Basic` defines `FiniteGraph`: bounded vertex IDs and sparse adjacency
+arrays. `Prepare` discovers only seed-reachable sources. `Correspondence`
+proves that decoding is injective and preserves seeds, edges, finite paths and
+positive return paths. `Traversal` uses Boolean visited arrays and frontiers;
+`Parents`, `ParentSearch` and `Frontier` implement route storage and stopping.
+`RouteTransport` proves exact enumeration-selected route preservation under
+reindexing. `LassoExtraction` and `LassoSearch` preserve the exact prefix/loop.
 
-- `reachableSetFast_eq` identifies fixed-point closure with `reachableSet`.
-- `reachable?_eq_true_iff` characterizes a target query by mathematical
-  reachability. A successful target query need not compute the full closure.
-- `storedRoutesFast_lookup` and `routeFast?_eq` preserve the exact routes of
-  `route?`, including enumeration-based predecessor selection.
+The specification modules contain bounded set expansion, deterministic
+route-selection recurrences, and lasso selection. They serve as mathematical
+contracts, not alternative production backends. `reachableSet_eq_spec`,
+`route?_eq_spec` and `acceptingLasso?_eq_spec` establish exact result equality.
+The retired caching/early-exit implementations, materialized route tables and
+their dependencies are removed. Historical versions remain in Git history.
 
-All searches retain structural fuel bounded by the state cardinality. Full
-closure stops when expansion equals the discovered set. Target queries stop
-when the target is present. Route rounds retain existing routes and stop when
-no previously unknown state gains one; the growth flag compares discovery
-status rather than whole route lists. Absence is reported only after stability
-or the proved cardinality bound. Positive return searches start from immediate
-successors, so accepting deadlocks remain rejected.
+`check` retains its arguments and theorem. Without an explicit order, its
+finite carrier is a multiset quotient of lists. `Enumeration.runInvariant`
+eliminates that quotient only for an operation proved independent of list
+order. It does not choose an ordering, require atom/state ordering, or use
+classical selection during execution. `runInvariant_eq` proves the resulting
+computation equals its specification. `checkWithOrder` bypasses that quotient
+interface with the caller's order and is proved equal to `check`. Witness APIs
+continue to require explicit enumeration because selected witnesses may depend
+on order. Duplicate order entries are removed executably by `ofList`.
 
-Successors are cached once per invocation and shared across initial and return
-searches. Lasso extraction uses the existing ordered association-list cache.
-Boolean checking has no explicit enumeration parameter: `Fintype` supplies a
-finite set, whose conversion to an ordered list is noncomputable. Consequently
-its cache is a finite set of key/successor-set rows, with union-based lookup.
-`prepareSuccessors_lookup` and `prepareSuccessorSet_lookup` prove both cache
-representations agree with the supplied graph. Neither requires atom ordering,
-finite atoms, valuation-function equality, classical executable selection or a
-change to the model representation. Cache lookup remains linear in carrier size.
-Empty seeds or acceptance bypass graph preparation.
+`hasAcceptingCycle_eq_true_iff_run` connects the canonical Boolean algorithm
+to infinite acceptance, and `check_correct` composes with CSLib and formula
+language correctness. The equality chain is a kernel-checked proof for all
+finite graphs, not an inference from the finite regression examples. It proves
+the stated contracts, subject to their model/semantics assumptions and standard
+Lean trusted kernel; human review of those contracts remains separate.
 
-`hasAcceptingCycle` uses the short-circuit finite-set existential decision
-procedure instead of filtering all successful candidates before testing
-nonemptiness. `hasAcceptingCycle_eq_reference` proves identical Boolean output
-with the original algorithm. `acceptingLasso?_eq_reference` proves identical
-optional lassos, not merely equal witness presence. The existing actual-trace
-soundness and formula correctness theorems reuse those refinements. `check`,
-`counterexample?`, seriality requirements and source-position-zero observations
-keep their public contracts.
+Positive returns start from successors, rejecting accepting deadlocks. Empty
+seeds or acceptance bypass preparation. Full searches stop at stability;
+target parent searches finish the discovery level to settle enumeration ties.
+The public route API reconstructs parent chains; no shortest-witness or SCC
+complexity claim is made.
 
-For example, once the waiting state is discovered in its self-loop graph,
-closure stops after one stable expansion. A return query seeded by that state's
-successors already contains the target and stops without any further expansion.
-The selected lasso is still prefix `[]`, loop `[waiting]`. A chain continues
-until its target is discovered, or its final deadlock makes closure stable.
+### Historical caching and early-exit measurements
 
-`Benchmarks/Efficiency.lean` and `scripts/benchmark-efficiency.sh` run fresh
-paired measurements independently of the default build. Cache-only and
-combined Boolean timings include cache construction; graph timings start with
-state enumeration, initial and acceptance sets already prepared. Separate
-formula-facing timers include compilation and enumeration. Phase timers report
-ordered-cache construction, initial closure, candidate/return search and stem
-route computation. Lasso total time includes constructing the witness.
-Validation/printing happens after timers. Each operation receives a data argument behind a noinline IO call after the
-clock read, avoiding a constant Unit thunk that could be precomputed. Phase
-measurements are standalone generic entry points rather than an additive
-decomposition of the public API call. In particular standalone product-order
-timing exceeds the measured public counterexample total in these interpreted
-runs. Do not sum these phases or infer compiler/search percentages from them;
-further allocation/native profiling is needed to explain that discrepancy.
+The following data belongs to the earlier cached implementation and is retained
+for comparison. Its benchmark implementation was retired with the canonical
+backend refactor; it is not evidence about subsequent source revisions.
 
-Work counts come from a separate instrumented traversal using the supplied
-explicit order. They count expansion rounds, successor requests and candidate
-return queries; its candidate order can differ from the public unordered
-Boolean search. Requests with a cache become lookups; raw successor rows are
-computed once per carrier state. Initial/selected-return route rounds are
-reported separately. Instrumentation is not on the timed production path.
-`/usr/bin/time -v` reports peak RSS for the whole Lean benchmark process,
-including imported modules/runtime, not isolated cache allocation.
 
-These refinements reduce repeated work but still enumerate the complete
-formula carrier, store full route lists, perform linear cache lookup and search
-returns separately. Persistent cross-call caching, indexed adjacency,
-predecessor pointers, bitset tableau states, on-demand generation and SCC search
-remain subsequent measured changes. Exact witness selection is preserved;
-shortest or simplest witnesses and scalability are not claimed.
-
-### Measured search refinement
 
 Three completed single-thread interpreted invocations per case gave these
 medians in milliseconds. Graph inputs already include enumeration, initial
@@ -864,7 +838,7 @@ from the interrupted run, and one complete fresh run replaced its unfinished
 third repetition. The replacement harness completed with exit status zero,
 including median/range summaries and finite witness validation.
 
-## Experimental reachable indexed storage
+## Reachable storage and parent invariants
 
 `prepareReachable order seeds successors` discovers a successor-closed graph
 from the seeds. Each discovered source supplies one cached row; an unprocessed
@@ -905,34 +879,36 @@ queue algorithms and are not SCC algorithms. Allocation and setup overhead need
 measurement. The graph, decoder, source order and rank arrays are reusable for
 queries inside the stored carrier. Seeds outside it require new preparation.
 
-`route?_transport` proves exact route preservation under reachable reindexing.
-`PreparedReachable.acceptingLasso?_eq_reference` and
-`Graph.acceptingLasso?_eq_reference` prove exact optional-lasso preservation,
-including the selected prefix, loop and time indices. The old cached backend
-remains `acceptingLassoCached?` for comparison, and the original full-round
-backend remains `acceptingLassoReference?`. Existing actual-returned-trace
-soundness and no-counterexample equivalences continue through these equalities.
+`routeSpec?_transport` proves exact route preservation under reachable reindexing.
+`PreparedReachable.acceptingLasso?_eq_spec` and
+`Graph.acceptingLasso?_eq_spec` prove exact optional-lasso preservation,
+including the selected prefix, loop and time indices. They depend on the
+mathematical lasso selection specification, not the removed cached backend.
+Existing actual-returned-trace soundness and no-counterexample equivalences
+continue through these equalities.
 
-`hasAcceptedPathIndexed` agrees with `hasAcceptedPath`. The formula-facing
-`checkIndexed formula hserial modelOrder` agrees with `check`, including its
-universal satisfaction and false-verdict theorems. Seriality remains explicit at
-the formula boundary; generic graph preparation and acceptance allow deadlocks.
-CSLib acceptance, source-label timing and no-fairness semantics are unchanged.
+`hasAcceptedPathWithOrder` agrees with `hasAcceptedPath`. The formula-facing
+`checkWithOrder formula hserial modelOrder` agrees with `check`, including
+universal satisfaction and false-verdict theorems. Seriality remains explicit;
+generic graph preparation and acceptance allow deadlocks. CSLib acceptance,
+source-label timing and no-fairness semantics are unchanged.
 
 Some concrete branching rank-sort expressions do not normalize in `decide`.
 Their displays and expected-result assertions run as build-failing execution
 tests; they are not promoted to proof. Small pointer/visited-array verdicts are
 kernel computed. Previous small formula-witness results are transported through
-the exact cached-backend equality and kernel-computed reference results. The
+the exact specification equality and kernel-computed specification results. The
 general representation and algorithm theorems remain kernel checked using only
 the allowed standard axioms. A reduction limitation is distinct from a false
 verdict or a missing proof, and user mathematical review is still pending.
 
-Native/interpreted benchmark support is outside the routine targets. By user
-instruction, completed performance comparisons and backend retirement are later
-work on `feature-indexed-graph`. No indexed speedup or scalability guarantee is
-claimed by successful builds. Existing cache measurements above concern the
-earlier implementation and are not measurements of this branch.
+`Benchmarks/GraphStorage.lean` and `scripts/benchmark-graph.sh` measure the
+canonical graph layer outside routine builds. Historical indexed/cached
+comparisons established improvements on small fixtures before this naming and
+dependency refactor. No benchmarks were run for the refactor itself; previous
+measurements do not establish performance of the new quotient-based default
+checker. Complete compiler enumeration, linear rank lookup, preparation costs
+and lack of isolated backend RSS measurements remain limitations.
 
 ## Sources and attribution
 

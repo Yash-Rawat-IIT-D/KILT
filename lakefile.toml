@@ -17,5 +17,5 @@ name = "Examples"
 allowNonModules = true
 
 [[lean_exe]]
-name = "benchmark-indexed"
-root = "Benchmarks.IndexedStorage"
+name = "benchmark-graph"
+root = "Benchmarks.GraphStorage"

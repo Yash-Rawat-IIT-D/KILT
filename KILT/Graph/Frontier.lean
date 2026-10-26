@@ -1,4 +1,4 @@
-import KILT.Graph.IndexedParentSearch
+import KILT.Graph.ParentSearch
 
 /-!
 # Level-frontier parent expansion
@@ -7,9 +7,9 @@ Earlier-level states cannot be predecessors of an undiscovered target: their
 edges already supplied routes in earlier rounds. Restricting predecessor scans
 to the current level therefore preserves the exact enumeration tie-breaker.
 -/
-namespace KILT.Graph.IndexedGraph
+namespace KILT.Graph.FiniteGraph
 
-theorem Parents.ext_get {g : IndexedGraph} {p q : Parents g}
+theorem Parents.ext_get {g : FiniteGraph} {p q : Parents g}
     (h : ∀ i, p.get i = q.get i) : p = q := by
   cases p with
   | mk a ha =>
@@ -23,7 +23,7 @@ theorem Parents.ext_get {g : IndexedGraph} {p q : Parents g}
       cases heq
       rfl
 
-theorem Parents.unseen_predecessor_depth (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem Parents.unseen_predecessor_depth (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (n : Nat) (target source : g.Vertex) (depth : Nat)
     (ht : (Parents.rounds g order seeds n).get target = .unseen)
     (hs : ((Parents.rounds g order seeds n).get source).depth = some depth)
@@ -60,7 +60,7 @@ theorem Parents.unseen_predecessor_depth (g : IndexedGraph) (order : Enumeration
     have hc := (routeTables_isSome_iff_mem_layers order seeds g.successors n target).mpr reached
     simp [hnone] at hc
 
-def Parents.frontierRound {g : IndexedGraph} (p : Parents g)
+def Parents.frontierRound {g : FiniteGraph} (p : Parents g)
     (order : Enumeration g.Vertex) (n : Nat) : Parents g :=
   let frontier := order.states.filter (fun i => (p.get i).depth == some n)
   ⟨Array.ofFn (fun target =>
@@ -71,7 +71,7 @@ def Parents.frontierRound {g : IndexedGraph} (p : Parents g)
       | some source => .via source (n + 1)
     | entry => entry), by simp⟩
 
-theorem Parents.frontierRound_eq (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem Parents.frontierRound_eq (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (n : Nat) :
     (Parents.rounds g order seeds n).frontierRound order n =
       (Parents.rounds g order seeds n).round order := by
@@ -129,7 +129,7 @@ theorem Parents.frontierRound_eq (g : IndexedGraph) (order : Enumeration g.Verte
         have hdepth := Parents.unseen_predecessor_depth g order seeds n target source depth ht hd he
         simp [hd, hdepth]
 
-def Parents.frontierSearch {g : IndexedGraph} (order : Enumeration g.Vertex)
+def Parents.frontierSearch {g : FiniteGraph} (order : Enumeration g.Vertex)
     (target : Option g.Vertex) : Nat → Nat → Parents g → Parents g
   | 0, _, p => p
   | fuel + 1, n, p =>
@@ -137,7 +137,7 @@ def Parents.frontierSearch {g : IndexedGraph} (order : Enumeration g.Vertex)
       let expanded := p.frontierRound order n
       if p.grows expanded then Parents.frontierSearch order target fuel (n + 1) expanded else p
 
-theorem Parents.frontierSearch_eq (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem Parents.frontierSearch_eq (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (target : Option g.Vertex) (fuel n : Nat) :
     (Parents.rounds g order seeds n).frontierSearch order target fuel n =
       (Parents.rounds g order seeds n).search order target fuel := by
@@ -152,19 +152,19 @@ theorem Parents.frontierSearch_eq (g : IndexedGraph) (order : Enumeration g.Vert
       · exact ih (n + 1)
       · rfl
 
-def Parents.frontierForest (g : IndexedGraph) (order : Enumeration g.Vertex)
+def Parents.frontierForest (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) : Parents g :=
   (Parents.initial g seeds).frontierSearch order none g.size 0
 
-theorem Parents.frontierForest_eq (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem Parents.frontierForest_eq (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) :
     Parents.frontierForest g order seeds = Parents.forest g order seeds :=
   Parents.frontierSearch_eq g order seeds none g.size 0
 
-theorem Parents.frontierTarget_eq (g : IndexedGraph) (order : Enumeration g.Vertex)
+theorem Parents.frontierTarget_eq (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds : Finset g.Vertex) (target : g.Vertex) :
     (Parents.initial g seeds).frontierSearch order (some target) g.size 0 =
       (Parents.initial g seeds).search order (some target) g.size :=
   Parents.frontierSearch_eq g order seeds (some target) g.size 0
 
-end KILT.Graph.IndexedGraph
+end KILT.Graph.FiniteGraph

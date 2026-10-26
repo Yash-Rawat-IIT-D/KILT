@@ -33,7 +33,7 @@ theorem false_counterexample :
     (Examples.Checker.singleton.counterexample? .falsehood
       Examples.Checker.singleton_serial unitOrder).isSome = true := by
   unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
-  rw [Graph.acceptingLasso?_eq_cached]
+  rw [Graph.acceptingLasso?_eq_spec]
   decide
 
 /-- Source labels are read at zero; p holds there even though it immediately disappears. -/
@@ -41,21 +41,21 @@ theorem initial_eventuality :
     (Examples.Checker.twoState false |>.counterexample? (◇ Examples.Checker.p)
       (Examples.Checker.twoState_serial false) boolOrder).isSome = false := by
   unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
-  rw [Graph.acceptingLasso?_eq_cached]
+  rw [Graph.acceptingLasso?_eq_spec]
   decide
 
 theorem next_counterexample :
     (Examples.Checker.twoState false |>.counterexample? (𝒩 Examples.Checker.p)
       (Examples.Checker.twoState_serial false) boolOrder).isSome = true := by
   unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
-  rw [Graph.acceptingLasso?_eq_cached]
+  rw [Graph.acceptingLasso?_eq_spec]
   decide
 
 theorem next_successor :
     (Examples.Checker.twoState false |>.counterexample? (𝒩 Examples.Checker.q)
       (Examples.Checker.twoState_serial false) boolOrder).isSome = false := by
   unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
-  rw [Graph.acceptingLasso?_eq_cached]
+  rw [Graph.acceptingLasso?_eq_spec]
   decide
 
 /-- A small computed witness is connected to its own path by the generic theorem. -/
@@ -75,7 +75,7 @@ theorem deadlock_no_lasso :
       (Formula.falsehood : Formula Nat).violationAutomaton unitOrder
       (Formula.neg (.falsehood : Formula Nat)).automatonOrder).isSome = false := by
   unfold FiniteKripke.acceptedLasso?
-  rw [Graph.acceptingLasso?_eq_cached]
+  rw [Graph.acceptingLasso?_eq_spec]
   decide
 
 /-- Finite boundary validation for compiled execution tests; not a proof oracle. -/
