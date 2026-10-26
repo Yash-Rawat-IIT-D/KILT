@@ -1,8 +1,9 @@
-import KILT.Graph.Parents
+import KILT.Graph.Internal.Parents
 import KILT.Graph.Specification.Rounds
 
-/-! Stability and target stopping without storing complete routes. -/
-namespace KILT.Graph.FiniteGraph
+/-! Internal implementation and refinement interface; use Graph/Parents for production queries.
+ Stability and target stopping without storing complete routes. -/
+namespace KILT.Graph.FiniteGraph.Internal
 
 def Parents.grows {g : FiniteGraph} (previous expanded : Parents g) : Bool :=
   (List.finRange g.size).any (fun i =>
@@ -169,4 +170,4 @@ theorem Parents.target_isSome (g : FiniteGraph) (order : Enumeration g.Vertex)
     simpa only [routeRounds_initial, routeSpec?, Fintype.card_fin] using htarget target rfl
   simpa only [heq] using h
 
-end KILT.Graph.FiniteGraph
+end KILT.Graph.FiniteGraph.Internal

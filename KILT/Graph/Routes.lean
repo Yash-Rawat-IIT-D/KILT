@@ -1,5 +1,5 @@
 import KILT.Graph.RouteTransport
-import KILT.Graph.Frontier
+import KILT.Graph.Parents
 
 /-! Public route lookup reconstructs one parent chain. Its specification retains
 finite-level enumeration tie-breaking without executing a route-table backend. -/
@@ -11,8 +11,7 @@ def route? (order : Enumeration State) (seeds : Finset State)
     (next : State → Finset State) (target : State) : Option (List State) :=
   let p := prepareReachable order seeds next
   (p.index? target).bind fun i =>
-    (((FiniteGraph.Parents.initial p.graph p.initials).frontierSearch
-      (p.order order) (some i) p.graph.size 0).unwind (p.graph.size + 1) i []).map (List.map p.decode)
+    (p.graph.parentRoute? (p.order order) p.initials i).map (List.map p.decode)
 
 theorem route?_eq_spec (order : Enumeration State) (seeds : Finset State)
     (next : State → Finset State) (target : State) :
@@ -27,10 +26,7 @@ theorem route?_eq_spec (order : Enumeration State) (seeds : Finset State)
   | some i =>
     have hd := (p.index?_eq_some_iff target i).mp hi
     simp only [Option.bind_some]
-    rw [FiniteGraph.Parents.frontierTarget_eq]
-    change (FiniteGraph.parentRouteFast? p.graph (p.order order) p.initials i).map
-      (List.map p.decode) = _
-    rw [FiniteGraph.parentRouteFast?_eq]
+    rw [FiniteGraph.parentRoute?_eq_spec]
     have ht := p.routeSpec?_transport order seeds (fun s hs => ⟨s, hs, .refl⟩) i
     have hinitial : p.queryInitials seeds = p.initials := by
       ext j

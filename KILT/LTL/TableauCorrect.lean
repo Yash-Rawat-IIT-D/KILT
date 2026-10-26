@@ -163,7 +163,7 @@ theorem accepts_iff_sat (f : NNF AP) (w : Word AP) :
     exact ⟨_, semanticRun_accepting h⟩
 
 theorem toFiniteBuchi_accepts (f : NNF AP) (w : Word AP) :
-    ωAcceptor.Accepts (toGeneralizedBuchi f).toFiniteBuchi.toBuchi w ↔ NNF.Sat w 0 f := by
+    ωAcceptor.Accepts (toGeneralizedBuchi f).toFiniteBuchi.toCSLib w ↔ NNF.Sat w 0 f := by
   rw [Automata.FiniteGeneralizedBuchi.toFiniteBuchi_accepts, accepts_iff_sat]
 
 end KILT.LTL.Tableau

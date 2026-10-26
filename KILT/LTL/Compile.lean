@@ -19,13 +19,13 @@ variable {AP : Type u} [DecidableEq AP]
 abbrev AutomatonState (φ : Formula AP) :=
   Tableau.State φ.normalize × (Tableau.toGeneralizedBuchi φ.normalize).Counter
 
-/-- Executable finite automaton; its `.toBuchi` adapter uses CSLib acceptance. -/
+/-- Executable finite automaton; its `.toCSLib` adapter uses CSLib acceptance. -/
 def toBuchi (φ : Formula AP) : Automata.FiniteBuchi (AutomatonState φ) (Valuation AP) :=
   (Tableau.toGeneralizedBuchi φ.normalize).toFiniteBuchi
 
 /-- Positive word-language theorem, independent of any Kripke model or seriality. -/
 theorem toBuchi_accepts (φ : Formula AP) (word : Word AP) :
-    ωAcceptor.Accepts φ.toBuchi.toBuchi word ↔ WordSat word φ := by
+    ωAcceptor.Accepts φ.toBuchi.toCSLib word ↔ WordSat word φ := by
   rw [toBuchi, Tableau.toFiniteBuchi_accepts]
   exact φ.wordSat_normalize word
 
@@ -35,7 +35,7 @@ def violationAutomaton (φ : Formula AP) :
   (Formula.neg φ).toBuchi
 
 theorem violationAutomaton_accepts (φ : Formula AP) (word : Word AP) :
-    ωAcceptor.Accepts φ.violationAutomaton.toBuchi word ↔ ¬ WordSat word φ :=
+    ωAcceptor.Accepts φ.violationAutomaton.toCSLib word ↔ ¬ WordSat word φ :=
   (Formula.neg φ).toBuchi_accepts word
 
 /-- At most the raw powerset size times the round-robin counter size. -/

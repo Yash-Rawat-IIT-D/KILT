@@ -521,7 +521,7 @@ round-robin conversion. Finally `Formula.toBuchi` normalizes and converts:
 
 ```lean
 Formula.toBuchi_accepts (φ : Formula AP) (word : Word AP) :
-  ωAcceptor.Accepts φ.toBuchi.toBuchi word ↔ WordSat word φ
+  ωAcceptor.Accepts φ.toBuchi.toCSLib word ↔ WordSat word φ
 ```
 
 The first `toBuchi` returns KILT's executable `FiniteBuchi`; the second is its
@@ -876,8 +876,11 @@ and successful witness reconstruction, not in expansion entries.
 The current frontier implementations still scan the vertex domain to produce
 the next array and test sparse-row membership. They are not adjacency-linear
 queue algorithms and are not SCC algorithms. Allocation and setup overhead need
-measurement. The graph, decoder, source order and rank arrays are reusable for
-queries inside the stored carrier. Seeds outside it require new preparation.
+measurement. The prepared graph stores adjacency, decoder and initial IDs. It does not retain
+the construction's source order or a duplicate rank array. The caller supplies
+an order when constructing a dense query order; `PreparedSearch` caches that
+query order once alongside the acceptance mask. Seeds outside the stored
+carrier require new preparation.
 
 `routeSpec?_transport` proves exact route preservation under reachable reindexing.
 `PreparedReachable.acceptingLasso?_eq_spec` and
@@ -909,6 +912,98 @@ dependency refactor. No benchmarks were run for the refactor itself; previous
 measurements do not establish performance of the new quotient-based default
 checker. Complete compiler enumeration, linear rank lookup, preparation costs
 and lack of isolated backend RSS measurements remain limitations.
+
+## Unified compilation and prepared checking
+
+`Formula.Compiled φ` holds the finite automaton on `AutomatonState φ`, its
+complete deterministic enumeration and the word-language theorem. `φ.compile`
+shares the normalized root between construction and enumeration.
+`compile_automaton` and `compile_order` preserve the previous compiler outputs;
+`compile_accepts` retains CSLib acceptance equivalence for all words. No atom
+ordering, finite atom type or valuation enumeration is added.
+
+A `FiniteKripke.Checker M` holds the chosen model order and global-seriality
+proof. Its `prepare φ` compiles the negated property once; `prepareCompiled`
+reuses a supplied compiled negation, also across models. `PreparedCheck M φ`
+contains that context, bundle and a prepared product. `M.prepareCheck` is a
+convenience constructor with explicit order and seriality. Existing formula
+checker and counterexample signatures remain wrappers over this path. The
+order-free `check` uses `Enumeration.runInvariant` on model orders; witness
+selection continues to use the supplied model order and compiler order.
+
+`Graph.PreparedSearch` caches reachable adjacency, the dense enumeration and
+acceptance mask. The ready case includes equations fixing order and mask to
+the original specification. Its empty case carries a proof that seeds or
+acceptance are empty; it skips graph preparation, rather than treating a
+missing graph or execution failure as a negative result. Return queries read
+cached adjacency. Extraction uses the cached order and parent forests, then
+maps the result back through the same decoder.
+
+`PreparedSearch.hasAcceptingCycle_eq` and `acceptingLasso?_eq` prove exact
+agreement with the existing graph entry points, including the selected prefix
+and loop. The product constructor `M.prepareProduct` is reusable for supplied
+monitors and permits partial models and empty automata without seriality.
+Actual-trace product projection lives in `Automata.ProductLasso`; its original
+public theorem names and statements remain available.
+
+For prepared formula problems, `check_correct` and `check_eq_false_iff` give
+universal satisfaction and violating-path existence. `counterexample?_sound`
+proves violation by the returned witness's own `counterexamplePath`;
+`counterexamplePath_states` fixes its exact projected sequence.
+`counterexample?_isSome_iff` equates witness presence with a false verdict,
+and `counterexample?_eq_none_iff` equates absence with satisfaction. `check_eq`
+proves verdict independence across well-specified preparations. The legacy
+`counterexample?_eq_acceptedLasso` preserves its exact enumeration-selected
+output, and all previous source-label/position-zero contracts remain.
+
+For example, prepare the waiting-response product once. Boolean checking finds
+an accepting positive return using visited arrays. Witness extraction from the
+same prepared value builds parent information and yields prefix `[]` and the
+waiting self-loop. It does not first call the Boolean method. The language
+proof turns this particular infinite repetition into a response violation.
+
+Shared preparation does not imply cached query results or cross-call persistent
+storage. Repeated queries rerun search; separate evaluations rebuild pure
+values. A changed formula changes its product. Boolean and witness engines
+remain separate to avoid allocating parent data for a Boolean query. Global
+versus reachable deadlocks, partial generic semantics, and no-fairness policy
+are unchanged. No benchmark or performance claim is added by this interface refinement.
+
+`Examples.PreparedChecking` covers exact legacy witnesses, empty shortcuts,
+accepting deadlocks, compiled reuse across models, multiple initial states,
+position zero/next, Nat atoms, enumeration-derived finiteness, and request/grant
+and traffic results. Kernel-checked propositions and build-failing execution
+assertions remain distinct; principal contracts join the standard-axiom audit.
+
+## Production searches and proof interfaces
+
+`Graph.Enumeration` is defined in `Graph/Enumeration/Basic.lean`; its executable
+operations import this independent foundation rather than the route recurrence.
+The route specification depends on enumeration, not the reverse.
+
+Use `g.parentForest order seeds` for complete parent information and
+`forest.route? target` to reconstruct a route. Use `g.parentsTo order seeds target`
+for a target-only result, followed by `result.route?`, or the convenience
+`g.parentRoute? order seeds target`. These interfaces fix initialization, fuel
+and initial level. Their distinct result types do not present stopped searches
+as complete forests. `ParentForest.route?_eq_spec` and
+`TargetParents.route?_eq_spec` equate results with the same enumeration-selected
+`routeSpec?`; the `reached_eq` lemmas connect constant-time discovery tests to
+route existence. Lasso extraction uses these production interfaces and retains
+its exact optional-witness refinement theorem.
+
+Full-round, stopped-round and frontier implementations remain necessary steps
+in that proof, under `FiniteGraph.Internal` in `Graph/Internal/`. Their raw
+fuel/level/state operations are an implementation and refinement interface;
+application code should use the production operations above.
+
+`Formula.compile` assembles the executable finite automaton, order and language
+proof. `Formula.toBuchi` remains the finite-only compilation API. In contrast,
+`FiniteBuchi.toCSLib` forgets finite storage and supplies CSLib's semantic Büchi
+interface. Write `φ.toBuchi.toCSLib`, or `φ.compile.automaton.toCSLib`, when stating
+word acceptance. The old finite adapter spelling `FiniteBuchi.toBuchi` and its
+three membership lemmas remain definitionally compatible aliases. Algorithms,
+acceptance semantics, dependency pins and witness tie-breaking are unchanged.
 
 ## Sources and attribution
 

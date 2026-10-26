@@ -210,8 +210,7 @@ def prepareReachable (order : Enumeration State) (seeds : Finset State)
     ((order.ranked row.2).filterMap (rankIndex? order states ids)).toArray)).toArray
   let graph : FiniteGraph := ⟨states.size, adjacency, by simp [adjacency, states]⟩
   refine ⟨graph, states, rfl, hn,
-    Finset.univ.filter (fun i => states[i.val] ∈ seeds), ?_, ?_, ?_, order,
-    states.map (fun s => (order.rank s).val), by simp [graph], ?_⟩
+    Finset.univ.filter (fun i => states[i.val] ∈ seeds), ?_, ?_, ?_⟩
   · intro s
     have hc : s ∈ w.nodes ↔ Reachable seeds next s :=
       ReachableQueue.prepare_mem_iff order seeds next s
@@ -231,7 +230,5 @@ def prepareReachable (order : Enumeration State) (seeds : Finset State)
     have hstate : states[i.val] = w.rows[i.val].1 := by
       simp only [states, List.getElem_toArray, List.getElem_map]
     simpa only [adjacencyRow, List.toList_toArray, lookup, hrow, hstate] using hm
-  · intro i
-    simp only [Array.getElem_map]
 
 end KILT.Graph

@@ -1,4 +1,5 @@
-import KILT.Graph.Specification.Routes
+import KILT.Graph.Enumeration.Basic
+import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.List.FinRange
 
 /-! Explicit traversal orders, with executable products, subtypes and powersets. -/
@@ -11,6 +12,12 @@ def ofList (states : List State) (complete : ∀ s, s ∈ states) : Enumeration 
   states := states.reverse.dedup.reverse
   nodup := List.nodup_reverse.mpr (List.nodup_dedup _)
   complete s := by simpa using complete s
+
+/-- Derive finite data locally from the supplied order. This is deliberately
+not a global instance: enumeration and Fintype synthesis must not recurse. -/
+def fintype (order : Enumeration State) : Fintype State where
+  elems := order.states.toFinset
+  complete s := by simpa using order.complete s
 
 def product (first : Enumeration State) (second : Enumeration Other) : Enumeration (State × Other) :=
   ofList (first.states.flatMap fun s => second.states.map fun t => (s, t)) (by

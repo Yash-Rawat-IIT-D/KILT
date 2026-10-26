@@ -32,7 +32,7 @@ theorem true_no_counterexample :
 theorem false_counterexample :
     (Examples.Checker.singleton.counterexample? .falsehood
       Examples.Checker.singleton_serial unitOrder).isSome = true := by
-  unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
+  rw [FiniteKripke.counterexample?_eq_acceptedLasso, FiniteKripke.acceptedLasso?_eq_graph]
   rw [Graph.acceptingLasso?_eq_spec]
   decide
 
@@ -40,21 +40,21 @@ theorem false_counterexample :
 theorem initial_eventuality :
     (Examples.Checker.twoState false |>.counterexample? (◇ Examples.Checker.p)
       (Examples.Checker.twoState_serial false) boolOrder).isSome = false := by
-  unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
+  rw [FiniteKripke.counterexample?_eq_acceptedLasso, FiniteKripke.acceptedLasso?_eq_graph]
   rw [Graph.acceptingLasso?_eq_spec]
   decide
 
 theorem next_counterexample :
     (Examples.Checker.twoState false |>.counterexample? (𝒩 Examples.Checker.p)
       (Examples.Checker.twoState_serial false) boolOrder).isSome = true := by
-  unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
+  rw [FiniteKripke.counterexample?_eq_acceptedLasso, FiniteKripke.acceptedLasso?_eq_graph]
   rw [Graph.acceptingLasso?_eq_spec]
   decide
 
 theorem next_successor :
     (Examples.Checker.twoState false |>.counterexample? (𝒩 Examples.Checker.q)
       (Examples.Checker.twoState_serial false) boolOrder).isSome = false := by
-  unfold FiniteKripke.counterexample? FiniteKripke.acceptedLasso?
+  rw [FiniteKripke.counterexample?_eq_acceptedLasso, FiniteKripke.acceptedLasso?_eq_graph]
   rw [Graph.acceptingLasso?_eq_spec]
   decide
 
@@ -74,7 +74,7 @@ theorem deadlock_no_lasso :
     (Examples.Checker.deadlock.acceptedLasso?
       (Formula.falsehood : Formula Nat).violationAutomaton unitOrder
       (Formula.neg (.falsehood : Formula Nat)).automatonOrder).isSome = false := by
-  unfold FiniteKripke.acceptedLasso?
+  rw [FiniteKripke.acceptedLasso?_eq_graph]
   rw [Graph.acceptingLasso?_eq_spec]
   decide
 
@@ -137,7 +137,7 @@ def safetyViolation : FiniteBuchi Bool (Valuation Atom) :=
   Monitors.guessAndStay (fun v => v (.inCritical .zero) && v (.inCritical .one)) (fun _ => true)
 
 theorem safetyViolation_accepts (word : Word Atom) :
-    ωAcceptor.Accepts safetyViolation.toBuchi word ↔ ¬ WordSat word mutualExclusion := by
+    ωAcceptor.Accepts safetyViolation.toCSLib word ↔ ¬ WordSat word mutualExclusion := by
   classical
   rw [safetyViolation, Monitors.guessAndStay_accepts]
   simp [WordSat, mutualExclusion, critical, sat_globally, sat_conj, sat_neg, sat_atom]

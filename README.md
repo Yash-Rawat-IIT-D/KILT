@@ -160,7 +160,7 @@ word position, including negated formulas. Read
 walkthrough, until/release duality, and transfer of traffic-light proofs.
 The tableau now includes until acceptance sets and full language correctness.
 [Compile.lean](KILT/LTL/Compile.lean) exposes `Formula.toBuchi`: an executable
-finite automaton whose CSLib adapter accepts exactly the satisfying words,
+finite automaton whose `.toCSLib` adapter accepts exactly the satisfying words,
 proved by `Formula.toBuchi_accepts`. Only decidable atom equality is required.
 Read [Tableau.lean](Examples/Tableau.lean) for local rules, then
 [Translation.lean](Examples/Translation.lean) for acceptance, compilation, and
@@ -283,6 +283,47 @@ that the returned trace itself is initial and violates the formula;
 See [the worked examples](Examples/Counterexample.lean) for request/grant,
 traffic and monitor-based two-thread lock witnesses.
 
+## Shared prepared checking
+
+Supply the model's order and seriality proof once. Preparing a property bundles
+its compiled violation automaton and enumeration with one reachable product,
+accepting mask and dense witness order. Both queries consume that prepared value:
+
+```lean
+import KILT
+import Examples.Buchi
+
+open KILT Examples
+
+#eval do
+  let runner := Buchi.waitingSystem.checker Buchi.waitingSerial
+    (Graph.Enumeration.ofList [.waiting, .granting] (by intro s; cases s <;> simp))
+  let problem := runner.prepare RequestGrant.response
+  let verdict := problem.check
+  let witness := problem.counterexample?
+  IO.println (verdict, witness.map fun l => (l.prefix.length, l.loop.length))
+-- (false, some (0, 1)): waiting forever violates the response property.
+```
+
+`problem.check_correct` connects its Boolean verdict to universal satisfaction.
+`problem.counterexample?_sound` proves that its returned trace itself violates
+the property; `problem.counterexamplePath` converts that result to a Kripke path.
+`systemCounterexample?` provides a system-state lasso view. For an already
+returned product lasso, `lasso.map Prod.fst` projects it without another search.
+
+To reuse compilation across models, compile `(Formula.neg property).compile`
+once and pass the bundle to each runner's `prepareCompiled`. Its fields are
+`automaton`, `order`, and the proved `accepts_iff`. A concrete model can also
+derive its `Fintype` instance from its complete `stateOrder.fintype`; this helper
+is explicit and introduces no generic instance-search cycle.
+
+Preparation is shared within one evaluation/program. Query results are not
+memoized, and separate `#eval` commands do not share a runtime cache. Boolean
+queries retain their visited-array search; witness queries use parent storage
+and perform no Boolean precheck. Existing `M.check`, `M.checkWithOrder`, and
+`M.counterexample?` signatures remain available as one-shot wrappers. See
+[prepared checking examples](Examples/PreparedChecking.lean).
+
 ## Finite graph backend
 
 The graph layer prepares seed-reachable adjacency arrays, uses Boolean visited
@@ -316,3 +357,10 @@ ranges and whole-process RSS. Phase timings are independent measurements, not
 an additive breakdown. Benchmarks remain separate from ordinary builds.
 Historical cached/indexed comparisons describe earlier revisions; their timings
 must not be presented as fresh results for later refactors.
+
+For graph-level route queries, `g.parentForest order seeds` returns complete
+parent information and `forest.route? target` reconstructs a route. A stopped
+query uses `g.parentsTo order seeds target` and `result.route?`; it has a distinct
+result type. Raw refinement engines live under `FiniteGraph.Internal`.
+`Graph.Enumeration` is independent of route specifications. See
+[the design notes](docs/design.md#production-searches-and-proof-interfaces).

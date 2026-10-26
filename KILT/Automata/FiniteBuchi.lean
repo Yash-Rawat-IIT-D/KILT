@@ -21,17 +21,28 @@ namespace FiniteBuchi
 variable {Q : Type u} {Symbol : Type v} [Fintype Q] [DecidableEq Q]
 
 /-- Forget finite storage, preserving CSLib's infinite-word acceptance. -/
-def toBuchi (A : FiniteBuchi Q Symbol) : Cslib.Automata.NA.Buchi Q Symbol where
+def toCSLib (A : FiniteBuchi Q Symbol) : Cslib.Automata.NA.Buchi Q Symbol where
   start q := q ∈ A.initials
   Tr q symbol r := r ∈ A.successors q symbol
   accept q := q ∈ A.accepting
 
-@[simp] theorem toBuchi_start (A : FiniteBuchi Q Symbol) (q : Q) :
-    q ∈ A.toBuchi.start ↔ q ∈ A.initials := Iff.rfl
-@[simp] theorem toBuchi_transition (A : FiniteBuchi Q Symbol) (q r : Q) (symbol : Symbol) :
-    A.toBuchi.Tr q symbol r ↔ r ∈ A.successors q symbol := Iff.rfl
-@[simp] theorem toBuchi_accept (A : FiniteBuchi Q Symbol) (q : Q) :
-    q ∈ A.toBuchi.accept ↔ q ∈ A.accepting := Iff.rfl
+@[simp] theorem toCSLib_start (A : FiniteBuchi Q Symbol) (q : Q) :
+    q ∈ A.toCSLib.start ↔ q ∈ A.initials := Iff.rfl
+@[simp] theorem toCSLib_transition (A : FiniteBuchi Q Symbol) (q r : Q) (symbol : Symbol) :
+    A.toCSLib.Tr q symbol r ↔ r ∈ A.successors q symbol := Iff.rfl
+@[simp] theorem toCSLib_accept (A : FiniteBuchi Q Symbol) (q : Q) :
+    q ∈ A.toCSLib.accept ↔ q ∈ A.accepting := Iff.rfl
+
+/-- Compatibility spelling. Prefer `toCSLib` to distinguish the semantic
+adapter from `Formula.toBuchi` (compilation). -/
+abbrev toBuchi (A : FiniteBuchi Q Symbol) := A.toCSLib
+
+theorem toBuchi_start (A : FiniteBuchi Q Symbol) (q : Q) :
+    q ∈ A.toBuchi.start ↔ q ∈ A.initials := A.toCSLib_start q
+theorem toBuchi_transition (A : FiniteBuchi Q Symbol) (q r : Q) (symbol : Symbol) :
+    A.toBuchi.Tr q symbol r ↔ r ∈ A.successors q symbol := A.toCSLib_transition q r symbol
+theorem toBuchi_accept (A : FiniteBuchi Q Symbol) (q : Q) :
+    q ∈ A.toBuchi.accept ↔ q ∈ A.accepting := A.toCSLib_accept q
 
 end FiniteBuchi
 end KILT.Automata

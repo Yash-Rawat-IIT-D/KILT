@@ -1,3 +1,4 @@
+import KILT.Graph.Internal.Parents
 import KILT.Graph.LassoSearch
 import KILT.Graph.Enumeration
 
@@ -63,7 +64,7 @@ theorem multiple_initials :
 abbrev chainGraph : FiniteGraph := ⟨5, #[#[1], #[2], #[1], #[3], #[]], rfl⟩
 
 theorem parent_round :
-    (FiniteGraph.Parents.rounds chainGraph (Enumeration.fin 5) {0} 2).unwind 6 2 [] =
+    (FiniteGraph.Internal.Parents.rounds chainGraph (Enumeration.fin 5) {0} 2).unwind 6 2 [] =
       some [0, 1, 2] := by decide +kernel
 
 def branchEdges (s : Fin 3) : Finset (Fin 3) := if s = 0 then {1, 2} else {s}

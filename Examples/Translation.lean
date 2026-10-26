@@ -145,40 +145,40 @@ example : (toGeneralizedBuchi (.conj u u)).Accepts delayed := by
   exact ⟨h, h⟩
 
 def switchWord : Word Nat := ⟨fun i => if i = 0 then onlyP else onlyQ⟩
-example : ωAcceptor.Accepts (𝒩 fq).toBuchi.toBuchi switchWord :=
+example : ωAcceptor.Accepts (𝒩 fq).toBuchi.toCSLib switchWord :=
   ((𝒩 fq).toBuchi_accepts switchWord).mpr rfl
-example : ¬ ωAcceptor.Accepts (𝒩 fp).toBuchi.toBuchi switchWord := by
+example : ¬ ωAcceptor.Accepts (𝒩 fp).toBuchi.toCSLib switchWord := by
   rw [Formula.toBuchi_accepts]
   change ¬ (false = true)
   decide
 
 /-- Only position zero makes q true: compilation must consume that valuation. -/
 def pulse : Word Nat := ⟨fun i => if i = 0 then onlyQ else off⟩
-theorem eventually_at_zero : ωAcceptor.Accepts (◇ fq).toBuchi.toBuchi pulse := by
+theorem eventually_at_zero : ωAcceptor.Accepts (◇ fq).toBuchi.toCSLib pulse := by
   apply ((◇ fq).toBuchi_accepts pulse).mpr
   exact sat_eventually.mpr ⟨0, le_rfl, rfl⟩
 
-example : ωAcceptor.Accepts (□ fq).toBuchi.toBuchi (constant onlyQ) := by
+example : ωAcceptor.Accepts (□ fq).toBuchi.toCSLib (constant onlyQ) := by
   rw [Formula.toBuchi_accepts]
   exact sat_globally.mpr (fun _ _ => rfl)
-example : ωAcceptor.Accepts (fp ⟹ ◇ fq).toBuchi.toBuchi (constant onlyQ) := by
+example : ωAcceptor.Accepts (fp ⟹ ◇ fq).toBuchi.toCSLib (constant onlyQ) := by
   rw [Formula.toBuchi_accepts]
   apply sat_imp.mpr
   intro hp
   change false = true at hp
   contradiction
-example : ωAcceptor.Accepts (Formula.release fp fq).toBuchi.toBuchi (constant onlyQ) := by
+example : ωAcceptor.Accepts (Formula.release fp fq).toBuchi.toCSLib (constant onlyQ) := by
   rw [Formula.toBuchi_accepts]
   exact sat_release.mpr (fun _ _ _ => rfl)
-example : ωAcceptor.Accepts (¬ₗ (¬ₗ fq)).toBuchi.toBuchi (constant onlyQ) := by
+example : ωAcceptor.Accepts (¬ₗ (¬ₗ fq)).toBuchi.toCSLib (constant onlyQ) := by
   rw [Formula.toBuchi_accepts]
   exact fun h => h rfl
-example : ωAcceptor.Accepts (¬ₗ (fp 𝒰 fq)).toBuchi.toBuchi (constant off) := by
+example : ωAcceptor.Accepts (¬ₗ (fp 𝒰 fq)).toBuchi.toCSLib (constant off) := by
   rw [Formula.toBuchi_accepts]
   rintro ⟨j, _, hj, _⟩
   change false = true at hj
   contradiction
-example : ωAcceptor.Accepts (¬ₗ (Formula.release fp fq)).toBuchi.toBuchi (constant off) := by
+example : ωAcceptor.Accepts (¬ₗ (Formula.release fp fq)).toBuchi.toCSLib (constant off) := by
   rw [Formula.toBuchi_accepts]
   intro h
   have hh := sat_release.mp h 0 le_rfl (fun _ _ hk => (Nat.not_lt_zero _ hk).elim)
@@ -187,18 +187,18 @@ example : ωAcceptor.Accepts (¬ₗ (Formula.release fp fq)).toBuchi.toBuchi (co
 
 /-- Independent handwritten language proofs remain comparison oracles. -/
 theorem agrees_eventually (w : Word Nat) :
-    ωAcceptor.Accepts (◇ fq).toBuchi.toBuchi w ↔
-      ωAcceptor.Accepts (KILT.Automata.Monitors.eventually 1).toBuchi w := by
+    ωAcceptor.Accepts (◇ fq).toBuchi.toCSLib w ↔
+      ωAcceptor.Accepts (KILT.Automata.Monitors.eventually 1).toCSLib w := by
   rw [Formula.toBuchi_accepts, KILT.Automata.Monitors.eventually_accepts]
   rfl
 theorem agrees_notEventually (w : Word Nat) :
-    ωAcceptor.Accepts (¬ₗ (◇ fq)).toBuchi.toBuchi w ↔
-      ωAcceptor.Accepts (KILT.Automata.Monitors.notEventually 1).toBuchi w := by
+    ωAcceptor.Accepts (¬ₗ (◇ fq)).toBuchi.toCSLib w ↔
+      ωAcceptor.Accepts (KILT.Automata.Monitors.notEventually 1).toCSLib w := by
   rw [Formula.toBuchi_accepts, KILT.Automata.Monitors.notEventually_accepts]
   rfl
 theorem agrees_notResponse (w : Word Nat) :
-    ωAcceptor.Accepts (¬ₗ (□ (fp ⟹ ◇ fq))).toBuchi.toBuchi w ↔
-      ωAcceptor.Accepts (KILT.Automata.Monitors.notResponse 0 1).toBuchi w := by
+    ωAcceptor.Accepts (¬ₗ (□ (fp ⟹ ◇ fq))).toBuchi.toCSLib w ↔
+      ωAcceptor.Accepts (KILT.Automata.Monitors.notResponse 0 1).toCSLib w := by
   rw [Formula.toBuchi_accepts, KILT.Automata.Monitors.notResponse_accepts]
   rfl
 

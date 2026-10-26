@@ -98,14 +98,14 @@ def liftSequence (A : FiniteGeneralizedBuchi Q Symbol) (ss : Cslib.ωSequence Q)
 
 theorem lift_run (A : FiniteGeneralizedBuchi Q Symbol) {word : Cslib.ωSequence Symbol}
     {ss : Cslib.ωSequence Q} (h : A.toNA.Run word ss) :
-    A.toFiniteBuchi.toBuchi.Run word (A.liftSequence ss) := by
+    A.toFiniteBuchi.toCSLib.Run word (A.liftSequence ss) := by
   constructor
   · exact (A.converted_start _).mpr ⟨h.start, rfl⟩
   · intro k
     exact (A.converted_transition _ _ _).mpr ⟨h.trans k, rfl⟩
 
 theorem project_run (A : FiniteGeneralizedBuchi Q Symbol) {word : Cslib.ωSequence Symbol}
-    {ss : Cslib.ωSequence (Q × A.Counter)} (h : A.toFiniteBuchi.toBuchi.Run word ss) :
+    {ss : Cslib.ωSequence (Q × A.Counter)} (h : A.toFiniteBuchi.toCSLib.Run word ss) :
     A.toNA.Run word (fun k => (ss k).1) := by
   constructor
   · exact ((A.converted_start _).mp h.start).1
@@ -114,7 +114,7 @@ theorem project_run (A : FiniteGeneralizedBuchi Q Symbol) {word : Cslib.ωSequen
 
 /-- Starting at zero leaves no freedom in the counter annotation. -/
 theorem run_eq_lift (A : FiniteGeneralizedBuchi Q Symbol) {word : Cslib.ωSequence Symbol}
-    {ss : Cslib.ωSequence (Q × A.Counter)} (h : A.toFiniteBuchi.toBuchi.Run word ss) :
+    {ss : Cslib.ωSequence (Q × A.Counter)} (h : A.toFiniteBuchi.toCSLib.Run word ss) :
     ss = A.liftSequence (fun k => (ss k).1) := by
   have hc : ∀ k, (ss k).2 = A.counter (fun j => (ss j).1) k := by
     intro k
@@ -132,7 +132,7 @@ theorem run_eq_lift (A : FiniteGeneralizedBuchi Q Symbol) {word : Cslib.ωSequen
 theorem accepts_singleton (A : FiniteGeneralizedBuchi Q Symbol) (F : Finset Q)
     (hf : A.accepting = [F]) (word : Cslib.ωSequence Symbol) :
     A.Accepts word ↔ Cslib.Automata.ωAcceptor.Accepts
-      (FiniteBuchi.mk A.initials A.successors F).toBuchi word := by
+      (FiniteBuchi.mk A.initials A.successors F).toCSLib word := by
   simp only [Accepts, AcceptingRun, hf, List.mem_singleton, forall_eq]
   rfl
 

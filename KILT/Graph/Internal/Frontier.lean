@@ -1,13 +1,14 @@
-import KILT.Graph.ParentSearch
+import KILT.Graph.Internal.ParentSearch
 
-/-!
+/-! Internal implementation and refinement interface; use Graph/Parents for production queries.
+
 # Level-frontier parent expansion
 
 Earlier-level states cannot be predecessors of an undiscovered target: their
 edges already supplied routes in earlier rounds. Restricting predecessor scans
 to the current level therefore preserves the exact enumeration tie-breaker.
 -/
-namespace KILT.Graph.FiniteGraph
+namespace KILT.Graph.FiniteGraph.Internal
 
 theorem Parents.ext_get {g : FiniteGraph} {p q : Parents g}
     (h : ∀ i, p.get i = q.get i) : p = q := by
@@ -167,4 +168,4 @@ theorem Parents.frontierTarget_eq (g : FiniteGraph) (order : Enumeration g.Verte
       (Parents.initial g seeds).search order (some target) g.size :=
   Parents.frontierSearch_eq g order seeds (some target) g.size 0
 
-end KILT.Graph.FiniteGraph
+end KILT.Graph.FiniteGraph.Internal

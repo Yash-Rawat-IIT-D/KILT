@@ -35,7 +35,7 @@ def guessAndStay (trigger maintain : Symbol → Bool) : FiniteBuchi Bool Symbol 
   cases next <;> cases h : maintain symbol <;> simp [guessAndStay, h]
 
 theorem guessAndStay_accepts (trigger maintain : Symbol → Bool) (word : ωSequence Symbol) :
-    ωAcceptor.Accepts (guessAndStay trigger maintain).toBuchi word ↔
+    ωAcceptor.Accepts (guessAndStay trigger maintain).toCSLib word ↔
       ∃ j, trigger (word j) = true ∧ ∀ k, j < k → maintain (word k) = true := by
   constructor
   · rintro ⟨ss, run, hacc⟩
@@ -104,7 +104,7 @@ def eventually (q : AP) : FiniteBuchi Bool (Valuation AP) :=
   guessAndStay (fun valuation => valuation q) (fun _ => true)
 
 theorem eventually_accepts (q : AP) (word : Word AP) :
-    ωAcceptor.Accepts (eventually q).toBuchi word ↔ WordSat word (Formula.eventually (.atom q)) := by
+    ωAcceptor.Accepts (eventually q).toCSLib word ↔ WordSat word (Formula.eventually (.atom q)) := by
   rw [eventually, guessAndStay_accepts]
   simp [WordSat, sat_eventually, sat_atom]
 
@@ -115,7 +115,7 @@ def notEventually (q : AP) : FiniteBuchi Unit (Valuation AP) where
   accepting := {()}
 
 theorem notEventually_accepts (q : AP) (word : Word AP) :
-    ωAcceptor.Accepts (notEventually q).toBuchi word ↔
+    ωAcceptor.Accepts (notEventually q).toCSLib word ↔
       ¬ WordSat word (Formula.eventually (.atom q)) := by
   constructor
   · rintro ⟨ss, run, _⟩ hevent
@@ -131,7 +131,7 @@ theorem notEventually_accepts (q : AP) (word : Word AP) :
       | true => exact False.elim (hnever (sat_eventually.mpr ⟨i, Nat.zero_le _, h⟩))
     refine ⟨ωSequence.const (), ⟨by change () ∈ ({()} : Finset Unit); simp, ?_⟩, ?_⟩
     · intro i
-      simp [notEventually, FiniteBuchi.toBuchi, hfalse]
+      simp [notEventually, FiniteBuchi.toCSLib, hfalse]
     · exact frequently_atTop.mpr fun n => ⟨n, le_rfl, by change () ∈ ({()} : Finset Unit); simp⟩
 
 /-- Guess an unanswered request, then require grant to remain false. -/
@@ -139,7 +139,7 @@ def notResponse (p q : AP) : FiniteBuchi Bool (Valuation AP) :=
   guessAndStay (fun valuation => valuation p && !valuation q) (fun valuation => !valuation q)
 
 theorem notResponse_accepts (p q : AP) (word : Word AP) :
-    ωAcceptor.Accepts (notResponse p q).toBuchi word ↔
+    ωAcceptor.Accepts (notResponse p q).toCSLib word ↔
       ¬ WordSat word (Formula.globally (Formula.imp (.atom p) (Formula.eventually (.atom q)))) := by
   classical
   rw [notResponse, guessAndStay_accepts]

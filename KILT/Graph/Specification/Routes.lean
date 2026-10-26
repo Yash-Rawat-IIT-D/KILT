@@ -1,4 +1,5 @@
 import KILT.Graph.Specification.Reachability
+import KILT.Graph.Enumeration.Basic
 
 /-!
 # Deterministic route-selection specification
@@ -15,12 +16,6 @@ namespace KILT.Graph
 universe u
 
 variable {State : Type u} [Fintype State] [DecidableEq State]
-
-/-- An explicit traversal order for deterministic witness selection. -/
-structure Enumeration (State : Type u) where
-  states : List State
-  nodup : states.Nodup
-  complete : ∀ state, state ∈ states
 
 /-- A route table stores at most one candidate route to each state. -/
 abbrev RouteTable (State : Type u) := State → Option (List State)

@@ -27,13 +27,13 @@ theorem singleton_serial : singleton.toKripke.Serial :=
   singleton.isSerial_eq_true_iff.mp (by decide)
 
 theorem truth_verdict : singleton.check Formula.truth singleton_serial = true := by
-  simp only [FiniteKripke.check, FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  simp only [FiniteKripke.check_eq_checkAgainst_violation, FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
   decide
 theorem falsehood_verdict : singleton.check .falsehood singleton_serial = false := by
-  simp only [FiniteKripke.check, FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  simp only [FiniteKripke.check_eq_checkAgainst_violation, FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
   decide
 theorem atom_verdict : singleton.check p singleton_serial = true := by
-  simp only [FiniteKripke.check, FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  simp only [FiniteKripke.check_eq_checkAgainst_violation, FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
   decide
 
 /-- A kernel-computed verdict entails universal satisfaction via the main theorem. -/
@@ -57,10 +57,10 @@ theorem twoState_serial (multiple : Bool) : (twoState multiple).toKripke.Serial 
   exact ⟨false, by simp [FiniteKripke.toKripke, twoState]⟩
 
 theorem initial_atom_verdict : (twoState false).check p (twoState_serial false) = true := by
-  simp only [FiniteKripke.check, FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  simp only [FiniteKripke.check_eq_checkAgainst_violation, FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
   decide
 theorem multiple_initials_verdict : (twoState true).check p (twoState_serial true) = false := by
-  simp only [FiniteKripke.check, FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
+  simp only [FiniteKripke.check_eq_checkAgainst_violation, FiniteKripke.checkAgainst, FiniteKripke.hasAcceptedPath, Graph.hasAcceptingCycle_eq_spec]
   decide
 
 def deadlock : FiniteKripke Unit Nat where
