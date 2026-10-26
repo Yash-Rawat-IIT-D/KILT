@@ -92,4 +92,32 @@ theorem parentRoute?_eq_spec (g : FiniteGraph) (order : Enumeration g.Vertex)
     g.parentRoute? order seeds target = routeSpec? order seeds g.successors target :=
   (g.parentsTo order seeds target).route?_eq_spec
 
+/-- Exact return route with deadlock/self-loop shortcuts, preserving seed-route selection. -/
+def returnRoute? (g : FiniteGraph) (order : Enumeration g.Vertex) (q : g.Vertex) :
+    Option (List g.Vertex) :=
+  if (g.row q).size = 0 then none else
+    if g.edge q q then some [q] else g.parentRoute? order (g.successors q) q
+
+theorem returnRoute?_eq_spec (g : FiniteGraph) (order : Enumeration g.Vertex) (q : g.Vertex) :
+    returnRoute? g order q = routeSpec? order (g.successors q) g.successors q := by
+  unfold returnRoute?
+  split
+  next he =>
+    have hs : g.successors q = ∅ := by
+      simp [successors, Array.eq_empty_of_size_eq_zero he]
+    rw [hs]
+    symm
+    cases hr : routeSpec? order ∅ g.successors q with
+    | none => rfl
+    | some route =>
+      have h := (routeSpec?_isSome_iff order ∅ g.successors q).mp (by simp [hr])
+      simp [Reachable] at h
+  next =>
+    split
+    next he =>
+      have hq : q ∈ g.successors q := by simpa [edge_eq_decide] using he
+      have h := routeRounds_retains order g.successors (Fintype.card g.Vertex)
+        (initialRouteTable (g.successors q)) q [q] (by simp [initialRouteTable, hq])
+      simpa [routeRounds_initial, routeSpec?] using h.symm
+    next => exact parentRoute?_eq_spec g order (g.successors q) q
 end KILT.Graph.FiniteGraph

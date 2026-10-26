@@ -1005,6 +1005,45 @@ word acceptance. The old finite adapter spelling `FiniteBuchi.toBuchi` and its
 three membership lemmas remain definitionally compatible aliases. Algorithms,
 acceptance semantics, dependency pins and witness tie-breaking are unchanged.
 
+## Enumeration and accepting-search shortcuts
+
+Enumeration constructors for products, `Fin`, filtered subtypes and powersets
+use `Enumeration.ofNodup`: uniqueness is proved rather than recomputed by list
+deduplication. `ofNodup_eq_ofList` establishes exact agreement with the old
+general constructor, including order. Arbitrary lists still use `ofList` and
+retain its first-occurrence deduplication. `subsetList_nodup` proves that the
+exclude-before-include powerset traversal is duplicate-free.
+
+`FiniteGraph.canReturn?` rejects an empty successor row and accepts a self-loop
+before allocating a visited search. `returnRoute?` similarly returns `none` or
+`some [q]`, falling back to the existing parent search for other rows. Theorems
+`canReturn?_eq_reachable` and `returnRoute?_eq_spec` preserve the previous
+positive-return query and exact reference route. A self-loop is a zero-step
+route from the successor seed `q`, representing a genuine one-edge return
+from the original source. Empty accepting masks skip lasso parent-forest
+construction entirely. The complete optional-lasso specification equality
+continues to hold. These changes do not introduce SCCs or alter Büchi semantics.
+
+## Incremental preparation and literal checks
+
+Reachable discovery uses an array and cursor, appends completed rows, and keeps
+a discovered set incrementally. `ReachableQueue.Buffer.prepare_view` refines
+the earlier list recurrence; `prepareReachable_eq_reference` equates the full
+prepared graph, including discovery IDs and adjacency. Rank lookup and generic
+finite-set operations still have nonconstant costs.
+
+Product preparation builds its accepting mask only over reachable dense IDs.
+`productAcceptingMask_eq` identifies it with the old product acceptance set;
+empty automaton starts or acceptance skip preparation. Product, checker and
+actual-lasso contracts are unchanged. The constructor is made locally opaque
+only while elaborating the generic counterexample proofs.
+
+Tableau literal compatibility depends on the source and input valuation, while
+temporal compatibility relates source and target. `step_split` proves their
+conjunction equivalent to the original rule; `successors_eq_step_filter` proves
+the executable successors unchanged. Literal mismatch returns no successors
+before candidate enumeration. Atom types need decidable equality, not finiteness.
+
 ## Sources and attribution
 
 KILT pins [CSLib at `a3da622f14ac47924a4ffb293fdb0dad6fcdfae1`](https://github.com/leanprover/cslib/tree/a3da622f14ac47924a4ffb293fdb0dad6fcdfae1)

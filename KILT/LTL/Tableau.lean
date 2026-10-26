@@ -86,13 +86,62 @@ def Step {f : NNF AP} (s t : State f) (v : Valuation AP) : Prop :=
 instance {f : NNF AP} (s t : State f) (v : Valuation AP) : Decidable (Step s t v) :=
   inferInstanceAs (Decidable (∀ g : NNF.Subformula f, LocalRule s t v g.val))
 
+def LiteralRule {f : NNF AP} (s : State f) (v : Valuation AP) : NNF AP → Prop
+  | .pos p => s.holds (.pos p) ↔ v p = true
+  | .negAtom p => s.holds (.negAtom p) ↔ v p = false
+  | _ => True
+instance {f : NNF AP} (s : State f) (v : Valuation AP) (g : NNF AP) : Decidable (LiteralRule s v g) := by
+  cases g <;> unfold LiteralRule <;> infer_instance
+
+def TemporalRule {f : NNF AP} (s t : State f) : NNF AP → Prop
+  | .next a => s.holds (.next a) ↔ t.holds a
+  | .until a b => s.holds (.until a b) ↔ s.holds b ∨ (s.holds a ∧ t.holds (.until a b))
+  | .release a b => s.holds (.release a b) ↔ s.holds b ∧ (s.holds a ∨ t.holds (.release a b))
+  | _ => True
+instance {f : NNF AP} (s t : State f) (g : NNF AP) : Decidable (TemporalRule s t g) := by
+  cases g <;> unfold TemporalRule <;> infer_instance
+
+def LiteralCompatible {f : NNF AP} (s : State f) (v : Valuation AP) : Prop :=
+  ∀ g : NNF.Subformula f, LiteralRule s v g.val
+instance {f : NNF AP} (s : State f) (v : Valuation AP) : Decidable (LiteralCompatible s v) :=
+  inferInstanceAs (Decidable (∀ g : NNF.Subformula f, LiteralRule s v g.val))
+
+def TemporalCompatible {f : NNF AP} (s t : State f) : Prop :=
+  ∀ g : NNF.Subformula f, TemporalRule s t g.val
+instance {f : NNF AP} (s t : State f) : Decidable (TemporalCompatible s t) :=
+  inferInstanceAs (Decidable (∀ g : NNF.Subformula f, TemporalRule s t g.val))
+
+theorem localRule_split {f : NNF AP} (s t : State f) (v : Valuation AP) (g : NNF AP) :
+    LocalRule s t v g ↔ LiteralRule s v g ∧ TemporalRule s t g := by
+  cases g <;> simp [LocalRule, LiteralRule, TemporalRule]
+
+theorem step_split {f : NNF AP} (s t : State f) (v : Valuation AP) :
+    Step s t v ↔ LiteralCompatible s v ∧ TemporalCompatible s t := by
+  simp only [Step, LiteralCompatible, TemporalCompatible, ← forall_and]
+  exact forall_congr' fun g => localRule_split s t v g.val
+
+
 def initials (f : NNF AP) : Finset (State f) := Finset.univ.filter fun s => s.holds f
+/-- Check source literals once before enumerating temporally compatible successors. -/
 def successors {f : NNF AP} (s : State f) (v : Valuation AP) : Finset (State f) :=
-  Finset.univ.filter fun t => Step s t v
+  if LiteralCompatible s v then Finset.univ.filter fun t => TemporalCompatible s t else ∅
 
 @[simp] theorem mem_initials {f : NNF AP} (s : State f) : s ∈ initials f ↔ s.holds f := by simp [initials]
 @[simp] theorem mem_successors {f : NNF AP} (s t : State f) (v : Valuation AP) :
-    t ∈ successors s v ↔ Step s t v := by simp [successors]
+    t ∈ successors s v ↔ Step s t v := by
+  by_cases h : LiteralCompatible s v
+  · simp [successors, h, step_split]
+  · simp [successors, h, step_split]
+
+/-- The optimized set is extensionally the original local-rule filter. -/
+theorem successors_eq_step_filter {f : NNF AP} (s : State f) (v : Valuation AP) :
+    successors s v = Finset.univ.filter (fun t => Step s t v) := by
+  ext t
+  simp [mem_successors]
+
+theorem successors_empty_of_incompatible {f : NNF AP} (s : State f) (v : Valuation AP)
+    (h : ¬ LiteralCompatible s v) : successors s v = ∅ := by
+  simp [successors, h]
 
 def toNA (f : NNF AP) : Cslib.Automata.NA (State f) (Valuation AP) where
   start s := s ∈ initials f

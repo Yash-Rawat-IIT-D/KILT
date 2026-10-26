@@ -82,4 +82,55 @@ theorem ordered_nat_atom : Checker.singleton.checkWithOrder Checker.p
 #eval branch.parentRoute? forward {0} 3
 #eval branch.parentRoute? backward {0} 3
 
+/-- Optimized constructors preserve the old first-occurrence traversal order. -/
+theorem enumeration_product_order :
+    ((Enumeration.fin 2).product (Enumeration.fin 2)).states =
+      [(0, 0), (0, 1), (1, 0), (1, 1)] := by decide +kernel
+
+theorem enumeration_subtype_order :
+    ((Enumeration.fin 4).subtype (fun i => i.val % 2 = 0)).states.map Subtype.val =
+      [0, 2] := by decide +kernel
+
+theorem enumeration_subset_order :
+    (Enumeration.fin 2).finset.states = [∅, {1}, {0}, {0, 1}] := by decide +kernel
+
+theorem arbitrary_list_still_deduplicates :
+    (Enumeration.ofList ([1, 0, 1, 0] : List (Fin 2))
+      (by intro s; fin_cases s <;> decide)).states = [1, 0] := by decide +kernel
+
+abbrev stopped : FiniteGraph := ⟨1, #[#[]], rfl⟩
+abbrev twoCycle : FiniteGraph := ⟨2, #[#[1], #[0]], rfl⟩
+
+theorem deadlock_return : stopped.canReturn? 0 = false ∧
+    stopped.returnRoute? (Enumeration.fin 1) 0 = none := by decide +kernel
+
+theorem selfloop_return : branch.canReturn? 3 = true ∧
+    branch.returnRoute? backward 3 = some [3] := by decide +kernel
+
+theorem cyclic_return : twoCycle.canReturn? 0 = true ∧
+    twoCycle.returnRoute? (Enumeration.fin 2) 0 = some [1, 0] := by decide +kernel
+
+theorem transient_return : branch.canReturn? 0 = false ∧
+    branch.returnRoute? forward 0 = none := by decide +kernel
+
+theorem no_acceptance_lasso : branch.acceptingLasso? forward {0} ∅ = none := by decide +kernel
+
+/-- Two seeds and branching exercise buffer order and the incremental seen set. -/
+def bufferNext (s : Fin 4) : Finset (Fin 4) :=
+  if s = 0 then {1, 2} else if s = 1 ∨ s = 2 then {3} else {3}
+
+def buffered := ReachableQueue.Buffer.prepare (Enumeration.fin 4) {0} bufferNext
+
+theorem buffer_matches_reference : buffered.view =
+    ReachableQueue.prepare (Enumeration.fin 4) {0} bufferNext :=
+  ReachableQueue.Buffer.prepare_view _ _ _
+
+#eval expect "buffer discovery order" (buffered.nodes.toList == [0, 1, 2, 3])
+#eval expect "buffer complete" (buffered.cursor == 4 && buffered.rows.size == 4)
+#eval expect "buffer seen" (buffered.seen == ({0, 1, 2, 3} : Finset (Fin 4)))
+#eval expect "multiple seeds" ((ReachableQueue.Buffer.prepare
+  (Enumeration.fin 4) {0, 2} bufferNext).nodes.toList == [0, 2, 1, 3])
+#eval expect "empty seeds" ((ReachableQueue.Buffer.prepare
+  (Enumeration.fin 4) ∅ bufferNext).nodes.isEmpty)
+
 end Examples.GraphStorage
