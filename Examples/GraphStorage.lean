@@ -1,6 +1,5 @@
 import KILT.Kripke.OrderedCheck
 import KILT.Graph.Parents
-import KILT.Graph.Frontier
 import KILT.Graph.Traversal
 import Examples.Checker
 
@@ -61,13 +60,13 @@ theorem boolean_branch : branch.reachable? {0} 3 = true := by decide +kernel
 theorem boolean_unreachable : branch.reachable? {3} 0 = false := by decide +kernel
 theorem boolean_empty : branch.reachable? ∅ 3 = false := by decide +kernel
 theorem frontier_selected :
-    (FiniteGraph.Parents.frontierForest branch forward {0}).unwind 5 3 [] =
+    (branch.parentForest forward {0}).route? 3 =
       some [0, 1, 3] := by decide +kernel
 theorem frontier_reversed :
-    (FiniteGraph.Parents.frontierForest branch backward {0}).unwind 5 3 [] =
+    (branch.parentForest backward {0}).route? 3 =
       some [0, 2, 3] := by decide +kernel
 theorem target_stops_at_seed :
-    (((FiniteGraph.Parents.initial branch {0}).frontierSearch forward (some 0) 4 0).get 3) =
+    ((branch.parentsTo forward {0} 0).storage.get 3) =
       .unseen := by decide +kernel
 
 def singletonOrder : Enumeration Unit := ⟨[()], by simp, by intro s; cases s; simp⟩

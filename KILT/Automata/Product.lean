@@ -36,7 +36,7 @@ theorem product_run_iff (M : FiniteKripke State AP)
       ∀ i, (ss (i + 1), qs (i + 1)) ∈ M.productSuccessors A (ss i, qs i)) ↔
     M.toKripke.initial (ss 0) ∧
       (∀ i, M.toKripke.step (ss i) (ss (i + 1))) ∧
-      A.toBuchi.Run (ss.map M.label) qs := by
+      A.toCSLib.Run (ss.map M.label) qs := by
   constructor
   · rintro ⟨hstart, hstep⟩
     have hstarts := Finset.mem_product.mp hstart
@@ -54,7 +54,7 @@ def hasAcceptedPath (M : FiniteKripke State AP)
 theorem hasAcceptedPath_eq_true_iff (M : FiniteKripke State AP)
     (A : FiniteBuchi Q (LTL.Valuation AP)) :
     M.hasAcceptedPath A = true ↔
-      ∃ p : M.toKripke.Path, p.IsInitial ∧ ωAcceptor.Accepts A.toBuchi p.word := by
+      ∃ p : M.toKripke.Path, p.IsInitial ∧ ωAcceptor.Accepts A.toCSLib p.word := by
   rw [hasAcceptedPath, Graph.hasAcceptingCycle_eq_true_iff_run]
   constructor
   · rintro ⟨ss, hstart, hstep, hacc⟩
@@ -63,12 +63,12 @@ theorem hasAcceptedPath_eq_true_iff (M : FiniteKripke State AP)
     refine ⟨p, (Finset.mem_product.mp hstart).1, ss.map Prod.snd,
       ⟨(Finset.mem_product.mp hstart).2,
         fun i => (Finset.mem_product.mp (hstep i)).2⟩, ?_⟩
-    simpa only [productAccepting, Finset.mem_product, Finset.mem_univ, true_and, FiniteBuchi.toBuchi_accept,
+    simpa only [productAccepting, Finset.mem_product, Finset.mem_univ, true_and, FiniteBuchi.toCSLib_accept,
       Cslib.ωSequence.get_map, Cslib.ωSequence.get_zip] using hacc
   · rintro ⟨p, hp, qs, hrun, hacc⟩
     refine ⟨p.states.zip Prod.mk qs, Finset.mem_product.mpr ⟨hp, hrun.start⟩,
       fun i => Finset.mem_product.mpr ⟨p.valid i, hrun.trans i⟩, ?_⟩
-    simpa only [productAccepting, Finset.mem_product, Finset.mem_univ, true_and, FiniteBuchi.toBuchi_accept,
+    simpa only [productAccepting, Finset.mem_product, Finset.mem_univ, true_and, FiniteBuchi.toCSLib_accept,
       Cslib.ωSequence.get_map, Cslib.ωSequence.get_zip] using hacc
 
 /-- Check a property against a supplied violation automaton. Seriality is an
@@ -82,11 +82,11 @@ conditional on the supplied automaton's language theorem, not a translator. -/
 theorem checkAgainst_correct (M : FiniteKripke State AP)
     (A : FiniteBuchi Q (LTL.Valuation AP)) (serial : M.toKripke.Serial)
     (formula : LTL.Formula AP)
-    (violations : ∀ word, ωAcceptor.Accepts A.toBuchi word ↔ ¬ LTL.WordSat word formula) :
+    (violations : ∀ word, ωAcceptor.Accepts A.toCSLib word ↔ ¬ LTL.WordSat word formula) :
     M.checkAgainst A serial = true ↔ M.toKripke.Satisfies formula := by
   classical
   have hzero : M.hasAcceptedPath A = false ↔
-      ¬ ∃ p : M.toKripke.Path, p.IsInitial ∧ ωAcceptor.Accepts A.toBuchi p.word := by
+      ¬ ∃ p : M.toKripke.Path, p.IsInitial ∧ ωAcceptor.Accepts A.toCSLib p.word := by
     rw [Bool.eq_false_iff]
     exact not_congr (hasAcceptedPath_eq_true_iff M A)
   rw [checkAgainst, Bool.not_eq_true', hzero]

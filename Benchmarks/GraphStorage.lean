@@ -45,16 +45,16 @@ def graphCase {S : Type} [Fintype S] [DecidableEq S] (name : String)
     p.hasAcceptingCycle acc)
   unless new == answer do throw (IO.userError s!"{name}: prepared verdict mismatch")
   let forest ← timed (B := fun p : Graph.PreparedReachable seeds next =>
-      Graph.FiniteGraph.Parents p.graph) s!"{name}/parent-search" p
-    (fun p => Graph.FiniteGraph.Parents.frontierForest p.graph (p.order order) p.initials)
+      Graph.FiniteGraph.ParentForest p.graph (p.order order) p.initials) s!"{name}/parent-search" p
+    (fun p => p.graph.parentForest (p.order order) p.initials)
   let routes ← timed s!"{name}/reconstruct-all-for-validation" forest
     (fun forest => (List.finRange p.graph.size).map fun target =>
-      forest.unwind (p.graph.size + 1) target [])
+      forest.route? target)
   for target in List.finRange p.graph.size do
     let actual := routes[target.val]!.map (List.map p.decode)
     let expected := Graph.routeSpec? order seeds next (p.decode target)
     unless actual == expected do throw (IO.userError s!"{name}: selected route mismatch")
-  IO.println s!"COUNTS {name} full={Fintype.card S} reachable={p.graph.size} edges={(p.graph.adjacency.map Array.size).foldl (· + ·) 0} parents={forest.entries.size} successorRows={(p.graph.size)} verdict={answer}"
+  IO.println s!"COUNTS {name} full={Fintype.card S} reachable={p.graph.size} edges={(p.graph.adjacency.map Array.size).foldl (· + ·) 0} parents={forest.storage.entries.size} successorRows={(p.graph.size)} verdict={answer}"
 
 def formulaCase {S AP : Type} [Fintype S] [DecidableEq S] [DecidableEq AP]
     (name : String) (M : FiniteKripke S AP) (φ : Formula AP) (hs : M.toKripke.Serial)

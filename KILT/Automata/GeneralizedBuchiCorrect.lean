@@ -72,7 +72,7 @@ theorem lift_acceptingRun (A : FiniteGeneralizedBuchi Q Symbol)
 /-- Conversion preserves the accepted infinite-word language. -/
 theorem toFiniteBuchi_accepts (A : FiniteGeneralizedBuchi Q Symbol)
     (word : Cslib.ωSequence Symbol) :
-    ωAcceptor.Accepts A.toFiniteBuchi.toBuchi word ↔ A.Accepts word := by
+    ωAcceptor.Accepts A.toFiniteBuchi.toCSLib word ↔ A.Accepts word := by
   constructor
   · rintro ⟨ss, hrun, hacc⟩
     refine ⟨fun k => (ss k).1, A.project_run hrun, ?_⟩

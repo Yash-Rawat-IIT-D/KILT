@@ -3,10 +3,12 @@ import KILT.LTL.NormalForm
 import KILT.LTL.Subformulas
 import KILT.LTL.Tableau
 import KILT.LTL.Compile
+import KILT.LTL.Compiled
 import KILT.Graph.Reachability
 import KILT.Graph.Routes
 import KILT.Graph.Parents
 import KILT.Kripke.OrderedCheck
+import KILT.Kripke.PreparedCheck
 import KILT.Kripke.Semantics
 import KILT.Kripke.Finite
 import KILT.Kripke.Check

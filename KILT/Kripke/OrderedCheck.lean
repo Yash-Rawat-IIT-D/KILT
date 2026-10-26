@@ -11,24 +11,24 @@ variable [Fintype State] [DecidableEq State] [Fintype Q] [DecidableEq Q]
 
 def hasAcceptedPathWithOrder (M : FiniteKripke State AP) (A : FiniteBuchi Q (Valuation AP))
     (modelOrder : Graph.Enumeration State) (automatonOrder : Graph.Enumeration Q) : Bool :=
-  Graph.hasAcceptingCycleWithOrder (modelOrder.product automatonOrder)
-    (M.productInitials A) (M.productSuccessors A) (productAccepting A)
+  (M.prepareProduct A modelOrder automatonOrder).hasAcceptingCycle
 
 theorem hasAcceptedPathWithOrder_eq (M : FiniteKripke State AP) (A : FiniteBuchi Q (Valuation AP))
     (modelOrder : Graph.Enumeration State) (automatonOrder : Graph.Enumeration Q) :
     M.hasAcceptedPathWithOrder A modelOrder automatonOrder = M.hasAcceptedPath A :=
-  Graph.hasAcceptingCycleWithOrder_eq _ _ _ _
+  M.prepareProduct_hasAcceptingCycle_eq A modelOrder automatonOrder
 
 variable [DecidableEq AP]
 
 def checkWithOrder (M : FiniteKripke State AP) (φ : Formula AP)
-    (_hserial : M.toKripke.Serial) (modelOrder : Graph.Enumeration State) : Bool :=
-  !(M.hasAcceptedPathWithOrder φ.violationAutomaton modelOrder (Formula.neg φ).automatonOrder)
+    (hserial : M.toKripke.Serial) (modelOrder : Graph.Enumeration State) : Bool :=
+  (M.prepareCheck φ hserial modelOrder).check
 
 theorem checkWithOrder_eq_check (M : FiniteKripke State AP) (φ : Formula AP)
     (hserial : M.toKripke.Serial) (modelOrder : Graph.Enumeration State) :
     M.checkWithOrder φ hserial modelOrder = M.check φ hserial := by
-  simp only [checkWithOrder, hasAcceptedPathWithOrder_eq, check, checkAgainst]
+  apply Bool.eq_iff_iff.mpr
+  exact (PreparedCheck.check_correct _).trans (M.check_correct φ hserial).symm
 
 theorem checkWithOrder_correct (M : FiniteKripke State AP) (φ : Formula AP)
     (hserial : M.toKripke.Serial) (modelOrder : Graph.Enumeration State) :

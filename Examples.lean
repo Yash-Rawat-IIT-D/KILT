@@ -1,5 +1,6 @@
 import Examples.Efficiency
 import Examples.GraphStorage
+import Examples.PreparedChecking
 import Examples.Basic
 import Examples.Integration
 import Examples.Syntax

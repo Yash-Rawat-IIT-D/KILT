@@ -1,5 +1,5 @@
 import KILT.Graph.RouteTransport
-import KILT.Graph.Frontier
+import KILT.Graph.Parents
 import KILT.Graph.Specification.Lasso
 
 /-! Accepting lasso extraction with parent storage and exact route transport. -/
@@ -8,13 +8,13 @@ namespace KILT.Graph
 namespace FiniteGraph
 
 private def parentCandidate? (g : FiniteGraph) (order : Enumeration g.Vertex)
-    (accepting : Finset g.Vertex) (stems : Parents g) (q : g.Vertex) : Option (Lasso g.Vertex) :=
+    (seeds accepting : Finset g.Vertex) (stems : ParentForest g order seeds) (q : g.Vertex) : Option (Lasso g.Vertex) :=
   if q ∈ accepting then
-    if (stems.get q).depth.isSome then
-      let returns := (Parents.initial g (g.successors q)).frontierSearch order (some q) g.size 0
-      if (returns.get q).depth.isSome then
-        (stems.unwind (g.size + 1) q []).bind fun stem =>
-          (returns.unwind (g.size + 1) q []).map fun back =>
+    if stems.reached q then
+      let returns := g.parentsTo order (g.successors q) q
+      if returns.reached then
+        (stems.route? q).bind fun stem =>
+          returns.route?.map fun back =>
             ⟨stem.dropLast, q :: back.dropLast, List.cons_ne_nil _ _⟩
       else none
     else none
@@ -24,8 +24,8 @@ private def parentCandidate? (g : FiniteGraph) (order : Enumeration g.Vertex)
 successful candidate. This synchronous implementation is the storage reference. -/
 def acceptingLasso? (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds accepting : Finset g.Vertex) : Option (Lasso g.Vertex) :=
-  let stems := Parents.frontierForest g order seeds
-  order.states.findSome? (parentCandidate? g order accepting stems)
+  let stems := g.parentForest order seeds
+  order.states.findSome? (parentCandidate? g order seeds accepting stems)
 
 theorem acceptingLasso?_eq_spec (g : FiniteGraph) (order : Enumeration g.Vertex)
     (seeds accepting : Finset g.Vertex) :
@@ -35,32 +35,18 @@ theorem acceptingLasso?_eq_spec (g : FiniteGraph) (order : Enumeration g.Vertex)
   dsimp only [acceptingLasso?]
   apply congrArg (fun f => order.states.findSome? f)
   funext q
-  let stems := Parents.frontierForest g order seeds
-  let returns := (Parents.initial g (g.successors q)).frontierSearch order (some q) g.size 0
-  have hs : stems.unwind (g.size + 1) q [] = routeSpec? order seeds g.successors q :=
-    by
-      dsimp only [stems]
-      rw [Parents.frontierForest_eq]
-      exact Parents.forest_unwind g order seeds q
-  have hr : returns.unwind (g.size + 1) q [] = routeSpec? order (g.successors q) g.successors q :=
-    by
-      dsimp only [returns]
-      rw [Parents.frontierTarget_eq]
-      exact parentRouteFast?_eq g order (g.successors q) q
-  have hsk : (stems.get q).depth.isSome = (routeSpec? order seeds g.successors q).isSome := by
-    dsimp only [stems]
-    rw [Parents.frontierForest_eq]
-    exact (Parents.forest g order seeds).isSome_iff (Parents.forest_represents g order seeds) q
-  have hrk : (returns.get q).depth.isSome = (routeSpec? order (g.successors q) g.successors q).isSome := by
-    dsimp only [returns]
-    rw [Parents.frontierTarget_eq]
-    exact Parents.target_isSome g order (g.successors q) q
-  change parentCandidate? g order accepting stems q = _
+  let stems := g.parentForest order seeds
+  let returns := g.parentsTo order (g.successors q) q
+  have hs := stems.route?_eq_spec q
+  have hr := returns.route?_eq_spec
+  have hsk := stems.reached_eq q
+  have hrk := returns.reached_eq
+  change parentCandidate? g order seeds accepting stems q = _
   unfold parentCandidate?
-  change (if q ∈ accepting then if (stems.get q).depth.isSome then
-    if (returns.get q).depth.isSome then
-      (stems.unwind (g.size + 1) q []).bind (fun stem =>
-        (returns.unwind (g.size + 1) q []).map (fun back =>
+  change (if q ∈ accepting then if stems.reached q then
+    if returns.reached then
+      (stems.route? q).bind (fun stem =>
+        returns.route?.map (fun back =>
           (⟨stem.dropLast, q :: back.dropLast, List.cons_ne_nil _ _⟩ : Lasso g.Vertex)))
     else none else none else none) = _
   rw [hs, hr, hsk, hrk]

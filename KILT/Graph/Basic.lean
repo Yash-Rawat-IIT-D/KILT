@@ -1,4 +1,5 @@
 import KILT.Graph.Enumeration
+import KILT.Graph.Specification.Reachability
 import Mathlib.Data.Finset.Sort
 import Std.Data.ExtTreeMap.Lemmas
 
@@ -176,11 +177,5 @@ structure PreparedReachable [Fintype State] (seeds : Finset State)
     j ∈ graph.successors i ↔
       states[j.val]'(by simpa only [states_size] using j.isLt) ∈
         next (states[i.val]'(by simpa only [states_size] using i.isLt))
-  sourceOrder : Enumeration State
-  ranks : Array Nat
-  ranks_size : ranks.size = graph.size
-  ranks_correct : ∀ i : graph.Vertex,
-    ranks[i.val]'(by simpa only [ranks_size] using i.isLt) =
-      (sourceOrder.rank (states[i.val]'(by simpa only [states_size] using i.isLt))).val
 
 end KILT.Graph

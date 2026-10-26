@@ -1,3 +1,4 @@
+import KILT.Graph.Internal.ParentSearch
 import Examples.LassoGraph
 import KILT.Graph.Routes
 import KILT.Graph.Reachability
@@ -37,13 +38,13 @@ theorem last_route :
 
 theorem no_route : route? (Enumeration.fin 6) {0} line 5 = none := by rw [route?_eq_spec]; decide +kernel
 
-theorem no_growth : FiniteGraph.Parents.grows
-    (FiniteGraph.Parents.initial graph {4})
-    ((FiniteGraph.Parents.initial graph {4}).round (Enumeration.fin 6)) = false := by decide +kernel
+theorem no_growth : FiniteGraph.Internal.Parents.grows
+    (FiniteGraph.Internal.Parents.initial graph {4})
+    ((FiniteGraph.Internal.Parents.initial graph {4}).round (Enumeration.fin 6)) = false := by decide +kernel
 
-theorem growth : FiniteGraph.Parents.grows
-    (FiniteGraph.Parents.initial graph {0})
-    ((FiniteGraph.Parents.initial graph {0}).round (Enumeration.fin 6)) = true := by decide +kernel
+theorem growth : FiniteGraph.Internal.Parents.grows
+    (FiniteGraph.Internal.Parents.initial graph {0})
+    ((FiniteGraph.Internal.Parents.initial graph {0}).round (Enumeration.fin 6)) = true := by decide +kernel
 
 theorem cached_deadlock : graph.successors 4 = ∅ := by decide +kernel
 
