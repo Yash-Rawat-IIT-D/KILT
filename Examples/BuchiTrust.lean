@@ -10,6 +10,7 @@ import Examples.Counterexample
 import Examples.Efficiency
 import Examples.GraphStorage
 import Examples.PreparedChecking
+import Examples.Walkthrough
 import Lean.Util.CollectAxioms
 
 /-!
@@ -89,6 +90,7 @@ run_cmd auditStandardAxioms #[
   ``KILT.FiniteKripke.PreparedCheck.check_correct,
   ``KILT.FiniteKripke.PreparedCheck.check_eq_false_iff,
   ``KILT.FiniteKripke.PreparedCheck.check_eq,
+  ``KILT.FiniteKripke.PreparedCheck.runSystem_verdict,
   ``KILT.FiniteKripke.PreparedCheck.counterexample?_valid,
   ``KILT.FiniteKripke.PreparedCheck.counterexamplePath_states,
   ``KILT.FiniteKripke.PreparedCheck.counterexample?_sound,
@@ -97,6 +99,9 @@ run_cmd auditStandardAxioms #[
   ``KILT.FiniteKripke.PreparedCheck.check_eq_check,
   ``KILT.FiniteKripke.check_eq_checkAgainst_violation,
   ``KILT.FiniteKripke.counterexample?_eq_acceptedLasso,
+  ``Examples.Walkthrough.serial,
+  ``Examples.Walkthrough.healthy_verdict,
+  ``Examples.Walkthrough.waiting_verdict,
   ``Examples.PreparedChecking.loop_verdict,
   ``Examples.PreparedChecking.loop_shape,
   ``Examples.PreparedChecking.empty_seeds_skip,
