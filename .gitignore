@@ -1,6 +1,7 @@
-# Lake build outputs and downloaded dependencies
+# Generated build outputs and downloaded dependencies
 /.lake/
 /docbuild/.lake/
+/report/build/
 
 # Local clones used for research
 /references/

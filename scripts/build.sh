@@ -10,11 +10,13 @@ Usage: ./scripts/build.sh [OPTIONS] [TARGET ...]
 
 Build the KILT library, displaying and saving terminal output.
 Can be run from any directory. Defaults to KILT; explicit targets go to Lake.
+Use --report to build the LaTeX report instead.
 
 Options:
       --gui         Open the keyboard-operated terminal menu (needs whiptail).
   -v, --verbose     Include the commands Lake executes.
       --with-examples  Build KILT and all checked examples (including axiom audits).
+      --report      Build report/src/main.tex into report/build/main.pdf.
   -c, --clean       Remove KILT build outputs; keep logs; exit.
       --clean-logs  Remove generated build logs; exit.
   -C, --clean-all   Remove KILT build outputs and script logs; exit.
@@ -24,6 +26,9 @@ Options:
 Cleanup keeps downloaded dependencies and their compiled caches.
 Choose one cleanup mode. Targets are accepted for builds and rebuilds.
 --gui accepts initial targets and --verbose, but no cleanup mode flags.
+With --report, cleanup/rebuild flags apply only to the report; --clean keeps
+the PDF, --clean-all removes it, and --clean-logs removes report script logs.
+--report cannot be combined with --gui, --with-examples or Lake targets.
 
 Examples:
   ./scripts/build.sh
@@ -31,6 +36,9 @@ Examples:
   ./scripts/build.sh --gui
   ./scripts/build.sh --verbose
   ./scripts/build.sh --with-examples
+  ./scripts/build.sh --report
+  ./scripts/build.sh --report --clean
+  ./scripts/build.sh --report --clean-all
   ./scripts/verify-examples.sh --verbose
   ./scripts/build.sh --rebuild Examples
   ./scripts/build.sh --clean-logs
@@ -41,7 +49,8 @@ for failures. Saved logs are plain text. Set NO_COLOR=1 to disable colors.
 LEAN_NUM_THREADS defaults to 1; set it explicitly to use more threads.
 GUI_LAUNCH=true (default) opens the menu when no target or cleanup mode is given.
 GUI_LAUNCH=false runs the CLI by default; --gui still opens the menu.
-The launch menu offers Build, Build with examples, Clean and Help.
+The launch menu offers Build, Build with examples, Report, Clean and Help.
+The Report menu builds/rebuilds the PDF and cleans report outputs.
 Build submenus include verbose/rebuild actions, logs and documentation.
 Plain lake build still checks both libraries; this script defaults to KILT.
 EOF
@@ -61,6 +70,7 @@ mode=build
 verbose=false
 gui=false
 with_examples=false
+report=false
 targets=()
 for argument in "$@"; do
   case "$argument" in
@@ -68,6 +78,7 @@ for argument in "$@"; do
     --gui) gui=true ;;
     -v|--verbose) verbose=true ;;
     --with-examples) with_examples=true ;;
+    --report) report=true ;;
     -c|--clean) select_mode clean ;;
     -C|--clean-all) select_mode clean-all ;;
     --clean-logs) select_mode clean-logs ;;
@@ -76,6 +87,16 @@ for argument in "$@"; do
     *) targets+=("$argument") ;;
   esac
 done
+if [[ "$report" == true ]]; then
+  [[ "$gui" == false && "$with_examples" == false ]] ||
+    argument_error '--report cannot be combined with --gui or --with-examples.'
+  ((${#targets[@]} == 0)) || argument_error '--report cannot be combined with Lake targets.'
+  repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+  report_flags=()
+  if [[ "$verbose" == true ]]; then report_flags+=(--verbose); fi
+  if [[ "$mode" != build ]]; then report_flags+=("--$mode"); fi
+  exec "$repo_dir/scripts/compile-report.sh" "${report_flags[@]}"
+fi
 if [[ "$with_examples" == true ]]; then
   ((${#targets[@]} == 0)) || argument_error '--with-examples cannot be combined with explicit targets.'
   targets=(KILT Examples)

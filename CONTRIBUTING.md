@@ -18,6 +18,10 @@ definitions, algorithms, proofs, and worked examples.
   sources and figures under `Proposal/src/`, and the submitted PDF under
   `Proposal/build/`. Use `./scripts/compile-proposal.sh` to build the proposal
   and `--clean` or `--clean-all` to remove generated files.
+- Keep the working report under `report/src/`. Build `report/build/main.pdf`
+  with `./scripts/build.sh --report`; use `--report --clean` to keep the PDF
+  while removing intermediates, or `--report --clean-all` to remove it too.
+  Generated report outputs remain untracked.
 - Commit the toolchain pin, dependency lockfile, and shared editor extension
   recommendations. Keep local editor settings and environment files untracked;
   an `.env.example` may be committed if it contains only sample values.

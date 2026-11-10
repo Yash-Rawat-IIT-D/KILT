@@ -19,6 +19,7 @@ import KILT.Automata.FiniteBuchi
 import KILT.Automata.GeneralizedBuchiCorrect
 import KILT.Automata.Product
 import KILT.Automata.Monitors
+import KILT.Frontend
 
 /-!
 # Kripke in Lean Toolkit

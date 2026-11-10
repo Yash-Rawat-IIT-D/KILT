@@ -139,6 +139,40 @@ menu_logs() {
   fi
 }
 
+report_menu() {
+  local selection report_log="$log_dir/latest-report.log"
+  while true; do
+    selection=$(menu_dialog --cancel-button Back --menu \
+      'Report: report/src/main.tex -> report/build/main.pdf' 18 80 6 \
+      build 'Build the report PDF' \
+      rebuild 'Clean generated report outputs, then build' \
+      clean 'Remove TeX intermediates; keep the PDF and script logs' \
+      all 'Remove generated report PDF and TeX intermediates' \
+      logs 'View the latest report build log' \
+      back 'Return to the main menu' \
+      3>&1 1>&2 2>&3) || break
+    case "$selection" in
+      build) menu_run --report || break ;;
+      rebuild) menu_run --report --rebuild || break ;;
+      clean) menu_run --report --clean || break ;;
+      all)
+        if menu_dialog --defaultno --yesno \
+            'Remove the generated report PDF and TeX intermediates? Sources are kept.' 10 76; then
+          menu_run --report --clean-all || break
+        fi
+        ;;
+      logs)
+        if [[ -f "$report_log" ]]; then
+          menu_dialog --scrolltext --textbox "$report_log" 22 82 || true
+        else
+          menu_dialog --msgbox 'No report build log yet.' 8 64 || true
+        fi
+        ;;
+      back) break ;;
+    esac
+  done
+}
+
 build_menu() {
   local gui_script=$1 gui_verbose=$2
   shift 2
@@ -156,9 +190,10 @@ build_menu() {
 
   while true; do
     selection=$(menu_dialog --cancel-button Exit --menu \
-      'Use arrow keys and Enter. Esc or Exit closes the menu.' 16 80 4 \
+      'Use arrow keys and Enter. Esc or Exit closes the menu.' 17 80 5 \
       build 'Build the KILT library' \
       examples 'Build KILT and verify all examples' \
+      report 'Build or clean the report PDF' \
       clean 'Clean outputs or generated logs' \
       help 'Show options and keyboard help' \
       3>&1 1>&2 2>&3) || break
@@ -171,6 +206,7 @@ build_menu() {
         fi
         ;;
       examples) menu_build KILT Examples || break ;;
+      report) report_menu || break ;;
       clean) menu_clean || break ;;
       help)
         menu_dialog --scrolltext --msgbox "$(usage)

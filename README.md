@@ -117,6 +117,23 @@ excluded from Git.
 Open this folder in VS Code to use the pinned toolchain. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
 
+## Working report
+
+The report source is [report/src/main.tex](report/src/main.tex), with section
+files and a dated working-notes appendix for collecting material during review.
+See [report/README.md](report/README.md) for the drafting workflow.
+
+```sh
+./scripts/build.sh --report             # Build report/build/main.pdf
+./scripts/build.sh --report --rebuild   # Clean report outputs, then build
+./scripts/build.sh --report --clean     # Remove intermediates; keep the PDF
+./scripts/build.sh --report --clean-all # Remove intermediates and the PDF
+```
+
+The terminal menu also has a **Report** entry. Report builds use pdfLaTeX by
+default, with XeLaTeX/LuaLaTeX available through `REPORT_ENGINE`. Logs are saved
+to `.lake/logs/report-*.log`, with `latest-report.log` pointing to the latest run.
+
 ## Generalized Büchi conversion
 
 `FiniteGeneralizedBuchi` supports several recurring acceptance obligations and
@@ -186,6 +203,18 @@ example (h : controller.check eventuallyGreen controller_serial = true) :
 
 The seriality argument is an explicit precondition. `#eval` executes the check;
 a proof of its Boolean verdict is needed to derive a theorem as above.
+For small closed models, the public `kilt_decide` tactic performs the verified
+implementation-to-specification rewrites and ordinary kernel decision:
+
+```lean
+example : controller.check eventuallyGreen controller_serial = true := by
+  kilt_decide
+```
+
+Similarly, `kilt_serial` proves global seriality of a small closed finite model
+by checking that its deadlock set is empty. These tactics produce proof terms;
+they are deliberately distinct from compiled `#eval`, and kernel computation
+may become expensive on larger inputs.
 [Checker.lean](Examples/Checker.lean) combines small kernel-computed proofs with
 build-failing execution tests for larger request/grant and traffic properties.
 Compiled outputs are not treated as proofs. Search caches successors within each
@@ -225,6 +254,8 @@ Examples.lean           Example entry point
 Examples/               Worked examples and regression cases
 Proposal/src/           Proposal LaTeX source and figures
 Proposal/build/         Submitted PDF and local build outputs
+report/src/             Working report sections, notes and LaTeX entry point
+report/build/           Generated report PDF and TeX intermediates (ignored)
 scripts/                Build and maintenance scripts
 docbuild/               Pinned doc-gen4 project for local API documentation
 lakefile.toml           Lake package and build targets
@@ -310,6 +341,12 @@ open KILT Examples
 the property; `problem.counterexamplePath` converts that result to a Kripke path.
 `systemCounterexample?` provides a system-state lasso view. For an already
 returned product lasso, `lasso.map Prod.fst` projects it without another search.
+When an interactive caller wants both a verdict and printable system witness,
+`problem.runSystem` performs witness extraction once, derives the corresponding
+verdict, and returns a `SystemCheckResult`. Its `render`/`renderRepr` methods
+standardize prefix, loop and finite-replay display. `runSystem_verdict` proves
+that this presentation verdict equals `problem.check`; rendering itself does
+not constitute a soundness proof.
 
 To reuse compilation across models, compile `(Formula.neg property).compile`
 once and pass the bundle to each runner's `prepareCompiled`. Its fields are
