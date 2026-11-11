@@ -1,0 +1,21 @@
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else
+  \usepackage{fontspec}
+  \setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
+\fi
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,tabularx,graphicx,xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+\newcommand{\lean}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\needsinput}[1]{\par\noindent
+  {\color{red!65!black}\textbf{[NEEDS INPUT:} #1\textbf{]}}\par}
+\newtheorem{assumption}{Assumption}
+\crefname{assumption}{Assumption}{Assumptions}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}

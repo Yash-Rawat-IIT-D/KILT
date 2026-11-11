@@ -4,24 +4,13 @@ import Cslib.Foundations.Data.OmegaSequence.Defs
 /-!
 # Infinite-word semantics for LTL
 
-`Valuation AP` assigns a Boolean value to each named atom. A `Word AP` is a
-CSLib infinite sequence of valuations. `Sat word i φ` interprets a formula
-at position `i`; `WordSat word φ` starts at position zero.
+This module gives `Formula` its declarative meaning over infinite traces of
+atomic-proposition valuations. It defines mathematical satisfaction only; the
+executable formula-to-automaton pipeline is provided by later modules.
 
-The constructor clauses are:
-
-* Falsehood is never satisfied.
-* An atom holds iff its valuation at `i` is `true`.
-* Negation means the operand does not hold at `i`.
-* Disjunction means at least one operand holds at `i`.
-* Next evaluates the operand at `i + 1`.
-* Strong until has a witness `j ≥ i` where the right operand holds, with the
-  left operand holding at every `k` such that `i ≤ k < j`.
-
-The until witness can be `i`, in which case the left interval is empty.
-Satisfaction recurses structurally on formulas and is a mathematical
-proposition. There is no decision procedure here for searching an infinite
-word, and no formula-to-automaton compiler is supplied by this module.
+Strong until follows the standard non-strict convention: its right operand may
+hold at the current position, leaving no earlier position at which the left
+operand must hold.
 
 ## Sources
 
@@ -36,15 +25,34 @@ namespace KILT.LTL
 
 universe u
 
-/-- A Boolean assignment to atomic proposition identifiers. -/
+/--
+A truth assignment for one position of a word. Every atomic proposition
+identifier is mapped to the Boolean value observed at that position.
+-/
 abbrev Valuation (AP : Type u) := AP → Bool
 
-/-- An infinite word of valuations, using CSLib's sequence representation. -/
+/--
+An infinite trace of valuations, represented by a CSLib omega sequence. Index
+`i` contains the valuation observed at position `i` of the trace.
+-/
 abbrev Word (AP : Type u) := Cslib.ωSequence (Valuation AP)
 
 variable {AP : Type u}
 
-/-- Indexed satisfaction for infinite-word LTL. -/
+/--
+`Sat word i φ` states that `φ` holds at position `i` of `word`. Its structural
+clauses give the formula constructors their meanings:
+
+* Falsehood is never satisfied.
+* An atom holds exactly when its value at position `i` is `true`.
+* Negation holds when its operand does not hold at `i`.
+* Disjunction holds when at least one operand holds at `i`.
+* Next evaluates its operand at position `i + 1`.
+* Strong until has some witness `j ≥ i` where its right operand holds, while
+  its left operand holds at every position `k` with `i ≤ k < j`.
+
+This is a proposition, not a Boolean decision procedure over infinite words.
+-/
 def Sat (word : Word AP) : Nat → Formula AP → Prop
   | _, .falsehood => False
   | i, .atom a => word i a = true
@@ -53,7 +61,7 @@ def Sat (word : Word AP) : Nat → Formula AP → Prop
   | i, .next φ => Sat word (i + 1) φ
   | i, .until φ ψ => ∃ j, i ≤ j ∧ Sat word j ψ ∧ ∀ k, i ≤ k → k < j → Sat word k φ
 
-/-- A word satisfies a formula when it holds at position zero. -/
+/-- Top-level word satisfaction: the formula holds at the initial (zero) position. -/
 def WordSat (word : Word AP) (φ : Formula AP) : Prop := Sat word 0 φ
 
 end KILT.LTL
