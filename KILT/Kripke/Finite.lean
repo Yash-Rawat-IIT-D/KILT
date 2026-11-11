@@ -1,22 +1,28 @@
- import KILT.Kripke.Semantics
+import KILT.Kripke.Semantics
 import KILT.Graph.Routes
 import KILT.Graph.Reachability
 
 /-!
 # Executable finite Kripke structures
 
-`FiniteKripke` stores initial states and successors as finite sets. Its
-`toKripke` adapter is the semantic contract: algorithms compute with the
-finite data, while existing paths and LTL satisfaction remain unchanged.
-Deadlocks are reported rather than repaired by implicit self-loops.
+This module connects a concrete finite transition system, over which algorithms
+can execute, to the relational Kripke model used for infinite paths and LTL
+semantics. `FiniteKripke` stores the finite data and `toKripke` interprets that
+same data relationally. The bridge results below expose that initial states,
+steps, labels, reachability, and seriality retain their intended meanings.
+
 -/
 
 namespace KILT
 
 universe u v
 
-/-- Executable finite transition-system data. Atomic proposition identifiers
-remain unrestricted; only the state carrier must be finite and decidable. -/
+/--
+Executable finite transition-system data. `[Fintype State]` lets algorithms
+enumerate every state, while `[DecidableEq State]` lets them compare states for
+finite-set membership and visited-state tracking. Atomic proposition identifiers
+remain unrestricted.
+-/
 structure FiniteKripke (State : Type u) (AP : Type v)
     [Fintype State] [DecidableEq State] where
   initials : Finset State
@@ -29,12 +35,24 @@ namespace FiniteKripke
 variable {State : Type u} {AP : Type v}
 variable [Fintype State] [DecidableEq State]
 
-/-- Forget executable storage while preserving the relational semantics. -/
+/--
+Interpret the finite storage as a relational Kripke structure. In particular,
+`source` steps to `target` exactly when `target` belongs to
+`M.successors source`; initial membership and labels are preserved one-to-one.
+-/
 def toKripke (M : FiniteKripke State AP) : Kripke State AP where
   initial state := state ∈ M.initials
   initial_nonempty := M.initials_nonempty
   step source target := target ∈ M.successors source
   label := M.label
+
+/-!
+## Adapter equations
+
+The next three simp theorems expose how `toKripke` preserves initial-state
+membership, successor edges, and labels. These are definitional facts, but naming
+them allows proofs to move cleanly between the finite and relational views.
+-/
 
 @[simp] theorem toKripke_initial (M : FiniteKripke State AP) (state : State) :
     M.toKripke.initial state ↔ state ∈ M.initials := Iff.rfl
@@ -64,6 +82,8 @@ def route? (M : FiniteKripke State AP) (order : Graph.Enumeration State)
     (target : State) : Option (List State) :=
   Graph.route? order M.initials M.successors target
 
+/-! Route lookup succeeds exactly for reachable targets, and every returned list is a valid route. -/
+
 @[simp] theorem route?_isSome_iff (M : FiniteKripke State AP)
     (order : Graph.Enumeration State) (target : State) :
     (M.route? order target).isSome = true ↔ M.Reachable target :=
@@ -80,14 +100,23 @@ theorem route?_sound (M : FiniteKripke State AP)
 def deadlocks (M : FiniteKripke State AP) : Finset State :=
   Finset.univ.filter fun state => M.successors state = ∅
 
-/-- Deadlocks that can be reached from an initial state. -/
+/--
+Deadlocks reachable from an initial state, used by the weaker diagnostic that
+distinguishes execution-relevant deadlocks from unreachable model data.
+-/
 def reachableDeadlocks (M : FiniteKripke State AP) : Finset State :=
   M.reachableSet.filter fun state => M.successors state = ∅
 
-/-- Boolean global seriality check. -/
+/--
+Boolean global seriality check. Its correctness theorem later turns a successful
+computation into the semantic `toKripke.Serial` proof required by checker APIs.
+-/
 def isSerial (M : FiniteKripke State AP) : Bool := decide (M.deadlocks = ∅)
 
-/-- Boolean diagnostic for reachable deadlocks. -/
+/--
+Boolean reachable-deadlock diagnostic, used to report whether any execution
+from an initial state can terminate even when unreachable deadlocks remain.
+-/
 def hasNoReachableDeadlocks (M : FiniteKripke State AP) : Bool :=
   decide (M.reachableDeadlocks = ∅)
 

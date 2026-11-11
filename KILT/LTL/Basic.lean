@@ -3,14 +3,10 @@ import KILT.LTL.Semantics
 /-!
 # Basic LTL semantic laws
 
-Semantic laws for the constructor basis, derived connectives, and word
-suffixes. Until unfolding is deliberately not a simp rule: repeated unfolding
-would keep introducing next-position obligations.
-
-Until and eventually include the current position. Release requires its right
-operand at every position before and including the first occurrence of its
-left operand; if the left never occurs, the right must hold forever. These are
-laws of infinite-word semantics, with no finiteness or atom-equality assumption.
+This module derives reusable laws from KILT's indexed infinite-word semantics.
+It proceeds from direct constructor and connective characterizations to
+current-position consequences, one-step temporal unfoldings, and suffix laws.
+No result here requires a finite atom type or decidable atom equality.
 
 The proofs are independently written for KILT's indexed semantics. The design
 reference remains LeanLTL's temporal definitions and laws:
@@ -23,6 +19,13 @@ universe u
 
 variable {AP : Type u} {word : Word AP} {i : Nat}
 variable {left right : Formula AP}
+
+/-!
+## Constructor semantics
+
+These lemmas expose the defining clauses of `Sat` and its position-zero
+specialization `WordSat`.
+-/
 
 @[simp] theorem sat_falsehood : Sat word i .falsehood ↔ False := Iff.rfl
 
@@ -40,6 +43,13 @@ theorem sat_until : Sat word i (.until left right) ↔
     ∃ j, i ≤ j ∧ Sat word j right ∧ ∀ k, i ≤ k → k < j → Sat word k left := Iff.rfl
 
 @[simp] theorem wordSat_iff : WordSat word left ↔ Sat word 0 left := Iff.rfl
+
+/-!
+## Derived connectives
+
+The following laws reduce KILT's derived Boolean and temporal connectives to
+their direct semantic meanings.
+-/
 
 @[simp] theorem sat_truth : Sat word i Formula.truth ↔ True := by
   simp [Formula.truth]
@@ -84,11 +94,47 @@ theorem sat_release : Sat word i (Formula.release left right) ↔
     rcases counterexample with ⟨j, hij, hright, hprefix⟩
     exact hright (h j hij hprefix)
 
+/-!
+## Current-position consequences
+
+These small lemmas record the immediate cases of the temporal operators:
+strong until and eventually hold when their goal holds now, while global
+satisfaction implies satisfaction now. Here `_now` is a local descriptive
+suffix for position `i`, not a special Lean naming convention.
+-/
+
 /-- Until is already satisfied when its right operand holds now. -/
 theorem sat_until_now (h : Sat word i right) : Sat word i (.until left right) := by
   refine ⟨i, Nat.le_refl i, h, ?_⟩
   intro k hlow hhigh
   omega
+
+/-- Eventually follows immediately from satisfaction at the current position. -/
+theorem sat_eventually_now (h : Sat word i left) :
+    Sat word i (Formula.eventually left) :=
+  sat_eventually.mpr ⟨i, Nat.le_refl i, h⟩
+
+/-- A globally satisfied formula holds at the current position. -/
+theorem sat_globally_now (h : Sat word i (Formula.globally left)) : Sat word i left :=
+  sat_globally.mp h i (Nat.le_refl i)
+
+/-!
+## One-step temporal unfoldings
+
+These equations restate the indexed denotational semantics as recursive
+current/next-position characterizations. Until either reaches its right operand
+now or preserves its left operand and continues. Release requires its right
+operand now and is either released by its left operand or continues. Globally
+requires its operand now and continues globally at the next position.
+
+Note - These equivalent laws are deliberately not simp rules because each right-hand
+side can retain the same temporal operator at the next position. For example,
+unfolding `Sat word i (Formula.globally p)` once produces the current `p`
+obligation and `Sat word (i + 1) (Formula.globally p)`. Automatically unfolding
+the latter would produce obligations at `i + 1`, then `i + 2`, and so on.
+Explicit rewriting keeps that expansion finite and under the proof author's
+control.
+-/
 
 /-- One-step unfolding of strong until; an eventual witness is still required. -/
 theorem sat_until_unfold : Sat word i (.until left right) ↔
@@ -120,14 +166,26 @@ theorem sat_release_unfold : Sat word i (Formula.release left right) ↔
   simp only [Formula.release, sat_neg]
   tauto
 
-/-- Eventually follows immediately from satisfaction at the current position. -/
-theorem sat_eventually_now (h : Sat word i left) :
-    Sat word i (Formula.eventually left) :=
-  sat_eventually.mpr ⟨i, Nat.le_refl i, h⟩
+/-- One-step global unfolding into the current obligation and its continuation. -/
+theorem sat_globally_unfold : Sat word i (Formula.globally left) ↔
+    Sat word i left ∧ Sat word (i + 1) (Formula.globally left) := by
+  simp only [sat_globally]
+  constructor
+  · intro h
+    exact ⟨h i (Nat.le_refl i), fun j hj => h j (by omega)⟩
+  · rintro ⟨hnow, hnext⟩ j hj
+    by_cases hji : j = i
+    · simpa only [hji] using hnow
+    · exact hnext j (by omega)
 
-/-- A globally satisfied formula holds at the current position. -/
-theorem sat_globally_now (h : Sat word i (Formula.globally left)) : Sat word i left :=
-  sat_globally.mp h i (Nat.le_refl i)
+/-!
+## Suffix manipulation
+
+Dropping a finite prefix turns position `i` of the suffix into position `n + i`
+of the original word. These lemmas let later proofs move temporal obligations
+between a complete execution and the execution remaining after a finite prefix;
+`wordSat_drop` is the common position-zero specialization.
+-/
 
 /-- Dropping a prefix shifts all satisfaction positions by the prefix length. -/
 @[simp] theorem sat_drop (word : Word AP) (n i : Nat) (formula : Formula AP) :

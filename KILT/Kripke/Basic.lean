@@ -24,8 +24,12 @@ namespace Kripke
 
 variable {State : Type u} {AP : Type v}
 
-/-- Every state has at least one successor. This is an explicit property, not
-part of the definition of a Kripke structure. -/
+/--
+Every state has at least one successor. Keeping this separate from `Kripke`
+allows partial models and deadlocks to remain representable and diagnosable;
+APIs that require infinite executions request a seriality proof explicitly
+rather than silently adding self-loops.
+-/
 def Serial (M : Kripke State AP) : Prop := ∀ s, ∃ t, M.step s t
 
 end KILT.Kripke
