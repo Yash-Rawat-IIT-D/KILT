@@ -3,10 +3,16 @@ import KILT.LTL.Basic
 /-!
 # Negation normal form
 
-Negation occurs only on atoms. Release is explicit because negating strong
-until exchanges the two operators. `toFormula` interprets this internal syntax
-in KILT's existing semantics; normalization introduces no second trace model.
-All definitions and semantic proofs here work without atom equality or finiteness.
+Users can state properties with the unrestricted public `Formula` syntax,
+including negation around compound formulas. `normalize` translates those
+formulas into an internal syntax where negation occurs only on atoms, making
+formula polarity and temporal obligations explicit for the later tableau
+construction. Release is included because negating strong until exchanges the
+two operators.
+
+`toFormula` interprets this internal syntax using KILT's existing semantics, so
+normalization introduces no second trace model. All definitions and semantic
+proofs here work without atom equality or finiteness.
 -/
 namespace KILT.LTL
 universe u
