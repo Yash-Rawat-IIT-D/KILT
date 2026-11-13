@@ -4,10 +4,11 @@ import Cslib.Computability.Automata.NA.Basic
 /-!
 # Kripke structures as automata
 
-This module will encode labelled Kripke transitions with CSLib automata types
-and prove that initial paths correspond to runs over their observation words.
-It is kept separate from the semantic definitions so the encoding cannot alter
-their meaning.
+This module encodes labelled Kripke transitions with CSLib automata types. The
+encoding preserves the behavior of the model: an initial Kripke path paired
+with its observation word is exactly a run of the automaton. Consequently,
+universal satisfaction over initial paths can equivalently be stated as
+satisfaction of every word carried by an automaton run.
 -/
 
 namespace KILT.Kripke
@@ -16,15 +17,19 @@ universe u v
 
 variable {State : Type u} {AP : Type v}
 
-/-- View a Kripke structure as a CSLib nondeterministic automaton. A transition
-is labelled by the valuation of its source state. -/
+/-- Model a Kripke structure as a CSLib nondeterministic automaton. Automaton
+states and initial states are those of the Kripke structure, while each
+transition must follow `M.step` and consume the source state's label. Thus an
+automaton run represents a model execution together with its observed label
+sequence. -/
 def toNA (M : KILT.Kripke State AP) :
     Cslib.Automata.NA State (LTL.Valuation AP) where
   Tr s valuation t := M.step s t ∧ valuation = M.label s
   start := M.initial
 
-/-- Runs of the encoding are exactly initial valid state sequences carrying
-the model's source-state label word. -/
+/-- A state sequence is a run of the encoding exactly when it starts in an
+initial Kripke state, follows valid model steps, and reads the infinite word of
+source-state labels observed along that execution. -/
 theorem toNA_run_iff (M : KILT.Kripke State AP) (word : LTL.Word AP)
     (states : Cslib.ωSequence State) :
     M.toNA.Run word states ↔
@@ -40,8 +45,9 @@ theorem toNA_run_iff (M : KILT.Kripke State AP) (word : LTL.Word AP)
   · rintro ⟨hstart, hstep, rfl⟩
     exact { start := hstart, trans := fun i => ⟨hstep i, rfl⟩ }
 
-/-- A path's own observation word is a run precisely when the path starts in
-an initial state. -/
+/-- A `Path` already supplies the valid Kripke steps required by a run, and
+`p.word` already supplies their source-state labels. The remaining requirement
+is exactly that the path starts in an initial state. -/
 theorem path_run_iff (M : KILT.Kripke State AP) (p : M.Path) :
     M.toNA.Run p.word p.states ↔ p.IsInitial := by
   constructor
@@ -51,8 +57,9 @@ theorem path_run_iff (M : KILT.Kripke State AP) (p : M.Path) :
     apply (toNA_run_iff M p.word p.states).mpr
     exact ⟨hinitial, p.valid, rfl⟩
 
-/-- Kripke satisfaction agrees with satisfaction of every word carried by a
-run of the CSLib encoding. No seriality assumption is needed. -/
+/-- Through the path--run correspondence, requiring every initial model path
+to satisfy a formula is equivalent to requiring every word and state sequence
+forming an automaton run to satisfy it. -/
 theorem satisfies_iff_all_runs (M : KILT.Kripke State AP)
     (formula : LTL.Formula AP) :
     M.Satisfies formula ↔

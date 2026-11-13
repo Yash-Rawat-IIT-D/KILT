@@ -88,6 +88,8 @@ theorem card_subformulas_le_size (f : NNF AP) : f.subformulas.card ≤ f.size :=
 /-- The finite carrier of subformulas for a later tableau state space. -/
 abbrev Subformula (f : NNF AP) := {g // g ∈ f.subformulas}
 
+/-- Make the subformula closure an enumerable index type, so finite tableau
+assignments and rule checks range over exactly the formulas relevant to `f`. -/
 instance (f : NNF AP) : Fintype (Subformula f) := FinsetCoe.fintype f.subformulas
 
 end KILT.LTL.NNF

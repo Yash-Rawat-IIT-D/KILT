@@ -2,12 +2,34 @@ import Mathlib.Order.Filter.AtTopBot.Basic
 import Mathlib.Tactic.Push
 
 /-! # Round-robin recurrence
-Pure proof infrastructure: a bounded counter waits for its current obligation,
-then advances, wrapping to zero. No assumptions about graph seriality are used.
+
+This module proves the recurrence argument behind the standard round-robin
+reduction from a finite family of generalized Büchi obligations to one Büchi
+round-completion condition. The argument is abstracted from automata states and
+uses only:
+
+* `c k`: the index of the obligation selected by the counter at position `k`;
+* `P k i`: the proposition that obligation `i` holds at position `k`.
+
+A hit of `i` is a position where both `c k = i` and `P k i`: occurrences while
+the counter is waiting for another obligation do not advance it.
+
+`stays` shows that a counter with no future hit remains stuck, and `next_hit`
+combines this fact with infinite recurrence to obtain a future selected hit.
+`complete` repeatedly uses that progress to turn recurrence of every obligation
+into recurring completed rounds;
+
+`sound` proves the converse by showing that a
+recurring completion must repeatedly pass through every intermediate
+obligation. `GeneralizedBuchiCorrect` instantiates the two directions to prove
+that KILT's round-robin conversion preserves the accepted LTL word language.
 -/
 namespace KILT.Automata.RoundRobin
 open Filter
 
+/-- If the counter is at `i` at time `t` and has no later hit of `i`—no position
+where it is still selecting `i` while `P` holds for `i`—then the `stay` rule
+keeps it at `i` forever. -/
 private theorem stays {c : Nat → Nat} {P : Nat → Nat → Prop}
     (stay : ∀ k, ¬ P k (c k) → c (k+1) = c k)
     {t i : Nat} (ht : c t = i) (nohit : ∀ k ≥ t, ¬ (c k = i ∧ P k i)) :
@@ -18,6 +40,9 @@ private theorem stays {c : Nat → Nat} {P : Nat → Nat → Prop}
   | succ k hk ih =>
     rw [stay k (by simpa [ih] using fun h => nohit k hk ⟨ih, h⟩), ih]
 
+/-- A hit of `i` is a position where the counter selects `i` and `P` holds for
+`i` simultaneously. If the counter is waiting at `i` and `P` holds for `i`
+infinitely often, such a selected hit must eventually occur. -/
 private theorem next_hit {c : Nat → Nat} {P : Nat → Nat → Prop}
     (stay : ∀ k, ¬ P k (c k) → c (k+1) = c k)
     {t i : Nat} (ht : c t = i) (hp : ∃ᶠ k in atTop, P k i) :
@@ -27,7 +52,10 @@ private theorem next_hit {c : Nat → Nat} {P : Nat → Nat → Prop}
   obtain ⟨k, hk, hp⟩ := frequently_atTop.mp hp t
   exact h k hk (hc k hk) hp
 
-/-- Recurrence of every obligation forces recurring completed rounds. -/
+/-- If every one of the `n` obligations recurs infinitely often, a bounded
+counter that waits for a selected hit and then advances cyclically completes
+infinitely many rounds, witnessed by recurring selected hits of obligation
+zero. This is the completeness direction of the round-robin reduction. -/
 theorem complete {n : Nat} (hn : 0 < n) {c : Nat → Nat} {P : Nat → Nat → Prop}
     (bound : ∀ k, c k < n)
     (stay : ∀ k, ¬ P k (c k) → c (k+1) = c k)
@@ -53,7 +81,10 @@ theorem complete {n : Nat} (hn : 0 < n) {c : Nat → Nat} {P : Nat → Nat → P
         exact ⟨j, by omega, h⟩
   exact frequently_atTop.mpr fun t => reach _ t rfl
 
-/-- Recurring completions force each intermediate obligation to be discharged. -/
+/-- If selected hits of obligation zero recur infinitely often, a counter that
+can reach the next round only by advancing through the intervening obligations
+must discharge every obligation infinitely often. This is the soundness
+direction of the round-robin reduction. -/
 theorem sound {n : Nat} (_hn : 0 < n) {c : Nat → Nat} {P : Nat → Nat → Prop}
     (stay : ∀ k, ¬ P k (c k) → c (k+1) = c k)
     (move : ∀ k, P k (c k) → c (k+1) = if c k + 1 < n then c k + 1 else 0)
