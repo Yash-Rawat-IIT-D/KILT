@@ -4,18 +4,32 @@ import Cslib.Computability.Automata.NA.Basic
 /-!
 # Finite tableau states and local transitions
 
-Only constant/connective-consistent subsets form states. Literal checks read
-source valuations; temporal checks relate consecutive states. These local
-constraints alone permit postponing until forever: acceptance is a later layer.
+This module constructs the transition structure of the property automaton for
+an NNF formula `f`. Its finite states are statically consistent assignments of
+the subformulas of `f`: each state records the formulas claimed at one position
+of an input valuation word. This is distinct from the Kripke automaton that
+represents system executions.
+
+An edge `s -v-> t` is valid when the claims in source state `s` agree with the
+current valuation `v`, and its next, until, and release obligations evolve
+consistently into target state `t`. Initial states claim `f` itself. These local
+constraints still permit an until obligation to be postponed forever, so the
+recurring acceptance conditions are added in `TableauAcceptance`.
+
 No complementary formulas or valuations are enumerated.
 -/
 namespace KILT.LTL.Tableau
 universe u
 variable {AP : Type u} [DecidableEq AP]
 
+/-- A candidate tableau snapshot: the finite set of subformulas of `f` marked
+true at the current position. Formulas omitted from the set are unmarked;
+logical and temporal consistency are imposed separately. -/
 abbrev Assignment (f : NNF AP) := Finset (NNF.Subformula f)
 
-/-- Membership of a formula outside the closure is false. -/
+/-- Test whether `g` is currently marked true in assignment `s`. Formulas
+outside `f`'s subformula closure cannot occur in the assignment and therefore
+do not hold. This is syntactic bookkeeping, not semantic `NNF.Sat`. -/
 def Holds {f : NNF AP} (s : Assignment f) (g : NNF AP) : Prop :=
   if h : g ∈ f.subformulas then ⟨g, h⟩ ∈ s else False
 instance {f : NNF AP} (s : Assignment f) (g : NNF AP) : Decidable (Holds s g) := by
@@ -26,6 +40,9 @@ instance {f : NNF AP} (s : Assignment f) (g : NNF AP) : Decidable (Holds s g) :=
 @[simp] theorem not_holds_of_not_mem {f g : NNF AP} (s : Assignment f)
     (h : g ∉ f.subformulas) : ¬ Holds s g := by simp [Holds, h]
 
+/-- The within-state consistency rule for constants and Boolean connectives.
+Literal valuations and temporal relationships between states are checked by
+the later local transition rules. -/
 def StaticRule {f : NNF AP} (s : Assignment f) : NNF AP → Prop
   | .truth => Holds s .truth
   | .falsehood => ¬ Holds s .falsehood
@@ -35,17 +52,25 @@ def StaticRule {f : NNF AP} (s : Assignment f) : NNF AP → Prop
 instance {f : NNF AP} (s : Assignment f) (g : NNF AP) : Decidable (StaticRule s g) := by
   cases g <;> unfold StaticRule <;> infer_instance
 
+/-- An assignment is statically consistent when `StaticRule` holds for every
+subformula of `f`; a proof supplies the certificate used by a tableau state. -/
 def StaticConsistent {f : NNF AP} (s : Assignment f) : Prop :=
   ∀ g : NNF.Subformula f, StaticRule s g.val
+
 instance {f : NNF AP} (s : Assignment f) : Decidable (StaticConsistent s) :=
   inferInstanceAs (Decidable (∀ g : NNF.Subformula f, StaticRule s g.val))
 
+/-- Equivalent unbundled view of static consistency: every formula in the
+computed subformula set obeys its within-state rule. -/
 theorem staticConsistent_iff {f : NNF AP} (s : Assignment f) :
     StaticConsistent s ↔ ∀ g ∈ f.subformulas, StaticRule s g := by
   constructor
   · intro h g hg; exact h ⟨g, hg⟩
   · intro h g; exact h g.val g.property
 
+/-- A tableau state is a statically consistent assignment for `f`. These states
+form the finite nodes of the tableau; later transition rules relate them to
+input valuations and to one another. -/
 abbrev State (f : NNF AP) := {s : Assignment f // StaticConsistent s}
 
 /-- The subtype Fintype filters the finite powerset, without classical selection. -/
@@ -53,6 +78,7 @@ instance (f : NNF AP) : Fintype (State f) := inferInstanceAs (Fintype {s : Assig
 
 namespace State
 variable {f : NNF AP}
+/-- Test whether the assignment underlying a tableau state marks `g` true. -/
 def holds (s : State f) (g : NNF AP) : Prop := Holds s.val g
 instance (s : State f) (g : NNF AP) : Decidable (s.holds g) := inferInstanceAs (Decidable (Holds s.val g))
 
@@ -71,6 +97,10 @@ theorem card_state_le (f : NNF AP) : Fintype.card (State f) ≤ 2 ^ f.subformula
     Fintype.card (State f) ≤ Fintype.card (Assignment f) := Fintype.card_subtype_le _
     _ = 2 ^ f.subformulas.card := by simp [Assignment, NNF.Subformula]
 
+/-- The per-subformula condition for a candidate labelled tableau edge
+`s -v-> t`. Literal claims in `s` must match the current valuation `v`, while
+next, until, and release claims must evolve consistently from `s` to `t`.
+Constants and Boolean connectives are already handled by static consistency. -/
 def LocalRule {f : NNF AP} (s t : State f) (v : Valuation AP) : NNF AP → Prop
   | .pos p => s.holds (.pos p) ↔ v p = true
   | .negAtom p => s.holds (.negAtom p) ↔ v p = false
@@ -81,6 +111,9 @@ def LocalRule {f : NNF AP} (s t : State f) (v : Valuation AP) : NNF AP → Prop
 instance {f : NNF AP} (s t : State f) (v : Valuation AP) (g : NNF AP) :
     Decidable (LocalRule s t v g) := by cases g <;> unfold LocalRule <;> infer_instance
 
+/-- A valid one-position transition of the tableau property automaton: every
+relevant subformula obeys its local rule while the edge from `s` to `t`
+consumes source-position valuation `v`. -/
 def Step {f : NNF AP} (s t : State f) (v : Valuation AP) : Prop :=
   ∀ g : NNF.Subformula f, LocalRule s t v g.val
 instance {f : NNF AP} (s t : State f) (v : Valuation AP) : Decidable (Step s t v) :=
@@ -121,6 +154,7 @@ theorem step_split {f : NNF AP} (s t : State f) (v : Valuation AP) :
   exact forall_congr' fun g => localRule_split s t v g.val
 
 
+/-- Tableau states that claim the compiled root formula at position zero. -/
 def initials (f : NNF AP) : Finset (State f) := Finset.univ.filter fun s => s.holds f
 /-- Check source literals once before enumerating temporally compatible successors. -/
 def successors {f : NNF AP} (s : State f) (v : Valuation AP) : Finset (State f) :=
@@ -143,6 +177,8 @@ theorem successors_empty_of_incompatible {f : NNF AP} (s : State f) (v : Valuati
     (h : ¬ LiteralCompatible s v) : successors s v = ∅ := by
   simp [successors, h]
 
+/-- The tableau as a CSLib nondeterministic property automaton: its states are
+consistent formula assignments and its valuation-labelled edges are `Step`. -/
 def toNA (f : NNF AP) : Cslib.Automata.NA (State f) (Valuation AP) where
   start s := s ∈ initials f
   Tr s v t := t ∈ successors s v

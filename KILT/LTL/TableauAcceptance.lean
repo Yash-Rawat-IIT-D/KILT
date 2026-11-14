@@ -5,12 +5,21 @@ import Mathlib.Data.List.Dedup
 /-!
 # Recurring tableau obligations
 
-The local until equation permits indefinite postponement. Each distinct until
-subformula therefore contributes an accepting set: it is absent, or fulfilled
-now. Obligations follow syntax order, retaining the first occurrence. Release
-is a greatest-fixpoint condition and contributes no recurring obligation.
-This is an explicit tableau construction, rather than an on-demand algorithm;
-see Gerth, Peled, Vardi and Wolper, https://www.cs.rice.edu/~vardi/papers/pstv95rj.pdf.
+The local rule for `a U b` permits the obligation to remain pending by requiring
+`a` now and carrying `a U b` to the next tableau state. Local consistency alone
+would also permit that branch forever, although strong until requires some
+future position where `b` holds. Each distinct until subformula therefore
+contributes a generalized Büchi accepting set containing states where the
+obligation is absent or fulfilled now. Recurring visits ensure that no active
+until obligation remains pending on an entire suffix; `TableauCorrect` proves
+that this produces the required finite witness position and intervening `a`
+positions.
+
+Obligations follow syntax order, retaining the first occurrence. Release is a
+greatest-fixpoint condition and contributes no recurring obligation. This is an
+explicit tableau construction, rather than an on-demand algorithm; see Gerth,
+Peled, Vardi and Wolper,
+https://www.cs.rice.edu/~vardi/papers/pstv95rj.pdf.
 -/
 namespace KILT.LTL.Tableau
 universe u
@@ -35,6 +44,8 @@ theorem isUntil_iff {g : NNF AP} : isUntil g = true ↔ ∃ a b, g = .until a b 
   cases g <;> simp [isUntil]
 
 /-- Reversing before and after last-occurrence dedup retains first occurrences. -/
+/-- The distinct until subformulas whose possible indefinite postponement needs
+a recurring acceptance condition, in stable syntax order. -/
 def untilObligations (f : NNF AP) : List (NNF AP) :=
   (((preorder f).filter isUntil).reverse.dedup).reverse
 
@@ -56,7 +67,11 @@ theorem length_untilObligations_le (f : NNF AP) :
   intro g hg
   exact (mem_untilObligations.mp (List.mem_toFinset.mp hg)).1
 
-/-- The non-until branch is unused in the acceptance family. -/
+/-- For an until formula `g = a U b`, accept states where `g` is not currently
+active or where its right operand `b` fulfils it now. The excluded states are
+exactly those where `g` is active but still pending. Combined with the local
+rule, recurring visits force every pending occurrence to reach a future `b`;
+the non-until branch is unused in the acceptance family. -/
 def acceptanceSet (f : NNF AP) : NNF AP → Finset (State f)
   | g@(.until _ b) => Finset.univ.filter fun s => ¬ s.holds g ∨ s.holds b
   | _ => Finset.univ
@@ -65,6 +80,11 @@ def acceptanceSet (f : NNF AP) : NNF AP → Finset (State f)
     s ∈ acceptanceSet f (.until a b) ↔ ¬ s.holds (.until a b) ∨ s.holds b := by
   simp [acceptanceSet]
 
+/-- Build the generalized Büchi property automaton for `f`. Its automaton states
+are the statically consistent tableau assignments `State f`, its input symbols
+are atomic-proposition valuations, and its initial and successor structure is
+the valuation-labelled tableau from `Tableau.lean`. The acceptance family adds
+one recurring discharge set for every distinct until subformula. -/
 def toGeneralizedBuchi (f : NNF AP) :
     Automata.FiniteGeneralizedBuchi (State f) (Valuation AP) where
   initials := initials f
