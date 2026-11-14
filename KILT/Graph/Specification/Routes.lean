@@ -193,6 +193,7 @@ private theorem routeTables_sound (order : Enumeration State)
               rcases ih hprior with ⟨initial, hinitial, hchain⟩
               exact ⟨initial, hinitial, hchain.snoc hedge⟩
 
+omit [Fintype State] in
 /-- A finite-round route is valid, before applying the cardinality bound. -/
 theorem routeTables_valid (order : Enumeration State) (seeds : Finset State)
     (successors : State → Finset State) {rounds : Nat} {target : State} {nodes : List State}

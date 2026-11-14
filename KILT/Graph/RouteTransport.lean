@@ -47,12 +47,12 @@ theorem predecessor_transport (p : PreparedReachable seeds next) (original : Enu
   have predicates : (fun s => (p.index? s).any predicate) = oldPredicate := by
     funext s
     cases hi : p.index? s with
-    | none => simp [hi, oldPredicate, outside s hi]
+    | none => simp [oldPredicate, outside s hi]
     | some i =>
       have hd := (p.index?_eq_some_iff s i).mp hi
       have hr := congrArg Option.isSome (represented i)
       simp only [Option.isSome_map] at hr
-      simp only [hi, Option.any_some]
+      simp only [Option.any_some]
       change ((localRoutes i).isSome && decide (target ∈ p.graph.successors i)) =
         ((originalRoutes s).isSome && decide (p.decode target ∈ next s))
       have he : decide (target ∈ p.graph.successors i) = decide (p.decode target ∈ next s) := by

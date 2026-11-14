@@ -30,9 +30,9 @@ theorem acceptingLasso?_eq_spec (g : FiniteGraph) (order : Enumeration g.Vertex)
     g.acceptingLasso? order seeds accepting =
       Graph.lassoSpec? order seeds g.successors accepting := by
   by_cases empty : accepting = ∅
-  · rw [acceptingLasso?, if_pos empty]
+  · rw [acceptingLasso?, ite_eq_left empty]
     exact (Graph.lassoSpec?_empty order seeds g.successors accepting (Or.inr empty)).symm
-  rw [acceptingLasso?, if_neg empty, Graph.lassoSpec?_eq_findSome]
+  rw [acceptingLasso?, ite_eq_right empty, Graph.lassoSpec?_eq_findSome]
   apply congrArg (fun f => order.states.findSome? f)
   funext q
   let stems := g.parentForest order seeds
@@ -107,7 +107,7 @@ theorem acceptingLasso?_eq_spec (p : PreparedReachable seeds next)
   | none =>
     have hs : routeSpec? original seeds next s = none :=
       p.outside_routes original seeds (fun s hs => ⟨s, hs, .refl⟩) (Fintype.card State) s hi
-    simp [hi, originalCandidate, hs]
+    simp [originalCandidate, hs]
   | some q =>
     have hd := (p.index?_eq_some_iff s q).mp hi
     have hs := p.routeSpec?_transport original seeds (fun s hs => ⟨s, hs, .refl⟩) q
@@ -119,24 +119,24 @@ theorem acceptingLasso?_eq_spec (p : PreparedReachable seeds next)
     have hr := p.routeSpec?_transport original (next (p.decode q)) covered q
     rw [← p.successors_eq_query q] at hr
     cases hd
-    simp only [hi, Option.bind_some]
+    simp only [Option.bind_some]
     by_cases ha : p.decode q ∈ accepting
     · simp only [localCandidate, originalCandidate, mem_accepting, ha, ↓reduceIte]
       cases ht : routeSpec? (p.order original) p.initials p.graph.successors q with
       | none =>
         have hs' : routeSpec? original seeds next (p.decode q) = none := by simpa [ht] using hs.symm
-        simp [ht, hs']
+        simp [hs']
       | some stem =>
         have hs' : routeSpec? original seeds next (p.decode q) = some (stem.map p.decode) := by
           simpa [ht] using hs.symm
         cases hb : routeSpec? (p.order original) (p.graph.successors q) p.graph.successors q with
         | none =>
           have hr' : routeSpec? original (next (p.decode q)) next (p.decode q) = none := by simpa [hb] using hr.symm
-          simp [ht, hs', hb, hr']
+          simp [hs', hr']
         | some back =>
           have hr' : routeSpec? original (next (p.decode q)) next (p.decode q) = some (back.map p.decode) := by
             simpa [hb] using hr.symm
-          simp [ht, hs', hb, hr', Lasso.map, List.map_dropLast]
+          simp [hs', hr', Lasso.map, List.map_dropLast]
     · simp [localCandidate, originalCandidate, ha]
 
 end PreparedReachable

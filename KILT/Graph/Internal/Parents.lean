@@ -240,7 +240,7 @@ theorem Parents.rounds_depth (g : FiniteGraph) (order : Enumeration g.Vertex)
       | entry => entry).depth.getD 0 ≤ n + 1
     cases he : (Parents.rounds g order seeds n).get i with
     | unseen =>
-      simp only [he]
+      simp only []
       cases hf : (Parents.rounds g order seeds n).predecessor? order i with
       | none => simp [Parent.depth]
       | some source =>

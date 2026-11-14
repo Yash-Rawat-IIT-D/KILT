@@ -10,6 +10,7 @@ variable {seeds : Finset State} {next : State → Finset State}
 def decode (p : PreparedReachable seeds next) (i : p.graph.Vertex) : State :=
   p.states[i.val]'(by simpa only [p.states_size] using i.isLt)
 
+omit [DecidableEq State] in
 theorem decode_injective (p : PreparedReachable seeds next) : Function.Injective p.decode := by
   intro i j h
   apply Fin.ext
@@ -44,10 +45,12 @@ def order (p : PreparedReachable seeds next) (original : Enumeration State) : En
     exact hs'.symm.trans ht') original.nodup
   complete i := List.mem_filterMap.mpr ⟨p.decode i, original.complete _, p.index?_decode i⟩
 
+omit [DecidableEq State] in
 theorem decode_reachable (p : PreparedReachable seeds next) (i : p.graph.Vertex) :
     Reachable seeds next (p.decode i) :=
   (p.coverage _).mp (Array.getElem_mem_toList _)
 
+omit [DecidableEq State] in
 theorem exists_decode_iff (p : PreparedReachable seeds next) (s : State) :
     (∃ i, p.decode i = s) ↔ Reachable seeds next s := by
   constructor
@@ -57,13 +60,16 @@ theorem exists_decode_iff (p : PreparedReachable seeds next) (s : State) :
     obtain ⟨i, hi, heq⟩ := List.mem_iff_getElem.mp ((p.coverage s).mpr hs)
     exact ⟨⟨i, by simpa only [Array.length_toList, p.states_size] using hi⟩, heq⟩
 
+omit [DecidableEq State] in
 @[simp] theorem initial_decode (p : PreparedReachable seeds next) (i : p.graph.Vertex) :
     i ∈ p.initials ↔ p.decode i ∈ seeds := p.initial_iff i
 
+omit [DecidableEq State] in
 @[simp] theorem step_decode (p : PreparedReachable seeds next) (i j : p.graph.Vertex) :
     Step p.graph.successors i j ↔ Step next (p.decode i) (p.decode j) :=
   p.edge_iff i j
 
+omit [DecidableEq State] in
 theorem lift_path (p : PreparedReachable seeds next) {s t : State}
     (path : Relation.ReflTransGen (Step next) s t) (i : p.graph.Vertex)
     (hi : p.decode i = s) :
@@ -77,6 +83,7 @@ theorem lift_path (p : PreparedReachable seeds next) {s t : State}
     obtain ⟨k, hk⟩ := (p.exists_decode_iff u).mpr hu
     exact ⟨k, hk, hpath.tail ((p.step_decode j k).mpr (by simpa [hj, hk] using edge))⟩
 
+omit [DecidableEq State] in
 theorem path_iff (p : PreparedReachable seeds next) (i j : p.graph.Vertex) :
     Relation.ReflTransGen (Step p.graph.successors) i j ↔
       Relation.ReflTransGen (Step next) (p.decode i) (p.decode j) := by
@@ -90,6 +97,7 @@ theorem path_iff (p : PreparedReachable seeds next) (i j : p.graph.Vertex) :
     have heq : k = j := p.decode_injective hk
     simpa [heq] using hpath
 
+omit [DecidableEq State] in
 theorem positive_path_iff (p : PreparedReachable seeds next) (i j : p.graph.Vertex) :
     Relation.TransGen (Step p.graph.successors) i j ↔
       Relation.TransGen (Step next) (p.decode i) (p.decode j) := by
@@ -103,6 +111,7 @@ theorem positive_path_iff (p : PreparedReachable seeds next) (i j : p.graph.Vert
     exact ⟨k, (p.step_decode _ _).mpr (by simpa [hk] using hedge),
       (p.path_iff _ _).mpr (by simpa [hk] using hpath)⟩
 
+omit [DecidableEq State] in
 theorem reachable_iff (p : PreparedReachable seeds next) (i : p.graph.Vertex) :
     Reachable p.initials p.graph.successors i ↔ Reachable seeds next (p.decode i) := by
   constructor

@@ -110,7 +110,7 @@ theorem rankTableFrom_lookup (order : Enumeration State) (offset : Nat)
         exact h (order.rank_injective (Fin.ext heq))
       simp only [compare_eq_iff_eq, hr, ↓reduceIte, ih]
       simp only [List.mem_cons, Ne.symm h, false_or, List.idxOf_cons, beq_iff_eq, h, ↓reduceIte]
-      split <;> simp_all [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
+      split <;> simp_all [Nat.add_comm, Nat.add_left_comm]
 
 end Enumeration
 
