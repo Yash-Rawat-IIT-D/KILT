@@ -1,11 +1,7 @@
-% STATE: DRAFT (awaiting human review).
 \section{Background and Design}\label{sec:design}
 
 \subsection{Preliminaries}
 
-% PROV[user]: Current request; prior discussion of labelled Kripke executions.
-% PROV[code]: KILT/LTL/Syntax.lean:L3-L30; KILT/LTL/Semantics.lean:L4-L65;
-% KILT/Kripke/Path.lean; KILT/Kripke/Semantics.lean.
 KILT uses the following core grammar for future-time LTL over atomic
 propositions $p \in AP$:
 \[
@@ -21,10 +17,6 @@ This follows the standard presentation in Baier and
 Katoen~\cite{BaierKatoen2008}; the separation of syntax from trace semantics
 was also informed by LeanLTL~\cite{VinMillerFremont2025}.
 
-% PROV[user]: Current request; prior explanations of Büchi acceptance and
-% finite-lasso counterexamples.
-% PROV[code]: KILT/Graph/Acceptance.lean:L24-L35,L81-L86;
-% KILT/Graph/Lasso.lean:L1-L12.
 For a B\"uchi automaton $A=(Q,\Sigma,\delta,Q_0,F)$, a run
 $\rho=q_0q_1\ldots$ is accepting when
 \[
@@ -39,10 +31,6 @@ prefix and a non-empty loop---a \emph{lasso}---repeated forever.
 
 \subsection{Overall Architecture}
 
-% PROV[user]: Current request and prior pipeline summary.
-% PROV[code]: KILT/LTL/Compile.lean:L3-L34,L41-L82;
-% KILT/Automata/Product.lean:L21-L29,L49-L98; KILT/Kripke/Check.lean:L17-L46;
-% KILT/Kripke/Counterexample.lean:L25-L64.
 To check a model against a property $\varphi$, KILT compiles $\lnot\varphi$.
 The formula is normalised into negation normal form and expanded into a tableau
 whose states are consistent assignments to its subformulas.  One recurring
@@ -57,11 +45,6 @@ infinite execution.
 
 \subsection{Design Choices and Reused Libraries}
 
-% PROV[user]: Current request; prior observation that correctness is layered
-% and that Graph, automata and tableau components should remain reusable.
-% PROV[code]: KILT/LTL/Compile.lean:L6-L34;
-% KILT/Automata/GeneralizedBuchiCorrect.lean; KILT/Graph/Acceptance.lean:L5-L16;
-% lake-manifest.json (pinned CSLib dependency).
 I kept the construction modular: declarative LTL semantics, formula
 compilation, automata-language preservation, product construction and finite
 graph search have separate interfaces and correspondence theorems.  This makes

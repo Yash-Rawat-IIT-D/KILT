@@ -22,7 +22,24 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage[capitalise,noabbrev]{cleveref}
 
+\definecolor{kiltnavy}{HTML}{22303F}
+\definecolor{kiltblue}{HTML}{4F6F8F}
+\definecolor{kiltpale}{HTML}{F2F5F8}
+\definecolor{kiltorange}{HTML}{B85514}
+\definecolor{kiltpeach}{HTML}{FBF0E8}
+\tikzset{
+  kiltstage/.style={rounded corners=2pt,draw=kiltnavy,fill=kiltpale,
+    line width=0.8pt,align=center,minimum height=10mm,text=kiltnavy,
+    font=\small\sffamily},
+  kiltemphasis/.style={kiltstage,draw=kiltorange,fill=kiltpeach,
+    text=kiltorange,line width=1.1pt},
+  kiltarrow/.style={-{Stealth[length=2.2mm]},draw=kiltnavy,line width=0.8pt},
+  kiltdashed/.style={kiltarrow,dashed,draw=kiltblue}
+}
+
 \newcommand{\lean}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\sourcefile}[1]{\colorbox{kiltpale}{\strut
+  \textcolor{kiltnavy}{\footnotesize\texttt{\detokenize{#1}}}}}
 \newcommand{\needsinput}[1]{\par\noindent
   {\color{red!65!black}\textbf{[NEEDS INPUT:} #1\textbf{]}}\par}
 \newtheorem{assumption}{Assumption}
