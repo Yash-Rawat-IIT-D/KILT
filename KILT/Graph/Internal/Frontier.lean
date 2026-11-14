@@ -95,17 +95,17 @@ theorem Parents.frontierRound_eq (g : FiniteGraph) (order : Enumeration g.Vertex
   | root => rfl
   | via source depth => rfl
   | unseen =>
-    simp only [ht]
+    simp only []
     have predicates : (fun source => ((p.get source).depth == some n) &&
         decide (target ∈ g.successors source)) =
         (fun source => (p.get source).depth.isSome && decide (target ∈ g.successors source)) := by
       funext source
       by_cases he : target ∈ g.successors source
       · cases hs : (p.get source).depth with
-        | none => simp [hs]
+        | none => simp
         | some depth =>
           have hd := Parents.unseen_predecessor_depth g order seeds n target source depth ht hs he
-          simp [hs, hd]
+          simp [hd]
       · simp [he]
     rw [List.find?_filter]
     simp only [Bool.decide_and, Bool.decide_eq_true]

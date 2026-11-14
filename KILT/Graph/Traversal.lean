@@ -44,7 +44,7 @@ def Visits.advance {g : FiniteGraph} (v : Visits g) : Visits g :=
   let bits := Array.ofFn (fun target => v.get target || v.frontier.any
     (fun source => g.edge source target))
   ⟨bits, by simp [bits], (List.finRange g.size).filter
-    (fun i => !v.get i && bits[i.val]'(by simpa [bits] using i.isLt))⟩
+    (fun i => !v.get i && bits[i.val]'(by simp [bits]))⟩
 
 theorem Visits.get_advance {g : FiniteGraph} (v : Visits g) (i : g.Vertex) :
     v.advance.get i = (v.get i || v.frontier.any (fun source => decide (i ∈ g.successors source))) := by

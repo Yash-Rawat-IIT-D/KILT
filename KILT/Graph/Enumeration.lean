@@ -24,7 +24,7 @@ theorem ofNodup_eq_ofList (states : List State) (nodup : states.Nodup)
 
 /-- Derive finite data locally from the supplied order. This is deliberately
 not a global instance: enumeration and Fintype synthesis must not recurse. -/
-def fintype (order : Enumeration State) : Fintype State where
+@[instance_reducible] def fintype (order : Enumeration State) : Fintype State where
   elems := order.states.toFinset
   complete s := by simpa using order.complete s
 
@@ -129,9 +129,9 @@ def runInvariant [Fintype State] {Result : Type*} (fallback : Result)
       have complete : (∀ s, s ∈ xs) ↔ (∀ s, s ∈ ys) :=
         forall_congr' (fun s => perm.mem_iff)
       by_cases hx : ∀ s, s ∈ xs
-      · rw [dif_pos hx, dif_pos (complete.mp hx)]
+      · rw [dite_eq_left hx, dite_eq_left (complete.mp hx)]
         exact invariant _ _
-      · rw [dif_neg hx, dif_neg (fun hy => hx (complete.mpr hy))])
+      · rw [dite_eq_right hx, dite_eq_right (fun hy => hx (complete.mpr hy))])
 
 theorem runInvariant_eq [Fintype State] {Result : Type*} (fallback : Result)
     (operation : Enumeration State → Result)
@@ -144,7 +144,7 @@ theorem runInvariant_eq [Fintype State] {Result : Type*} (fallback : Result)
   induction m using Quotient.inductionOn with
   | h xs =>
     have hx : ∀ s, s ∈ xs := by simpa using complete
-    simp only [Quotient.lift_mk, dif_pos hx]
+    simp only [Quotient.lift_mk, dite_eq_left hx]
     exact correct _
 
 end KILT.Graph.Enumeration

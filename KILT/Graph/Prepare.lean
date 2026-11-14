@@ -32,10 +32,11 @@ structure Invariant (seeds : Finset State) (next : State → Finset State)
 def initial (order : Enumeration State) (seeds : Finset State) : Work State :=
   ⟨[], order.ranked seeds⟩
 
+omit [Fintype State] in
 theorem initial_invariant (order : Enumeration State) (seeds : Finset State)
     (next : State → Finset State) : Invariant seeds next (initial order seeds) := by
   refine ⟨order.ranked_nodup seeds, ?_, ?_, ?_, ?_⟩
-  · simpa [initial, nodes] using (fun s hs => (order.mem_ranked seeds s).mpr hs)
+  · simp [initial, nodes]
   · intro s hs
     have hs' : s ∈ seeds := by simpa [initial, nodes] using hs
     exact ⟨s, hs', .refl⟩
@@ -53,12 +54,14 @@ def advance (order : Enumeration State) (next : State → Finset State)
     let fresh := order.ranked (edges \ w.nodes.toFinset)
     ⟨w.rows ++ [(s, edges)], rest ++ fresh⟩
 
+omit [Fintype State] in
 theorem nodes_advance (order : Enumeration State) (next : State → Finset State)
     (w : Work State) (s : State) (rest : List State) (hp : w.pending = s :: rest) :
     (advance order next w).nodes =
       w.nodes ++ order.ranked (next s \ w.nodes.toFinset) := by
   simp [advance, hp, nodes, List.append_assoc]
 
+omit [Fintype State] in
 theorem advance_invariant (order : Enumeration State) (next : State → Finset State)
     (seeds : Finset State) (w : Work State) (h : Invariant seeds next w) :
     Invariant seeds next (advance order next w) := by
@@ -107,6 +110,7 @@ def run (order : Enumeration State) (next : State → Finset State) : Nat → Wo
   | fuel + 1, w =>
     if w.pending.isEmpty then w else run order next fuel (advance order next w)
 
+omit [Fintype State] in
 theorem run_invariant (order : Enumeration State) (next : State → Finset State)
     (seeds : Finset State) (fuel : Nat) (w : Work State) (h : Invariant seeds next w) :
     Invariant seeds next (run order next fuel w) := by
@@ -118,6 +122,7 @@ theorem run_invariant (order : Enumeration State) (next : State → Finset State
     · exact h
     · exact ih _ (advance_invariant order next seeds w h)
 
+omit [Fintype State] in
 /-- An unfinished queue processes one distinct source per unit of fuel. -/
 theorem run_progress (order : Enumeration State) (next : State → Finset State)
     (fuel : Nat) (w : Work State) :
@@ -200,20 +205,22 @@ def Valid (b : Buffer State) : Prop :=
 def initial (order : Enumeration State) (seeds : Finset State) : Buffer State :=
   ⟨(order.ranked seeds).toArray, 0, #[], seeds⟩
 
+omit [Fintype State] in
 theorem initial_valid (order : Enumeration State) (seeds : Finset State) :
     Valid (initial order seeds) := by
   unfold Valid initial
-  simp only [List.size_toArray, Array.size_empty, Nat.zero_le, List.toList_toArray,
-    Array.toList_empty, List.map_nil, List.take_zero, true_and]
+  simp only [List.size_toArray, Nat.zero_le, List.map_nil, List.take_zero, true_and]
   constructor
   · rfl
   · ext s
     simp
 
+omit [Fintype State] in
 theorem initial_view (order : Enumeration State) (seeds : Finset State) :
     (initial order seeds).view = ReachableQueue.initial order seeds := by
   simp [view, initial, ReachableQueue.initial]
 
+omit [Fintype State] in
 theorem view_nodes (b : Buffer State) (h : b.Valid) : b.view.nodes = b.nodes.toList := by
   simp only [view, Work.nodes]
   rw [h.2.2.1, List.take_append_drop]
@@ -228,6 +235,7 @@ def advance (order : Enumeration State) (next : State → Finset State)
       b.seen ∪ fresh.toFinset⟩
   else b
 
+omit [Fintype State] in
 theorem advance_view (order : Enumeration State) (next : State → Finset State)
     (b : Buffer State) (v : b.Valid) :
     (b.advance order next).view = ReachableQueue.advance order next b.view := by
@@ -240,8 +248,8 @@ theorem advance_view (order : Enumeration State) (next : State → Finset State)
     have hf' : (Work.mk b.rows.toList
         (b.nodes.toList[b.cursor] :: b.nodes.toList.drop (b.cursor + 1))).nodes.toFinset = b.seen := by
       simpa [view, hd] using hf
-    simp only [view, ReachableQueue.advance, hd, hf', Array.getElem_toList]
-    simp only [Array.toList_push, Array.toList_append, List.toList_toArray]
+    simp only [view, ReachableQueue.advance, hd, Array.getElem_toList]
+    simp only [Array.toList_push, Array.toList_append]
     rw [List.drop_append_of_le_length (by simpa using Nat.succ_le_of_lt h)]
     simp only [Array.getElem_toList] at hf'
     rw [hf']
@@ -251,6 +259,7 @@ theorem advance_view (order : Enumeration State) (next : State → Finset State)
       simpa using Nat.le_of_not_gt h
     simp [view, ReachableQueue.advance, he]
 
+omit [Fintype State] in
 theorem advance_valid (order : Enumeration State) (next : State → Finset State)
     (b : Buffer State) (v : b.Valid) : (b.advance order next).Valid := by
   unfold advance
@@ -259,8 +268,8 @@ theorem advance_valid (order : Enumeration State) (next : State → Finset State
     have hl : b.cursor < b.nodes.toList.length := by simpa using h
     rcases v with ⟨hbound, hcursor, hrows, hseen⟩
     simp only [Valid, Array.size_append, List.size_toArray, Array.size_push,
-      Array.toList_push, Array.toList_append, List.toList_toArray, List.map_append,
-      List.map_cons, List.map_nil, List.toFinset_append, List.toFinset_cons, List.toFinset_nil]
+      Array.toList_push, Array.toList_append, List.map_append,
+      List.map_cons, List.map_nil, List.toFinset_append]
     refine ⟨by omega, by omega, ?_, ?_⟩
     · rw [List.take_append_of_le_length (by simpa using Nat.succ_le_of_lt h)]
       rw [List.take_succ_eq_append_getElem hl]
@@ -272,6 +281,7 @@ def run (order : Enumeration State) (next : State → Finset State) : Nat → Bu
   | 0, b => b
   | fuel + 1, b => if b.cursor < b.nodes.size then run order next fuel (b.advance order next) else b
 
+omit [Fintype State] in
 theorem run_view (order : Enumeration State) (next : State → Finset State)
     (fuel : Nat) (b : Buffer State) (v : b.Valid) :
     (b.run order next fuel).view = ReachableQueue.run order next fuel b.view := by
@@ -305,6 +315,7 @@ def adjacencyRow (order : Enumeration State) (states : Array State)
     (edges : Finset State) : Array (Fin states.size) :=
   ((order.ranked edges).filterMap (denseIndex? states)).toArray
 
+omit [Fintype State] in
 theorem mem_adjacencyRow (order : Enumeration State) (states : Array State)
     (hn : states.toList.Nodup) (edges : Finset State) (i : Fin states.size) :
     i ∈ (adjacencyRow order states edges).toList ↔ states[i.val] ∈ edges := by

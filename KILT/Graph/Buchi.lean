@@ -44,14 +44,14 @@ theorem hasAcceptingCycleWithOrder_eq_spec (order : Enumeration State) (seeds : 
     (next : State → Finset State) (accepting : Finset State) :
     hasAcceptingCycleWithOrder order seeds next accepting = hasAcceptingCycleSpec seeds next accepting := by
   by_cases h : seeds = ∅ ∨ accepting = ∅
-  · rw [hasAcceptingCycleWithOrder, if_pos h]
+  · rw [hasAcceptingCycleWithOrder, ite_eq_left h]
     apply Eq.symm
     apply Bool.eq_false_iff.mpr
     intro hh
     obtain ⟨q, hq, hr, _⟩ := (hasAcceptingCycleSpec_eq_true_iff _ _ _).mp hh
     rcases h with hs | ha
-    · simpa [hs, Reachable] using hr
-    · simpa [ha] using hq
+    · simp [hs, Reachable] at hr
+    · simp [ha] at hq
   · simp only [hasAcceptingCycleWithOrder, h, ↓reduceIte]
     exact PreparedReachable.hasAcceptingCycle_eq_spec _ _
 

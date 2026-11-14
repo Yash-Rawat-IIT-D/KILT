@@ -43,9 +43,9 @@ omit [DecidableEq AP] in
 theorem isUntil_iff {g : NNF AP} : isUntil g = true ↔ ∃ a b, g = .until a b := by
   cases g <;> simp [isUntil]
 
-/-- Reversing before and after last-occurrence dedup retains first occurrences. -/
 /-- The distinct until subformulas whose possible indefinite postponement needs
-a recurring acceptance condition, in stable syntax order. -/
+a recurring acceptance condition, in stable syntax order. Reversing before and
+after last-occurrence deduplication retains first occurrences. -/
 def untilObligations (f : NNF AP) : List (NNF AP) :=
   (((preorder f).filter isUntil).reverse.dedup).reverse
 
