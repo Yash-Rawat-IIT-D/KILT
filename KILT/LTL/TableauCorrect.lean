@@ -4,15 +4,47 @@ import KILT.Automata.GeneralizedBuchiCorrect
 /-!
 # Language correctness of the tableau
 
-Soundness concerns present obligations only. Completeness uses classical truth
-assignments as mathematical witnesses, never as executable translator data.
+This module is the semantic correctness bridge for KILT's tableau construction.
+For an NNF formula `f`, tableau states are statically consistent assignments to
+`f.subformulas`, input symbols are valuations of atomic propositions, and
+tableau transitions enforce the literal and temporal `LocalRule`s. Generalized
+Büchi acceptance adds the global condition missing from those local rules: an
+active strong-until obligation cannot be postponed forever.
+
+The proof establishes both directions of the language correspondence:
+
+* Soundness interprets every formula marked in an arbitrary accepting tableau
+  run as true according to `NNF.Sat`. The generalized acceptance sets provide
+  the eventual witnesses needed by the strong-until case.
+* Completeness uses the proof-only `semanticState` containing exactly the true
+  subformulas at each word position. These states form an accepting tableau run
+  whenever the root formula holds initially.
+
+Consequently, `accepts_iff_sat` proves that the generalized tableau recognizes
+exactly the words satisfying `f`. The final theorem then composes this semantic
+result with `FiniteGeneralizedBuchi.toFiniteBuchi_accepts`: the round-robin
+counter conversion yields an ordinary CSLib Büchi automaton with the same NNF
+language. This is how the LTL semantics, tableau construction, generalized
+acceptance obligations, and ordinary executable Büchi backend meet.
+
+The classical truth assignments used for completeness are mathematical
+witnesses only; the executable translator enumerates finite tableau states and
+does not evaluate `NNF.Sat` on an infinite word.
 -/
 namespace KILT.LTL.Tableau
 open Filter Cslib Cslib.Automata
 universe u
 variable {AP : Type u} [DecidableEq AP]
 
-/-- A pending until must eventually reach its right operand on an accepting run. -/
+/-- Convert generalized acceptance into the semantic witness required by one
+pending strong-until claim. If an accepting run marks `a U b` at position `i`,
+then some `j ≥ i` marks `b`, while every preceding position from `i` to `j`
+marks `a`.
+
+The local tableau rule can carry `a U b` forward while `a` holds. Recurring
+membership in this until formula's acceptance set rules out carrying it forever
+without `b`. This is the key liveness lemma used by the until case of
+`acceptingRun_sound`. -/
 theorem until_witness {f a b : NNF AP} {w : Word AP} {ss : ωSequence (State f)}
     (hr : (toGeneralizedBuchi f).AcceptingRun w ss)
     (hg : NNF.until a b ∈ f.subformulas) {i : Nat}
@@ -46,7 +78,15 @@ theorem until_witness {f a b : NNF AP} {w : Word AP} {ss : ωSequence (State f)}
   refine ⟨j, hj.1, hj.2, fun k hik hkj => ?_⟩
   exact ((step k).mp (pending k hik (by omega))).resolve_left (not_right k hik hkj) |>.1
 
-/-- Every present subformula is true, at every position of an accepting run. -/
+/-- Soundness of the generalized tableau: every relevant subformula marked by
+a state of an accepting run is true under `NNF.Sat` at the corresponding word
+position.
+
+Static consistency handles Boolean connectives, transition `LocalRule`s connect
+literals and temporal operators to the input valuation and next state, and
+`until_witness` supplies the global strong-until witness. This implication is
+deliberately one-way for arbitrary tableau states; completeness later builds
+special states that mark exactly all semantically true subformulas. -/
 theorem acceptingRun_sound {f : NNF AP} {w : Word AP} {ss : ωSequence (State f)}
     (hr : (toGeneralizedBuchi f).AcceptingRun w ss) :
     ∀ g ∈ f.subformulas, ∀ i, (ss i).holds g → NNF.Sat w i g := by
@@ -101,7 +141,13 @@ theorem acceptingRun_sound {f : NNF AP} {w : Word AP} {ss : ωSequence (State f)
           (ha (hc (by simp [NNF.subformulas])) k h))
     exact hb (hc (by simp [NNF.subformulas])) j ((step j).mp (pending j hij le_rfl)).1
 
-/-- Proof-only state consisting of precisely the true subformulas. -/
+/-- The canonical proof-only tableau state at word position `i`: its assignment
+contains exactly those subformulas of `f` that satisfy `NNF.Sat w i`.
+
+The semantic clauses for truth, falsehood, conjunction, and disjunction prove
+that this assignment is statically consistent, hence a `State f`. The
+definition is noncomputable because satisfaction over an arbitrary infinite
+word is used only to witness completeness, not by the executable compiler. -/
 noncomputable def semanticState (f : NNF AP) (w : Word AP) (i : Nat) : State f := by
   classical
   let s : Assignment f := Finset.univ.filter fun g => NNF.Sat w i g.val
@@ -124,13 +170,24 @@ noncomputable def semanticState (f : NNF AP) (w : Word AP) (i : Nat) : State f :
     exact NNF.sat_disj
   | pos _ | negAtom _ | next _ | «until» _ _ | release _ _ => trivial
 
+/-- The canonical semantic state represents the word exactly: for every
+subformula of `f`, syntactic membership in the state is equivalent to semantic
+satisfaction at position `i`. This exact correspondence drives both transition
+validity and recurring acceptance in the completeness construction. -/
 theorem semanticState_represents (f : NNF AP) (w : Word AP) (i : Nat) :
     Represents (semanticState f w i) w i := by
   classical
   intro g hg
   simp [semanticState, State.holds, Holds, hg]
 
-/-- The exact-truth sequence is accepting whenever the root holds initially. -/
+/-- Completeness of the generalized tableau at the run level. If the root NNF
+formula is true at position zero, the sequence of exact semantic states is a
+valid accepting run over the word.
+
+Root truth gives tableau initiality, adjacent exact representations satisfy all
+`LocalRule`s, and each until acceptance set is reached arbitrarily late: an
+inactive obligation is accepted immediately, while an active obligation has a
+future semantic witness for its right operand. -/
 theorem semanticRun_accepting {f : NNF AP} {w : Word AP} (h : NNF.Sat w 0 f) :
     (toGeneralizedBuchi f).AcceptingRun w ⟨fun i => semanticState f w i⟩ := by
   classical
@@ -152,7 +209,13 @@ theorem semanticRun_accepting {f : NNF AP} {w : Word AP} (h : NNF.Sat w 0 f) :
       exact (hs j b (NNF.subformulas_subset_of_mem hg (by simp [NNF.subformulas]))).mpr hj
     · exact ⟨i, le_rfl, mem_acceptanceSet _ |>.mpr
         (Or.inl (fun hh => hi ((hs i _ hg).mp hh)))⟩
-/-- The generalized tableau accepts exactly the satisfying infinite words. -/
+/-- The central tableau language-correctness theorem. The generalized tableau
+accepts an infinite valuation word exactly when that word satisfies the root NNF
+formula at position zero.
+
+The forward direction applies `acceptingRun_sound` to the root formula marked
+by an initial state. The reverse direction supplies the accepting sequence of
+exact semantic states from `semanticRun_accepting`. -/
 theorem accepts_iff_sat (f : NNF AP) (w : Word AP) :
     (toGeneralizedBuchi f).Accepts w ↔ NNF.Sat w 0 f := by
   constructor
@@ -162,6 +225,14 @@ theorem accepts_iff_sat (f : NNF AP) (w : Word AP) :
   · intro h
     exact ⟨_, semanticRun_accepting h⟩
 
+/-- End-to-end automata correspondence for an NNF formula: the ordinary finite
+Büchi automaton obtained by adding the verified round-robin counter accepts
+exactly the infinite valuation words satisfying `f`.
+
+This composes `accepts_iff_sat` with the generic language-preservation theorem
+from `GeneralizedBuchiCorrect`. It is the boundary used by later compilation
+and model-checking proofs: tableau-specific generalized obligations have become
+ordinary CSLib Büchi acceptance without changing the declared NNF semantics. -/
 theorem toFiniteBuchi_accepts (f : NNF AP) (w : Word AP) :
     ωAcceptor.Accepts (toGeneralizedBuchi f).toFiniteBuchi.toCSLib w ↔ NNF.Sat w 0 f := by
   rw [Automata.FiniteGeneralizedBuchi.toFiniteBuchi_accepts, accepts_iff_sat]
