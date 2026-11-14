@@ -6,9 +6,19 @@
   \usepackage{fontspec}
   \setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
 \fi
-\usepackage[margin=25mm]{geometry}
+\usepackage[margin=25mm,headheight=10mm,headsep=6mm,footskip=12mm]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs,tabularx,graphicx,xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,decorations.pathreplacing,positioning}
+\usepackage[headsepline,footsepline]{scrlayer-scrpage}
+\clearpairofpagestyles
+\ihead{\textbf{KILT}}
+\ohead{\includegraphics[width=22mm]{../images/image.png}}
+\cfoot{\pagemark}
+\setkomafont{pageheadfoot}{\normalfont\sffamily\small}
+% Human preference: superscript numeric citations. Confirmed entries go in refs.bib.
+\usepackage[superscript]{cite}
 \usepackage[hidelinks]{hyperref}
 \usepackage[capitalise,noabbrev]{cleveref}
 
@@ -19,3 +29,4 @@
 \crefname{assumption}{Assumption}{Assumptions}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.5em}
+\setcounter{tocdepth}{2}

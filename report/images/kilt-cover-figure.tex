@@ -1,0 +1,125 @@
+% Reusable illustration body. The report loads TikZ and the required libraries.
+% kilt-cover.tex remains the standalone compilation entry point.
+% PROV[user]: supplied report/images/kilt-cover.tex and cover-layout request.
+\begingroup
+
+% ---------- palette (flat, restrained) ----------
+\definecolor{navy}{HTML}{22303F}      % charcoal slate: state outlines, transitions, main text
+\definecolor{teal}{HTML}{4F6F8F}      % steel blue: proposition labels, section captions, notes
+\definecolor{tealfill}{HTML}{F2F5F8}  % very pale blue-grey: normal state fill
+\definecolor{mred}{HTML}{B85514}      % burnt orange: counterexample only
+\definecolor{mredfill}{HTML}{FBF0E8}  % pale peach: highlighted state fill
+\definecolor{rule}{HTML}{CBD3DB}      % light grey (currently unused, kept for consistency)
+
+% ---------- shared styles ----------
+\tikzset{
+  >={Stealth[length=2.6mm,width=2.2mm]},
+  trans/.style   ={navy,line width=0.9pt,->,shorten >=1pt},
+  cex/.style     ={mred,line width=1.5pt,->,shorten >=1pt},
+  state/.style   ={circle,draw=navy,fill=tealfill,line width=1pt,
+                   minimum size=2.1cm,inner sep=0pt,font=\large\sffamily,text=navy},
+  hstate/.style  ={state,draw=mred,fill=mredfill,text=mred,line width=1.5pt},
+  lab/.style     ={teal,font=\normalsize,inner sep=2pt},
+  exstate/.style ={circle,draw=navy,fill=tealfill,line width=0.9pt,
+                   minimum size=1.35cm,inner sep=0pt,font=\footnotesize\sffamily,text=navy},
+  exhstate/.style={exstate,draw=mred,fill=mredfill,text=mred,line width=1.3pt},
+  stage/.style   ={rounded corners=3pt,draw=navy,line width=0.9pt,fill=white,
+                   minimum width=3.5cm,minimum height=1.4cm,align=center,
+                   text width=3.3cm,font=\small,text=navy},
+  stagered/.style={stage,draw=mred,line width=1.4pt,text=mred,fill=mredfill},
+  caption/.style ={font=\scriptsize\sffamily\bfseries,teal,text=teal},
+}
+
+\begin{tikzpicture}[x=1cm,y=1cm]
+
+%% =====================================================
+%% 1. KRIPKE STRUCTURE (dominant element)
+%% =====================================================
+\node[state]  (idle)    at (-3.2, 0)    {idle};
+\node[hstate] (waiting) at ( 3.2, 0)    {waiting};
+\node[state]  (granted) at ( 0,  -2.8)  {granted};
+
+% proposition labels  L(s)  (maths font, teal) -- distinct from state names
+\node[lab] at ($(idle.north)    + (0, 0.50)$) {$\varnothing$};
+\node[lab] at ($(waiting.north) + (0, 0.50)$) {$\{\mathit{request}\}$};
+\node[lab] at ($(granted.south) + (0,-0.50)$) {$\{\mathit{grant}\}$};
+
+% initial arrow
+\draw[trans,line width=1.1pt] ($(idle.west)+(-1.7,0)$) -- (idle.west);
+
+% transitions
+\draw[cex]   (idle)    -- (waiting);                       % idle -> waiting
+\draw[trans] (waiting) -- (granted);                       % waiting -> granted
+\draw[trans] (granted) -- (idle);                          % granted -> idle
+\draw[cex]   (waiting.38) to[out=38,in=-38,looseness=9] (waiting.-38); % self-loop
+
+% counterexample tag
+\node[mred,font=\scriptsize\sffamily\bfseries,inner sep=1pt]
+  at ($(idle)!0.5!(waiting)+(0,0.42)$) {COUNTEREXAMPLE};
+
+%% =====================================================
+%% 2. PROPERTY
+%% =====================================================
+\node[caption] at (0,-5.0) {PROPERTY};
+\node[navy,font=\Large,inner sep=0pt] (prop) at (0,-5.6)
+  {$\varphi \;=\; \mathbf{G}\,\bigl(\mathit{request}\rightarrow \mathbf{F}\,\mathit{grant}\bigr)$};
+\node[navy,font=\small\itshape,inner sep=0pt] at (0,-6.15)
+  {``Every request is eventually granted.''};
+
+%% =====================================================
+%% 3. INFINITE EXECUTION: finite prefix + repeating loop
+%% =====================================================
+\node[caption,mred,text=mred] at (0,-7.0) {VIOLATING EXECUTION};
+
+\def\ey{-8.7}
+\node[exstate]  (e0) at (-4.8,\ey) {idle};
+\node[exhstate] (e1) at (-2.4,\ey) {waiting};
+\node[exhstate] (e2) at ( 0.0,\ey) {waiting};
+\node[exhstate] (e3) at ( 2.4,\ey) {waiting};
+
+\draw[cex] (e0) -- (e1);
+\draw[cex] (e1) -- (e2);
+\draw[cex] (e2) -- (e3);
+% continuation: dotted, with an arrow head -- the execution never terminates
+\draw[cex,dotted,line width=1.5pt,dash pattern=on 0.2pt off 3pt,line cap=round]
+  (e3.east) -- ++(1.6,0);
+\draw[cex,line width=1.5pt] ($(e3.east)+(1.6,0)$) -- ++(0.55,0);
+
+% labels L(s) above the trace
+\foreach \n/\t in {e0/\varnothing,e1/{\{\mathit{request}\}},e2/{\{\mathit{request}\}},e3/{\{\mathit{request}\}}}
+  \node[lab,font=\footnotesize] at ($(\n.north)+(0,0.42)$) {$\t$};
+
+% braces: prefix vs. loop
+\draw[decorate,decoration={brace,mirror,amplitude=5pt},navy,line width=0.8pt]
+  ($(e0.south west)+(0.1,-0.25)$) -- ($(e0.south east)+(-0.1,-0.25)$)
+  node[midway,below=8pt,navy,font=\scriptsize\sffamily] {finite prefix};
+\draw[decorate,decoration={brace,mirror,amplitude=5pt},mred,line width=0.8pt]
+  ($(e1.south west)+(0.1,-0.25)$) -- (4.55,{\ey-0.675-0.25})
+  node[midway,below=8pt,mred,font=\scriptsize\sffamily] {loop repeated forever};
+
+\node[navy,font=\normalsize,inner sep=0pt] at (0,-10.55)
+  {$\pi \;=\; \textsf{idle}\,\bigl(\textsf{waiting}\bigr)^{\omega}$};
+\node[teal,font=\scriptsize,inner sep=0pt,align=center] at (0,-11.15)
+  {$\mathit{request}$ holds from position $1$ onwards and $\mathit{grant}$ never holds,\\
+   although \textsf{granted} remains reachable from \textsf{waiting}.};
+
+%% =====================================================
+%% 4. SUPPORTING PIPELINE (secondary)
+%% =====================================================
+\node[caption] at (0,-12.1) {HOW A COUNTEREXAMPLE IS FOUND};
+
+\def\py{-13.1}
+\node[stage]    (p1) at (-6.0,\py) {Negated property\\[1pt]\footnotesize $\neg\varphi$};
+\node[stage]    (p2) at (-2.0,\py) {B\"uchi automaton\\[1pt]\footnotesize $\mathcal{B}_{\neg\varphi}$};
+\node[stage]    (p3) at ( 2.0,\py) {Product with system\\[1pt]\footnotesize $\mathcal{K}\otimes\mathcal{B}_{\neg\varphi}$};
+\node[stagered] (p4) at ( 6.0,\py) {Accepting lasso\\[1pt]\footnotesize prefix\,$\cdot$\,cycle$^{\omega}$};
+
+\foreach \a/\b in {p1/p2,p2/p3,p3/p4}
+  \draw[trans,line width=1pt] (\a.east) -- (\b.west);
+
+\node[teal,font=\scriptsize,inner sep=0pt,align=center] at (0,-14.25)
+  {An accepting lasso in the product projects to an infinite system execution\\
+   that violates $\varphi$.};
+
+\end{tikzpicture}
+\endgroup

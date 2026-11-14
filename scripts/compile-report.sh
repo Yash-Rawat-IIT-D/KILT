@@ -6,7 +6,8 @@ usage() {
 Usage: ./scripts/compile-report.sh [OPTIONS]
 
 Build report/src/main.tex into report/build/main.pdf with pdfLaTeX by default.
-Uses latexmk when available, otherwise runs the selected engine twice.
+Uses latexmk when available. Otherwise, runs the selected engine once, BibTeX
+when the document requests a bibliography, and then two final engine passes.
 Can be run from any directory; no Lean build or shell escape is required.
 Set REPORT_ENGINE=pdflatex|xelatex|lualatex to choose an engine explicitly.
 
@@ -132,6 +133,19 @@ run_report() {
     run_compiler latexmk "$engine_flag" -interaction=nonstopmode -halt-on-error \
       -file-line-error "-outdir=$build_dir" main.tex || return $?
   else
+    run_compiler "$engine" -interaction=nonstopmode -halt-on-error \
+      -file-line-error "-output-directory=$build_dir" main.tex || return $?
+    if grep -Fq '\bibdata' "$build_dir/main.aux"; then
+      if ! command -v bibtex >/dev/null 2>&1; then
+        printf 'The report requests a bibliography, but BibTeX is unavailable.\n' >&2
+        return 127
+      fi
+      (
+        cd -- "$build_dir"
+        export BIBINPUTS="$source_dir:"
+        run_compiler bibtex main
+      ) || return $?
+    fi
     local pass
     for pass in 1 2; do
       run_compiler "$engine" -interaction=nonstopmode -halt-on-error \

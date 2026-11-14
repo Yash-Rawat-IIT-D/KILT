@@ -1,0 +1,65 @@
+\section{Problem and Objectives}\label{sec:problem}
+
+\subsection{Problem and Motivation}
+
+An introductory course in Automated Verification during the previous semester
+introduced me to temporal logic and its practical role. Lean offered a way to
+go beyond running a model-checking algorithm: I could formalise the checker and
+also prove that its answer means what I claim. KILT became a substantial test
+of that idea across graphs, automata and executable algorithms.
+
+The problem is concrete. Given a finite Kripke structure and an LTL formula,
+KILT computes whether the formula holds on every initial infinite execution.
+Lean proves that a positive Boolean result is equivalent to this trace
+semantics. For a negative result, a separate theorem connects the returned
+finite lasso to an actual violating execution. These are kernel-checked claims,
+not conclusions drawn only from running examples.
+
+A finite system can still have an infinite bad execution. In the running
+example, $\mathbf{G}(\mathit{request}\rightarrow\mathbf{F}\,\mathit{grant})$
+requires every request to be granted eventually. A system may enter a waiting
+state and repeat its self-loop forever: granting remains reachable but is never
+chosen. The finite prefix and repeating loop describe this execution as a lasso.
+
+I did not start from an empty field. My preliminary literature and API audit
+found substantial Lean work on LTL and automata, but its scoped search did not
+find the executable pieces assembled into the path I needed. I therefore
+chose a narrower CSLib-oriented contribution: connect formula compilation,
+product emptiness and semantic correctness in one toolkit.
+
+\subsection{Objectives and Deliverables}
+
+I retained the proposal's core objectives and added counterexample extraction
+after the verified checker was working:
+
+\begin{enumerate}
+  \setlength{\itemsep}{0pt}
+  \setlength{\parskip}{0pt}
+  \item define LTL formulas and trace semantics, audit relevant Lean libraries,
+    and reuse CSLib's automata interfaces where appropriate;
+  \item translate formulas to generalized or ordinary B\"uchi automata, then
+    combine the property automaton with a finite Kripke structure;
+  \item implement executable accepting-run search and prove its correspondence
+    with the declared trace semantics;
+  \item return a counterexample lasso and prove its projected execution violates
+    the supplied formula; and
+  \item provide organised Lean source, representative safety and liveness
+    examples, and documentation of the design, proofs, trust boundary and
+    limitations.
+\end{enumerate}
+
+\subsection{Scope, Assumptions and Simplifications}
+
+I restrict the executable checker to finite Kripke structures so that states
+and successor sets can be enumerated by the search. The set of initial states is
+also finite and nonempty, which ensures that the model has a starting point.
+
+I kept seriality as a separate proof obligation rather than building it into
+the model. Partial models and deadlocks therefore remain representable without
+silently adding self-loops, while checking an infinite-trace property requires
+proof that every state has a successor. Seriality guarantees continuation; it
+does not add fairness or force an enabled transition to be selected.
+
+CTL* and frontend automation exceeded this project's scope. I delivered the
+verified LTL checker and lasso extraction; both extensions and CSLib
+contribution remain future work.

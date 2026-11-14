@@ -1,0 +1,21 @@
+% PROV[user]: .ai/submission/REPORT.md Appendix A; supplied cover artwork;
+% requested title above the illustration and supervisor details below it.
+\makeatletter
+\begin{titlepage}
+\thispagestyle{empty}
+\centering
+\vspace*{-0.5cm}
+{\LARGE\sffamily\bfseries \@title\par}
+\vspace{0.2cm}
+{\normalsize\sffamily \@subtitle\par}
+\vspace{0.45cm}
+{\normalsize \@author\par}
+\vspace{0.4cm}
+
+\resizebox{0.94\linewidth}{!}{\input{../images/kilt-cover-figure}}
+\par
+\vfill
+{\small \@publishers\par
+\@date\par}
+\end{titlepage}
+\makeatother

@@ -1,33 +1,45 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper,titlepage=true,bibliography=totoc]{scrartcl}
 \input{preamble}
 
-% Metadata copied from Proposal/src/KILT_Proposal.tex; date is the planned deadline.
-\title{KILT: Kripke in Lean Toolkit\\
-  \large A Verified LTL Model-Checking Toolkit in Lean\\[0.5em]
-  \normalsize Working draft --- manual review in progress}
+% PROV[user]: .ai/submission/REPORT.md, Appendix A (human-filled metadata).
+\title{KILT: Kripke in Lean Toolkit}
+\subtitle{A Verified LTL Model-Checking Toolkit in Lean}
 \author{Yash Rawat\\2023CS50334\\
   COL876: Special Topics in Formal Methods}
+\publishers{IIT Delhi\\[0.5em]
+  Supervisor: Vaishnavi Sundararajan}
 \date{17 November 2026}
 
 \begin{document}
-\maketitle
+\hypersetup{pageanchor=false}
+\input{cover}
+\pagenumbering{roman}
+\hypersetup{pageanchor=true}
+\pagestyle{plain}
+\input{sections/00-abstract}
+\clearpage
+\pagestyle{scrheadings}
 \tableofcontents
 \clearpage
+\pagenumbering{arabic}
 
-% Sections are scaffolding, not approved prose. Abstract and conclusion are written last.
-\input{sections/00-abstract}
-\input{sections/01-introduction}
-\input{sections/02-background}
-\input{sections/03-problem-and-scope}
-\input{sections/04-assumptions}
-\input{sections/05-lean-learnings}
-\input{sections/06-formalisation}
-\input{sections/07-deliverables}
-\input{sections/08-challenges}
-\input{sections/09-limitations}
-\input{sections/10-future-extensions}
-\input{sections/11-conclusion}
+% Approved structure; all sections remain scaffolding without report prose.
+% Write the abstract and conclusion after the body has been approved.
+% Body limit: 20 pages, excluding TOC, appendices and other front matter.
+\input{sections/01-problem-and-objectives}
+\input{sections/02-background-and-design}
+\input{sections/03-implementation-and-techniques}
+\input{sections/04-theorems-and-correctness}
+\input{sections/05-examples-and-evaluation}
+\input{sections/06-lean-learnings}
+\input{sections/07-limitations-and-future-work}
+\input{sections/08-conclusion}
 
+\clearpage
+\input{sections/references}
+
+% Optional appendix: retain only what the finished report needs.
+\clearpage
 \appendix
 \input{sections/appendix-reproducibility}
 \end{document}

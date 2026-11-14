@@ -1,0 +1,8 @@
+% Standalone entry point; compile from report/images/ with pdflatex kilt-cover.tex.
+% The report includes the same drawing directly, so no separate figure build is needed.
+\documentclass[tikz,border=14pt]{standalone}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta,calc,decorations.pathreplacing,positioning}
+\begin{document}
+\input{kilt-cover-figure}
+\end{document}
