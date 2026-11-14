@@ -112,7 +112,9 @@ The generated site is under `docbuild/.lake/build/doc/`, and documentation logs
 are stored alongside build logs under `.lake/logs/`. The first build also
 generates pages for imported Lean and Mathlib modules, so later incremental
 builds are much faster. Generated HTML and compiled documentation outputs are
-excluded from Git.
+excluded from Git. The script disables optional generated equation displays for
+Lean's core pages, avoiding doc-gen4 timeouts on compiler internals in the pinned
+release. KILT and dependency equation displays remain enabled by default.
 
 Open this folder in VS Code to use the pinned toolchain. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.

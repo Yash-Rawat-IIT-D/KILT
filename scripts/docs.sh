@@ -40,7 +40,8 @@ Logs: .lake/logs/docs-*.log; latest: .lake/logs/latest-docs.log
 LEAN_NUM_THREADS defaults to 1. Setup and the first build can take time and
 disk space because doc-gen4 also generates documentation for Lean, Init, Lake
 and Std. Downloaded dependencies and compiled dependency caches are preserved
-by clean operations.
+by clean operations. Core Lean pages omit generated equation displays to avoid
+doc-gen4 timeouts on compiler internals; KILT equations remain enabled.
 EOF
 }
 
@@ -244,6 +245,21 @@ run_docs() {
     clean_docs || return $?
     cd -- "$docbuild_dir"
   fi
+  # doc-gen4 tries to synthesize equation theorems even for compiler internals.
+  # On the pinned Lean release some time out or fail. Use its supported switch
+  # for core pages only, then reuse those cached pages for the normal build.
+  local data_dir="$docbuild_dir/.lake/build/doc-data"
+  local core_policy="$data_dir/core-without-equations"
+  if [[ ! -f "$core_policy" ]]; then
+    # Environment options are not in doc-gen4's Lake trace. Invalidate only the
+    # four generated core traces once to replace older equation-enabled data.
+    rm -f -- "$data_dir/core-Init.doc.trace" "$data_dir/core-Std.doc.trace" \
+      "$data_dir/core-Lake.doc.trace" "$data_dir/core-Lean.doc.trace"
+  fi
+  printf 'Preparing Lean core documentation (generated equation displays disabled)...\n'
+  DISABLE_EQUATIONS=1 "${lake_command[@]}" build @doc-gen4/coreDocs || return $?
+  touch -- "$core_policy"
+  printf 'Building project documentation (equation displays enabled by default)...\n'
   printf 'Command:'
   printf ' %q' "${lake_command[@]}" build "${doc_targets[@]}"
   printf '\n\n'
