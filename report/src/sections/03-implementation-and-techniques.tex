@@ -1,13 +1,7 @@
-% STATE: DRAFT (awaiting human review).
 \section{Implementation and Techniques}\label{sec:implementation}
 
 \subsection{Formula Compilation}
 
-% PROV[user]: Requested a file-spanning pipeline, its rationale and a TikZ figure.
-% PROV[code]: KILT/LTL/NormalForm.lean; KILT/LTL/Subformulas.lean;
-% KILT/LTL/Tableau.lean; KILT/LTL/TableauAcceptance.lean;
-% KILT/Automata/GeneralizedBuchi.lean; KILT/LTL/Compile.lean;
-% KILT/LTL/Compiled.lean.
 The compiler is deliberately staged because the public formula syntax is not
 the representation on which the automata algorithms operate.  Starting with
 the negated property, \sourcefile{NormalForm.lean} pushes negation to atoms and
@@ -23,7 +17,6 @@ to the ordinary finite B\"uchi representation consumed by the rest of KILT.
 while \sourcefile{Compiled.lean} packages the automaton, its traversal order and
 its language theorem from the same normalised root.
 
-% PROV[code]: The modules named in the nodes; KILT/LTL/Compile.lean:L6-L34.
 \begin{figure}[ht]
   \centering
   \resizebox{0.98\linewidth}{!}{%
@@ -53,10 +46,6 @@ its language theorem from the same normalised root.
   \label{fig:formula-pipeline}
 \end{figure}
 
-% PROV[user]: Requested the reason for the tableau technique and its efficiency change.
-% PROV[code]: KILT/LTL/Tableau.lean, definitions State, LocalRule, step_split,
-% successors and successors_eq_step_filter; docs/design.md, Tableau local foundation
-% and Incremental preparation and literal checks.
 A tableau state is a statically consistent subset of the normalised
 subformulas, so its raw state space is bounded by $2^n$ for a closure of size
 $n$.  Static rules handle constants and Boolean connectives within one state;
@@ -70,10 +59,6 @@ filters targets only by temporal compatibility.  The equivalence proved in
 is an execution optimisation rather than a semantic change.  It does not remove
 the tableau's exponential worst-case bound.
 
-% PROV[user]: Requested mathematical detail for generalized-to-ordinary Büchi conversion.
-% PROV[code]: KILT/LTL/TableauAcceptance.lean, acceptanceSet;
-% KILT/Automata/GeneralizedBuchi.lean, Counter, hit, advance and toFiniteBuchi;
-% KILT/Automata/RoundRobin.lean; KILT/Automata/GeneralizedBuchiCorrect.lean.
 The generalised acceptance family is the natural way to track several strong
 until formulas.  For an obligation $g=a\,\mathsf{U}\,b$, its accepting set is
 \[
@@ -105,10 +90,6 @@ it adds a factor of $\max(1,m)$ rather than another powerset construction.
 
 \subsection{Product Construction and Graph Search}
 
-% PROV[user]: Prior understanding of product states as system state plus automaton memory;
-% requested a diagram and rationale.
-% PROV[code]: KILT/Automata/Product.lean:L21-L29,L31-L72;
-% KILT/Graph/Acceptance.lean:L24-L35,L81-L86.
 The violation automaton describes words that break the property, but it does
 not know which words the model can generate.  \sourcefile{Product.lean}
 synchronises it with the finite Kripke structure.  For system state $s$ and
@@ -125,9 +106,6 @@ it records how far the monitor has progressed along the labels of the current
 execution.  Product paths therefore represent exactly the model executions
 that are simultaneously runs of the violation monitor.
 
-% PROV[code]: KILT/Automata/Product.lean; KILT/Graph/Prepare.lean;
-% KILT/Graph/Buchi.lean; KILT/Graph/PreparedSearch.lean;
-% KILT/Graph/LassoExtraction.lean; KILT/Automata/ProductLasso.lean.
 \begin{figure}[ht]
   \centering
   \resizebox{0.98\linewidth}{!}{%
@@ -157,9 +135,6 @@ that are simultaneously runs of the violation monitor.
   \label{fig:product-search}
 \end{figure}
 
-% PROV[code]: KILT/Graph/Acceptance.lean, HasAcceptingCycle and
-% hasAcceptingCycle_iff_hasAcceptingRun; KILT/Graph/Buchi.lean;
-% KILT/Graph/Prepare.lean; docs/design.md, Reachable storage and parent invariants.
 Finiteness turns infinite B\"uchi acceptance into the graph condition
 \[
  \exists x\in F_P.\quad
@@ -173,8 +148,6 @@ visited arrays and frontiers over cached adjacency.  This separates the
 mathematical cycle criterion from the executable representation and avoids
 re-evaluating the original product-successor function during each query.
 
-% PROV[code]: KILT/Graph/Internal/Parents.lean; KILT/Graph/LassoExtraction.lean;
-% KILT/Automata/ProductLasso.lean; KILT/Kripke/Counterexample.lean.
 Witness extraction needs more information than the Boolean query, but storing a
 complete route at every discovered vertex would duplicate prefixes.
 \sourcefile{Internal/Parents.lean} instead stores a root marker or predecessor
@@ -188,10 +161,6 @@ does not depend on LTL-specific states.
 
 \subsection{Prepared Checking and User Interface}
 
-% PROV[user]: Prior description of prepared checking as an intermediate representation
-% shared by the two main queries; requested a diagram and rationale.
-% PROV[code]: KILT/LTL/Compiled.lean; KILT/Kripke/PreparedCheck.lean;
-% KILT/Graph/PreparedSearch.lean; KILT/Automata/ProductLasso.lean.
 The same formula compilation and reachable product are needed for both a
 Boolean verdict and an optional counterexample.  Repeating them would make a
 combined user-facing query perform avoidable work.  KILT therefore makes this
@@ -202,8 +171,6 @@ and its language theorem.  A \lean{Checker} from
 Combining them produces a \lean{PreparedCheck}, whose prepared product caches
 reachable adjacency, a dense query order and the accepting mask.
 
-% PROV[code]: KILT/LTL/Compiled.lean; KILT/Kripke/PreparedCheck.lean;
-% KILT/Graph/PreparedSearch.lean; KILT/Frontend.lean.
 \begin{figure}[ht]
   \centering
   \resizebox{0.94\linewidth}{!}{%
@@ -232,8 +199,6 @@ reachable adjacency, a dense query order and the accepting mask.
   \label{fig:prepared-checking}
 \end{figure}
 
-% PROV[code]: KILT/Graph/PreparedSearch.lean; KILT/Kripke/PreparedCheck.lean;
-% KILT/Frontend.lean.
 \sourcefile{PreparedSearch.lean} distinguishes an empty problem, carrying a
 proof that starts or acceptance are empty, from a ready problem containing a
 real prepared graph.  The verdict and lasso queries read the same stored
@@ -243,15 +208,19 @@ cache.  A compiled property can also be supplied to several model checkers via
 \lean{prepareCompiled}, whereas each prepared product remains specific to one
 model--property pair.
 
-% PROV[user]: Prior API-friction discussion requesting simple kernel-checked verdicts,
-% concise seriality proofs and standardised result presentation.
-% PROV[code]: KILT/Frontend.lean, kilt_decide, kilt_serial, SystemCheckResult,
-% PreparedCheck.runSystem and runSystem_verdict.
 Finally, \sourcefile{Frontend.lean} keeps proof automation and presentation
 above the verified backend.  \lean{kilt_decide} reduces manageable closed
 verdict goals through the proved checker specification before using kernel
 \lean{decide}, while \lean{kilt_serial} proves the finite no-deadlock
-obligation for small models.  When both a displayed verdict and witness are
+obligation for small models.  Building on these, \lean{kilt_verify hserial}
+proves a satisfaction goal directly: it infers the model and formula from the
+goal, applies \lean{check_correct} with the supplied seriality proof, then
+invokes \lean{kilt_decide}.  The explicit and one-line versions appear side
+by side in \sourcefile{Examples/Demos/Frontend.lean}.  These tactics construct
+kernel-checked proofs for small closed models; symbolic hypotheses require
+ordinary reasoning, and larger instances can exceed kernel reduction limits.
+
+When both a displayed verdict and witness are
 needed, \lean{runSystem} performs witness extraction once and derives the
 verdict from its absence, returning a stable system-state view rather than the
 internal automaton product.  These conveniences shorten examples without
