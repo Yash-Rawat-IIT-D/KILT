@@ -136,7 +136,7 @@ that are simultaneously runs of the violation monitor.
       {Finite Kripke\\structure $M$};
     \node[kiltemphasis,text width=27mm,below=8mm of model] (monitor)
       {Violation monitor\\$B_{\lnot\varphi}$};
-    \node[kiltstage,text width=32mm,right=16mm of $(model)!0.5!(monitor)$] (product)
+    \node[kiltstage,text width=32mm,right=22mm of $(model)!0.5!(monitor)$] (product)
       {Synchronous product\\states $(s,q)$\\[-1mm]{\scriptsize\ttfamily Product.lean}};
     \node[kiltstage,text width=34mm,right=of product] (prepared)
       {Reachable-only graph\\dense IDs and cached rows\\[-1mm]{\scriptsize\ttfamily Prepare.lean}};
@@ -146,8 +146,8 @@ that are simultaneously runs of the violation monitor.
       {Parent reconstruction\\prefix $+$ loop\\[-1mm]{\scriptsize\ttfamily LassoExtraction.lean}};
     \node[kiltstage,text width=29mm,right=of lasso] (projection)
       {Project $\pi_1$\\system execution\\[-1mm]{\scriptsize\ttfamily ProductLasso.lean}};
-    \draw[kiltarrow] (model.east) -- (product.west);
-    \draw[kiltarrow] (monitor.east) -- (product.west);
+    \draw[kiltarrow] (model.east) -- (product.north west);
+    \draw[kiltarrow] (monitor.east) -- (product.south west);
     \draw[kiltarrow] (product) -- (prepared);
     \draw[kiltarrow] (prepared) -- (verdict);
     \draw[kiltarrow] (prepared) -- (lasso);
@@ -214,7 +214,7 @@ reachable adjacency, a dense query order and the accepting mask.
       {reusable across models};
     \node[kiltstage,text width=31mm,below=9mm of compiled] (checker)
       {Checker for $M$\\model order $+$ seriality\\[-1mm]{\scriptsize\ttfamily PreparedCheck.lean}};
-    \node[kiltstage,text width=38mm,right=18mm of $(compiled)!0.5!(checker)$] (prepared)
+    \node[kiltstage,text width=38mm,right=24mm of $(compiled)!0.5!(checker)$] (prepared)
       {PreparedCheck $M\,\varphi$\\one reachable product\\[-1mm]{\scriptsize\ttfamily PreparedSearch.lean}};
     \node[kiltstage,text width=29mm,above right=7mm and 13mm of prepared] (bool)
       {\lean{check}\\Boolean only};

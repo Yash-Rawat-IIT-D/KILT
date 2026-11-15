@@ -1,0 +1,43 @@
+% Reusable compact version of panel (a) from kilt_lasso.tex.
+\begingroup
+\tikzset{
+  lassoState/.style={circle,draw=kiltnavy,fill=kiltpale,line width=0.9pt,
+    minimum size=16mm,inner sep=0pt,align=center,font=\footnotesize\sffamily,
+    text=kiltnavy},
+  lassoGhost/.style={lassoState,draw=kiltnavy!35,fill=white,text=kiltnavy!55},
+  lassoHot/.style={lassoState,draw=kiltorange,fill=kiltpeach,
+    text=kiltorange,line width=1.2pt},
+  lassoAccept/.style={double distance=1.3pt},
+  lassoEdge/.style={-{Stealth[length=2.2mm]},draw=kiltnavy,line width=0.8pt},
+  lassoCounterexample/.style={-{Stealth[length=2.2mm]},draw=kiltorange,
+    line width=1.25pt},
+  lassoFaded/.style={-{Stealth[length=2.2mm]},draw=kiltnavy!35,line width=0.7pt},
+  lassoNote/.style={font=\scriptsize,inner sep=1pt}
+}
+\newcommand{\lassoq}[1]{\textcolor{kiltblue}{\ensuremath{q_{#1}}}}
+\begin{tikzpicture}
+  \node[lassoState] (iq0) at (0,0) {idle\\[-1pt]\lassoq{0}};
+  \node[lassoHot] (wq0) at (3.4,0) {waiting\\[-1pt]\lassoq{0}};
+  \node[lassoHot,lassoAccept] (wq1) at (6.8,0)
+    {waiting\\[-1pt]\lassoq{1}};
+  \node[lassoGhost] (gq0) at (10.2,0) {granted\\[-1pt]\lassoq{0}};
+  \node[lassoGhost,lassoAccept] (gq1) at (13.6,0)
+    {granted\\[-1pt]\lassoq{1}};
+
+  \draw[lassoEdge] ($(iq0.west)+(-1.1,0)$) -- (iq0.west);
+  \draw[lassoCounterexample] (iq0) -- (wq0);
+  \draw[lassoCounterexample] (wq0) -- (wq1);
+  \draw[lassoCounterexample] (wq1.55) to[out=55,in=125,looseness=4]
+    (wq1.125);
+  \draw[lassoFaded] (wq0.35) to[out=35,in=145,looseness=4] (wq0.145);
+  \draw[lassoFaded] (wq0) -- (gq0);
+  \draw[lassoFaded] (wq0.south east) to[out=-25,in=-155] (gq1.south west);
+  \draw[lassoFaded] (wq1) -- (gq1);
+
+  \node[lassoNote,text=kiltorange] at (1.7,-0.5) {finite prefix};
+  \node[lassoNote,text=kiltorange,align=center] at (6.8,-1.45)
+    {accepting cycle\\repeated forever};
+  \node[lassoNote,text=kiltblue,align=center] at (13.6,-1.45)
+    {accepting dead end:\\not a cycle witness};
+\end{tikzpicture}
+\endgroup

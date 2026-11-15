@@ -33,6 +33,18 @@ macro "kilt_serial" : tactic =>
   `(tactic|
     exact (FiniteKripke.isSerial_eq_true_iff _).mp (by decide))
 
+/-- Prove `M.toKripke.Satisfies φ` for a small closed finite model. Supply a
+proof of `M.toKripke.Serial`; the model and formula are inferred from the goal.
+
+This composes `check_correct` with `kilt_decide`, so the resulting proof is
+kernel checked. Symbolic labels and hypotheses require ordinary semantic
+reasoning, and larger concrete instances may exceed kernel reduction limits.
+Elaboration and computation failures are reported by the underlying tactics. -/
+macro "kilt_verify" hserial:term : tactic =>
+  `(tactic|
+    (apply (FiniteKripke.check_correct _ _ $hserial).mp
+     kilt_decide))
+
 namespace FiniteKripke
 
 /-- Presentation-oriented result using only system states. Constructing this

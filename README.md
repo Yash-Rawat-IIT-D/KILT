@@ -195,6 +195,37 @@ Similarly, `kilt_serial` proves global seriality of a small closed finite model
 by checking that its deadlock set is empty. These tactics produce proof terms;
 they are deliberately distinct from compiled `#eval`, and kernel computation
 may become expensive on larger inputs.
+
+For a small concrete model, `kilt_verify` connects the verdict to system
+satisfaction automatically. Supply the seriality proof; the goal determines
+the model and property:
+
+```lean
+import Examples.Frontend
+
+open Examples.Frontend
+
+-- Explicit connection to checker correctness:
+example : healthy.toKripke.Satisfies eventuallyGrant := by
+  apply (healthy.check_correct eventuallyGrant (serial false)).mp
+  kilt_decide
+
+-- The same steps through the lightweight frontend:
+example : healthy.toKripke.Satisfies eventuallyGrant := by
+  kilt_verify (serial false)
+```
+
+[Frontend.lean](Examples/Frontend.lean) defines the model from scratch, displays
+the waiting variant's counterexample, and demonstrates the automation's limit:
+an unknown valuation requires a manual proof using its hypothesis, whereas a
+concrete specialisation can be checked automatically. The computation macros
+require closed goals; even seriality with an unused symbolic label can need a
+direct proof. The tactic is a small
+composition of `check_correct` and `kilt_decide`, not general symbolic proof
+search. False claims, incompatible seriality proofs, and unsupported goals
+produce ordinary Lean errors; a computation failure is never a false verdict.
+[FrontendRegression.lean](Examples/FrontendRegression.lean) checks these cases.
+
 [Checker.lean](Examples/Checker.lean) combines small kernel-computed proofs with
 build-failing execution tests for larger request/grant and traffic properties.
 Compiled outputs are not treated as proofs. Search caches successors within each

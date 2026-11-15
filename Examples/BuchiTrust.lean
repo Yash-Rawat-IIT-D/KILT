@@ -11,6 +11,7 @@ import Examples.Efficiency
 import Examples.GraphStorage
 import Examples.PreparedChecking
 import Examples.Walkthrough
+import Examples.FrontendRegression
 import Lean.Util.CollectAxioms
 
 /-!
@@ -91,6 +92,24 @@ run_cmd auditStandardAxioms #[
   ``KILT.FiniteKripke.PreparedCheck.check_eq_false_iff,
   ``KILT.FiniteKripke.PreparedCheck.check_eq,
   ``KILT.FiniteKripke.PreparedCheck.runSystem_verdict,
+  ``Examples.Frontend.serial,
+  ``Examples.Frontend.healthy_explicit,
+  ``Examples.Frontend.healthy_verified,
+  ``Examples.Frontend.waiting_verdict,
+  ``Examples.Frontend.labelledLoop_serial,
+  ``Examples.Frontend.symbolic_manual,
+  ``Examples.Frontend.concrete_verified,
+  ``Examples.FrontendRegression.truth_verified,
+  ``Examples.FrontendRegression.atom_verified,
+  ``Examples.FrontendRegression.eventually_verified,
+  ``Examples.FrontendRegression.next_verified,
+  ``Examples.FrontendRegression.inline_serial_verified,
+  ``Examples.FrontendRegression.true_verdict,
+  ``Examples.FrontendRegression.false_verdict,
+  ``Examples.FrontendRegression.false_claim_rejected,
+  ``Examples.FrontendRegression.wrong_seriality_rejected,
+  ``Examples.FrontendRegression.unsupported_goal_rejected,
+  ``Examples.FrontendRegression.deadlock_seriality_rejected,
   ``KILT.FiniteKripke.PreparedCheck.counterexample?_valid,
   ``KILT.FiniteKripke.PreparedCheck.counterexamplePath_states,
   ``KILT.FiniteKripke.PreparedCheck.counterexample?_sound,

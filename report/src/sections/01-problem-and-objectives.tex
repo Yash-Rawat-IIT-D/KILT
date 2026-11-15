@@ -4,11 +4,11 @@
 
 An introductory course in Automated Verification during the previous semester
 introduced me to temporal logic and its practical role. Lean offered a way to
-go beyond running a model-checking algorithm: I could formalise the checker and
+go beyond running a model-checking algorithm as I could formalise the checker and
 also prove that its answer means what I claim. KILT became a substantial test
 of that idea across graphs, automata and executable algorithms.
 
-The problem is concrete. Given a finite Kripke structure and an LTL formula,
+The problem statement is as follows : Given a finite Kripke structure and an LTL formula,
 KILT computes whether the formula holds on every initial infinite execution.
 Lean proves that a positive Boolean result is equivalent to this trace
 semantics. For a negative result, a separate theorem connects the returned
@@ -57,9 +57,9 @@ also finite and nonempty, which ensures that the model has a starting point.
 I kept seriality as a separate proof obligation rather than building it into
 the model. Partial models and deadlocks therefore remain representable without
 silently adding self-loops, while checking an infinite-trace property requires
-proof that every state has a successor. Seriality guarantees continuation; it
-does not add fairness or force an enabled transition to be selected.
+proof that every state has a successor. Seriality only guarantees continuation and
+it does not impose fairness or force an enabled transition to be selected.
 
-CTL* and frontend automation exceeded this project's scope. I delivered the
+CTL* and frontend automation exceeded this project's scope. I delivered the % Maybe able to add frontend automation ?
 verified LTL checker and lasso extraction; both extensions and CSLib
 contribution remain future work.
