@@ -10,7 +10,7 @@ Correctness in KILT is a collection of connected claims.  A compiler must
 preserve the meaning of a formula; a product must represent compatible system
 and automaton runs; a finite search must decide the existence of an accepting
 infinite run.  A returned counterexample needs a further guarantee about its
-own execution.  I distinguish these contracts in \cref{fig:correctness-hub}.
+own execution.  \Cref{fig:correctness-hub} distinguishes these contracts.
 The displays below are informal mathematical readings of the named Lean
 declarations, rather than new specifications.
 
@@ -80,6 +80,15 @@ Kripke structure or graph search is involved.
 \clearpage
 \subsection{Product and Finite-Search Correctness}
 
+% PROV[user]: Requested a clearer distinction between infinite paths, finite
+% state spaces, finite evidence of failure and lasso witnesses.
+% PROV[code]: KILT/Kripke/Path.lean, Path, fromState and exists_initial;
+% KILT/Kripke/Basic.lean, Serial.
+A path has infinitely many positions: $p:\mathbb{N}\to S$.  Finiteness means
+that the set $S$ of possible states is finite, not that execution stops after
+finitely many steps.  Seriality lets execution continue from every system
+state.  A finite route ending at a deadlock is not an infinite path.
+
 % PROV[code]: KILT/Automata/Product.lean:L21-L72;
 % KILT/Automata/Kripke.lean, toNA and run_iff_path.
 The monitor alone accepts words whether or not the system can produce them.
@@ -94,32 +103,37 @@ position, including position zero.  With $P=M\otimes A$ and $w_p(i)=L(p(i))$,
   \quad\Longleftrightarrow\quad
   \exists p\in\operatorname{InitialPaths}(M),\ A\text{ accepts }w_p.
 \]
-Thus an accepting monitor run is relevant precisely when it accompanies a
-feasible system execution.
-
 % PROV[code]: KILT/Graph/Acceptance.lean:L24-L35,L83-L130;
-% KILT/Graph/Buchi.lean:L20-L90;
-% KILT/Graph/Correspondence.lean:L49-L69,L100-L120;
-% KILT/Graph/LassoExtraction.lean:L28-L44,L83-L130.
-Finite-search correctness supplies the other half of this result.  For a
-finite graph with starts $I$, edges $\to$ and acceptance $F$,
+% KILT/Automata/Product.lean:L54-L72; KILT/LTL/Compile.lean:L80-L83;
+% KILT/Automata/ProductLasso.lean, productLassoPath_accepts.
+The finite product makes infinite violations detectable by a finite search.
+For a graph with starts $I$, edges $\to$ and acceptance $F$,
 \sourcefile{Acceptance.lean} proves
 \[
   \operatorname{HasAcceptingRun}(I,\to,F)
   \quad\Longleftrightarrow\quad
   \exists q\in F,\ I\leadsto q\ \land\ q\to^{+}q.
 \]
-An infinite accepting run revisits some accepting vertex arbitrarily late,
-giving a positive-length return path.  Conversely, an initial route followed
-by repetitions of such a return path gives an infinite accepting execution.
-The positive length excludes an accepting deadlock.  This proof uses CSLib's
-finite recurrence and infinite-execution constructions.
-In \sourcefile{Buchi.lean}, \lean{hasAcceptingCycle_eq_spec} equates the
-executable prepared-graph search with its bounded reachability specification.
-The correspondence lemmas preserve starts, edges and reachability under dense
-vertex decoding; \sourcefile{LassoExtraction.lean} relates parent-based
-reconstruction to the route specification.  These are implementation
-correctness results beneath the language theorem.
+If an infinite accepting run exists, finitely many product vertices must
+account for infinitely many accepting visits.  Some accepting vertex $q$
+therefore occurs at two positions $i<j$.  The route to its first occurrence
+gives a prefix; the segment from $i$ to $j$ gives a nonempty return to $q$.
+Repeating that segment forever gives an accepting lasso.  Conversely, such a
+lasso is an infinite accepting run because each repetition visits $q$.
+CSLib's finite recurrence and execution lemmas support this argument.
+
+% PROV[user]: Requested care over why arbitrary infinite counterexamples yield lassos.
+% PROV[code]: KILT/Graph/Acceptance.lean, hasAcceptingCycle_iff_hasAcceptingRun;
+% KILT/Automata/Product.lean, product_run_iff; KILT/LTL/Compile.lean,
+% violationAutomaton_accepts.
+Thus, if any violating execution exists, a lasso-shaped violating execution
+also exists.  The original execution need not itself settle into a fixed
+loop: the proof constructs a repeatable witness.  The repeated vertex is a
+system--monitor pair, preserving the monitor's progress as well as the system
+state.  Repetition of a system state alone does not establish violation.
+Seriality prevents system deadlocks; the lasso argument follows from finite
+product states and recurring acceptance.  The positive-length return excludes
+an accepting dead end, even when the underlying system is serial.
 
 \subsection{End-to-End Checker Correctness}
 
@@ -147,17 +161,30 @@ independent of the chosen traversal order.
 % PROV[code]: KILT/Kripke/Check.lean:L14-L17,L34-L46;
 % KILT/Kripke/Finite.lean, structure FiniteKripke;
 % KILT/Kripke/Basic.lean, Serial; KILT/Kripke/Semantics.lean:L17-L24.
-These statements quantify over arbitrary finite state types with decidable
-equality and formulas over atoms with decidable equality.  The model supplies
-nonempty initial states, and the public checker takes the explicit hypothesis
-$\forall s,\exists t,\ s\to t$ (seriality).  Satisfaction ranges over all
-initial infinite paths without a fairness restriction: being able to grant a
-request does not force an execution to do so.  The specification is KILT's
-declared trace semantics; the equivalence does not certify that a user's model
-or formula captures their intended external system.
+The public contract assumes finitely many states, decidable equality on states
+and atoms, nonempty initials and seriality
+($\forall s,\exists t,\ s\to t$).  All initial infinite paths are considered,
+without fairness: an available grant need not be taken.  Correctness is
+relative to the declared trace semantics; whether a model or formula captures
+the intended external system remains a modelling question.
 
 \clearpage
 \subsection{Counterexample Guarantees}
+
+% PROV[user]: Requested an explanation of violations settled after finitely many steps.
+% PROV[code]: KILT/LTL/Basic.lean, sat_globally and sat_eventually;
+% Examples/Models/TwoThreadLock.lean:L116-L140;
+% Examples/Models/RequestGrant.lean:L141-L161.
+An infinite counterexample can already be decisive after a few steps.
+For safety, reaching $\mathit{bad}$ once refutes
+$\mathbf{G}\neg\mathit{bad}$ regardless of the remaining execution.
+\sourcefile{TwoThreadLock.lean} demonstrates this with a collision at position
+six.  For liveness, a finite wait does not refute
+$\mathbf{F}\,\mathit{grant}$: the grant may still occur later.
+The permanent-waiting path in \sourcefile{RequestGrant.lean} refutes it by
+never granting.  A lasso records an infinite continuation in both cases.
+The safety failure has a finite witness within its replay, whereas the
+waiting loop certifies that granting never occurs.
 
 % PROV[code]: KILT/Graph/Lasso.lean:L15-L38,L65-L70,L94-L128;
 % KILT/Automata/ProductLasso.lean:L60-L109;
@@ -177,13 +204,10 @@ its informal contract is
   p_\ell\in\operatorname{InitialPaths}(M)
        \ \land\ \neg(w_{p_\ell},0\models\varphi).
 \]
-Here $o$ is the supplied system-state enumeration.  The product lasso retains
-the monitor component needed for acceptance; projecting with $\pi_1$ gives the
-readable system execution.  In \sourcefile{ProductLasso.lean},
-\lean{productLassoPath_states} shows that projection preserves the exact time
-sequence.  An accepting loop entry recurs infinitely often, so the replay is
-accepted by the violation monitor and therefore violates the formula from
-position zero.
+Here $o$ is the system-state enumeration.  Projecting with $\pi_1$ preserves
+the exact time sequence, as \lean{productLassoPath_states} in
+\sourcefile{ProductLasso.lean} establishes.  The accepting loop entry recurs
+forever, so the projected execution violates the formula from position zero.
 
 % PROV[code]: KILT/Kripke/Counterexample.lean:L53-L65;
 % KILT/Kripke/PreparedCheck.lean:L95-L120.
@@ -199,25 +223,29 @@ Extraction is also complete relative to the Boolean verdict.
        =\operatorname{none}
     &\ \Longleftrightarrow\ M\models\varphi.
 \end{align*}
-Absence is therefore a satisfaction result, rather than a search timeout or a
-failure to discover a witness.  The prepared API has corresponding theorems
-about its own returned lasso.  Traversal order may select a different witness;
-the semantic guarantee remains the same.
+Absence therefore establishes satisfaction.  The prepared API has the same
+guarantees for its returned lasso; traversal order can change the chosen
+witness but preserves its semantic guarantee.
 
 \subsection{Proof Techniques and Trust Boundary}
 
 % PROV[code]: KILT/LTL/NormalForm.lean:L119-L130;
 % KILT/LTL/TableauCorrect.lean:L48-L240;
 % KILT/Automata/GeneralizedBuchiCorrect.lean:L65-L135;
-% KILT/Graph/Acceptance.lean:L83-L130; KILT/Graph/Buchi.lean:L20-L90.
+% KILT/Graph/Acceptance.lean:L83-L130; KILT/Graph/Buchi.lean:L20-L90;
+% KILT/Graph/Correspondence.lean, initial_decode, step_decode and reachable_iff;
+% KILT/Graph/LassoExtraction.lean, acceptingLasso?_eq_spec.
 The proof structure follows these boundaries.  Structural induction handles
 normalisation and subformula soundness; temporal arguments recover until
 witnesses and propagate release obligations.  Completeness supplies exact
 semantic assignments.  Lifting and projection connect the round-robin
 representations, while finite recurrence turns infinite acceptance into a
-cycle criterion.  Refinement equalities connect the array and parent-storage
-implementations to simpler specifications.  The final checker proof composes
-these results rather than repeating their internal arguments.
+cycle criterion.  For executable refinement,
+\lean{hasAcceptingCycle_eq_spec} in \sourcefile{Buchi.lean} connects array
+search to the bounded reachability specification.  Dense decoding preserves
+starts, edges and reachability, while \sourcefile{LassoExtraction.lean}
+relates parent reconstruction to its route specification.  The final checker
+proof composes these contracts.
 
 % PROV[code]: Examples/Regression/BuchiTrust.lean:L15-L37 and audit declaration list;
 % KILT/Frontend.lean:L14-L46; KILT/LTL/TableauCorrect.lean:L151-L175.
