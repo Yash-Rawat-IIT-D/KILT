@@ -6,8 +6,11 @@ definitions, algorithms, proofs, and worked examples.
 - Use the toolchain in `lean-toolchain` and run `lake build` before committing.
 - Put reusable definitions and theorems in the `KILT` namespace, in focused
   modules under `KILT/`. Export public modules through `KILT.lean`.
-- Put examples and regression cases under `Examples/` and import them from
-  `Examples.lean` so the default build checks them.
+- Put user sessions in `Examples/Demos/`, system case studies in `Examples/Models/`,
+  conceptual worked examples in `Examples/Theory/`, and automated checks in
+  `Examples/Regression/`. Import each module from its group's umbrella;
+  `Examples.lean` imports all groups so the default build checks them. See
+  `Examples/README.md` for reading order, import conventions and focused builds.
 - Document theorem assumptions, the supported fragment, and algorithm trust
   boundaries. Mark unfinished proofs clearly; a theorem using `sorry` is not a
   completed correctness result.

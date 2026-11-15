@@ -1,17 +1,17 @@
-import Examples.Buchi
-import Examples.TrafficLight
-import Examples.Normalization
-import Examples.GeneralizedBuchi
-import Examples.Tableau
-import Examples.TwoThreadLock
-import Examples.Translation
-import Examples.Checker
-import Examples.Counterexample
-import Examples.Efficiency
-import Examples.GraphStorage
-import Examples.PreparedChecking
-import Examples.Walkthrough
-import Examples.FrontendRegression
+import Examples.Regression.Buchi
+import Examples.Models.TrafficLight
+import Examples.Theory.Normalization
+import Examples.Theory.GeneralizedBuchi
+import Examples.Theory.Tableau
+import Examples.Models.TwoThreadLock
+import Examples.Theory.Translation
+import Examples.Regression.Checker
+import Examples.Regression.Counterexample
+import Examples.Regression.Efficiency
+import Examples.Regression.GraphStorage
+import Examples.Regression.PreparedChecking
+import Examples.Demos.Walkthrough
+import Examples.Regression.FrontendRegression
 import Lean.Util.CollectAxioms
 
 /-!

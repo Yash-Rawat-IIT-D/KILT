@@ -1,6 +1,6 @@
 import KILT.LTL.Subformulas
-import Examples.TrafficLight
-import Examples.Words
+import Examples.Models.TrafficLight
+import Examples.Theory.Words
 
 /-!
 # Normalization and finite-subformula walkthrough

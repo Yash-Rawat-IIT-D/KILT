@@ -1,7 +1,7 @@
 import KILT.Automata.Product
 import KILT.Automata.Monitors
-import Examples.FiniteKripke
-import Examples.BuchiGraph
+import Examples.Regression.FiniteKripke
+import Examples.Regression.BuchiGraph
 
 /-! # Computed Büchi checks and temporal regression cases -/
 namespace Examples.Buchi

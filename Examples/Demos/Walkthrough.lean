@@ -15,7 +15,7 @@ There are three different outputs to which demonstrates what KILT does:
 * `counterexample?` returns optional finite data describing an infinite trace.
 
 From the repository root, after building the library, rerun the displays with:
-`LEAN_NUM_THREADS=1 lake env lean Examples/Walkthrough.lean`.
+`LEAN_NUM_THREADS=1 lake env lean Examples/Demos/Walkthrough.lean`.
 The normal examples build also imports and checks this file.
 -/
 

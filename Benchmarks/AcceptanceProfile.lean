@@ -1,7 +1,7 @@
 import KILT.Kripke.OrderedCheck
-import Examples.Buchi
-import Examples.TrafficLight
-import Examples.Counterexample
+import Examples.Regression.Buchi
+import Examples.Models.TrafficLight
+import Examples.Regression.Counterexample
 
 /-!
 Counterbalanced interpreted profiling of the pre-P2 and current lasso engines.

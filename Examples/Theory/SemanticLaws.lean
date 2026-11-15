@@ -1,6 +1,6 @@
 import KILT.LTL.Basic
-import Examples.Syntax
-import Examples.Words
+import Examples.Theory.Syntax
+import Examples.Theory.Words
 
 /-!
 # Semantic-law regression examples

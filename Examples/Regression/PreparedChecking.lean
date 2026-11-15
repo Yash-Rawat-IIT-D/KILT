@@ -1,4 +1,4 @@
-import Examples.Counterexample
+import Examples.Regression.Counterexample
 
 /-!
 # Compile once, prepare once, query twice

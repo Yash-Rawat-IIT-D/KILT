@@ -1,5 +1,5 @@
 import KILT.Graph.Internal.ParentSearch
-import Examples.LassoGraph
+import Examples.Regression.LassoGraph
 import KILT.Graph.Routes
 import KILT.Graph.Reachability
 

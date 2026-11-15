@@ -1,7 +1,7 @@
 import KILT.Kripke.Counterexample
-import Examples.Checker
-import Examples.TwoThreadLock
-import Examples.LassoGraph
+import Examples.Regression.Checker
+import Examples.Models.TwoThreadLock
+import Examples.Regression.LassoGraph
 
 /-!
 # Counterexamples: finite data, infinite violations

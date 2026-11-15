@@ -1,5 +1,5 @@
 import KILT
-import Examples.Syntax
+import Examples.Theory.Syntax
 
 /-!
 # Request/grant Kripke examples

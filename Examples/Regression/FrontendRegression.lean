@@ -1,4 +1,4 @@
-import Examples.Frontend
+import Examples.Demos.Frontend
 
 /-!
 # Frontend regression checks

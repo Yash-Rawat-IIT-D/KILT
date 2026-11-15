@@ -1,5 +1,5 @@
 import KILT.Automata.GeneralizedBuchiCorrect
-import Examples.TrafficLight
+import Examples.Models.TrafficLight
 
 /-!
 # Generalized acceptance worked examples

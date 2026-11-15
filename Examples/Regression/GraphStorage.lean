@@ -1,7 +1,7 @@
 import KILT.Kripke.OrderedCheck
 import KILT.Graph.Parents
 import KILT.Graph.Traversal
-import Examples.Checker
+import Examples.Regression.Checker
 
 /-!
 # Reachable graph storage and parent-route regressions

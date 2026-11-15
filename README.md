@@ -34,6 +34,16 @@ running checks, then explore proof-producing automation and CTL*.
 
 ## Getting started
 
+Examples are organised into [demos, models, theory and regression checks](Examples/README.md).
+Start with [the frontend demo](Examples/Demos/Frontend.lean) for a short session,
+or [the walkthrough](Examples/Demos/Walkthrough.lean) for the complete proof and
+counterexample flow. To build one group:
+
+```sh
+GUI_LAUNCH=false LEAN_NUM_THREADS=1 ./scripts/build.sh Examples.Demos
+# Other groups: Examples.Models, Examples.Theory, Examples.Regression
+```
+
 Install [elan](https://github.com/leanprover/elan), the Lean toolchain manager,
 and optionally the Lean 4 VS Code extension. From this repository:
 
@@ -120,7 +130,7 @@ to `.lake/logs/report-*.log`, with `latest-report.log` pointing to the latest ru
 `FiniteGeneralizedBuchi` supports several recurring acceptance obligations and
 an executable, language-preserving `toFiniteBuchi` conversion. Empty families,
 partial transitions and unrestricted symbol types are supported. See
-`Examples/GeneralizedBuchi.lean` for counter traces and traffic-colour recurrence
+`Examples/Theory/GeneralizedBuchi.lean` for counter traces and traffic-colour recurrence
 through the existing accepted-path backend. The formula compiler below reuses
 this conversion.
 
@@ -136,14 +146,14 @@ Handwritten automata cover eventuality and response violations. General LTL
 formula-input checking is available through `FiniteKripke.check`. Check the examples with:
 
 ```sh
-lake build Examples.Buchi Examples.BuchiTrust
+lake build Examples.Regression.Buchi Examples.Regression.BuchiTrust
 ```
 
 The default build also runs these examples and rejects unexpected axioms in
 their principal correctness results.
 
 For a complete worked example, read
-[TrafficLight.lean](Examples/TrafficLight.lean) from top to bottom: colour
+[TrafficLight.lean](Examples/Models/TrafficLight.lean) from top to bottom: colour
 valuations, finite controllers, infinite paths and words, safety and next-step
 proofs, reachability/routes, then verified eventuality and response checks.
 The red → green → yellow controller passes; a variant that can stay red
@@ -153,14 +163,14 @@ explains the failure. These examples run in the default build.
 The formula compiler foundation now includes negation normal form and a
 verified finite subformula closure. Normalization preserves truth at every
 word position, including negated formulas. Read
-[Normalization.lean](Examples/Normalization.lean) for the response-formula
+[Normalization.lean](Examples/Theory/Normalization.lean) for the response-formula
 walkthrough, until/release duality, and transfer of traffic-light proofs.
 The tableau now includes until acceptance sets and full language correctness.
 [Compile.lean](KILT/LTL/Compile.lean) exposes `Formula.toBuchi`: an executable
 finite automaton whose `.toCSLib` adapter accepts exactly the satisfying words,
 proved by `Formula.toBuchi_accepts`. Only decidable atom equality is required.
-Read [Tableau.lean](Examples/Tableau.lean) for local rules, then
-[Translation.lean](Examples/Translation.lean) for acceptance, compilation, and
+Read [Tableau.lean](Examples/Theory/Tableau.lean) for local rules, then
+[Translation.lean](Examples/Theory/Translation.lean) for acceptance, compilation, and
 comparisons with the handwritten monitors. This explicit construction enumerates
 exponentially many candidate states; examples intentionally stay small.
 `FiniteKripke.check` compiles violations and uses the verified product search.
@@ -170,7 +180,7 @@ For example:
 
 ```lean
 import KILT
-import Examples.TrafficLight
+import Examples.Models.TrafficLight
 
 open Examples.TrafficLight
 
@@ -201,7 +211,7 @@ satisfaction automatically. Supply the seriality proof; the goal determines
 the model and property:
 
 ```lean
-import Examples.Frontend
+import Examples.Demos.Frontend
 
 open Examples.Frontend
 
@@ -215,7 +225,7 @@ example : healthy.toKripke.Satisfies eventuallyGrant := by
   kilt_verify (serial false)
 ```
 
-[Frontend.lean](Examples/Frontend.lean) defines the model from scratch, displays
+[Frontend.lean](Examples/Demos/Frontend.lean) defines the model from scratch, displays
 the waiting variant's counterexample, and demonstrates the automation's limit:
 an unknown valuation requires a manual proof using its hypothesis, whereas a
 concrete specialisation can be checked automatically. The computation macros
@@ -224,9 +234,9 @@ direct proof. The tactic is a small
 composition of `check_correct` and `kilt_decide`, not general symbolic proof
 search. False claims, incompatible seriality proofs, and unsupported goals
 produce ordinary Lean errors; a computation failure is never a false verdict.
-[FrontendRegression.lean](Examples/FrontendRegression.lean) checks these cases.
+[FrontendRegression.lean](Examples/Regression/FrontendRegression.lean) checks these cases.
 
-[Checker.lean](Examples/Checker.lean) combines small kernel-computed proofs with
+[Checker.lean](Examples/Regression/Checker.lean) combines small kernel-computed proofs with
 build-failing execution tests for larger request/grant and traffic properties.
 Compiled outputs are not treated as proofs. Search caches successors within each
 invocation and stops at fixed points, target discovery and the first accepting
@@ -236,7 +246,7 @@ False verdicts establish counterexample existence. The separate
 
 ## Two-thread lock example
 
-[TwoThreadLock.lean](Examples/TwoThreadLock.lean) models two interleaved threads
+[TwoThreadLock.lean](Examples/Models/TwoThreadLock.lean) models two interleaved threads
 sharing a lock bit. A split check/claim permits both threads into the critical
 section; atomic test-and-acquire preserves mutual exclusion on every initial
 path. Without scheduler fairness, a requesting thread can still starve. The
@@ -262,7 +272,10 @@ The script uses an available LaTeX compiler and writes the PDF to
 KILT.lean               Public library entry point
 KILT/                   Library definitions and proofs
 Examples.lean           Example entry point
-Examples/               Worked examples and regression cases
+Examples/Demos/         End-to-end user sessions
+Examples/Models/        Request/grant, traffic-light and lock systems
+Examples/Theory/        Worked semantics and compiler examples
+Examples/Regression/    Automated checks and axiom audits
 Proposal/src/           Proposal LaTeX source and figures
 Proposal/build/         Submitted PDF and local build outputs
 report/src/             Working report sections, notes and LaTeX entry point
@@ -306,7 +319,7 @@ generated internally. For example:
 
 ```lean
 import KILT
-import Examples.TrafficLight
+import Examples.Models.TrafficLight
 open KILT Examples.TrafficLight
 
 -- The traffic example already provides phaseOrder : Graph.Enumeration Phase.
@@ -321,7 +334,7 @@ nonempty and omits its duplicate closing state. `counterexample?_sound` proves
 that the returned trace itself is initial and violates the formula;
 `counterexample?_eq_none_iff` relates absence to universal satisfaction.
 `#eval` displays computed data; it does not itself create a theorem.
-See [the worked examples](Examples/Counterexample.lean) for request/grant,
+See [the worked examples](Examples/Regression/Counterexample.lean) for request/grant,
 traffic and monitor-based two-thread lock witnesses.
 
 ## Shared prepared checking
@@ -332,7 +345,7 @@ accepting mask and dense witness order. Both queries consume that prepared value
 
 ```lean
 import KILT
-import Examples.Buchi
+import Examples.Regression.Buchi
 
 open KILT Examples
 
@@ -369,7 +382,7 @@ memoized, and separate `#eval` commands do not share a runtime cache. Boolean
 queries retain their visited-array search; witness queries use parent storage
 and perform no Boolean precheck. Existing `M.check`, `M.checkWithOrder`, and
 `M.counterexample?` signatures remain available as one-shot wrappers. See
-[prepared checking examples](Examples/PreparedChecking.lean).
+[prepared checking examples](Examples/Regression/PreparedChecking.lean).
 
 ## Finite graph backend
 
@@ -387,7 +400,7 @@ API uses this backend. To supply an explicit model-state order:
 selection. Mathematical recurrences under `KILT/Graph/Specification` state the
 reachability and route-selection contracts; cached association-list and stored
 full-route implementations have been removed. See
-[graph regressions](Examples/GraphStorage.lean).
+[graph regressions](Examples/Regression/GraphStorage.lean).
 
 ## Measuring search performance
 

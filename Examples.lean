@@ -1,30 +1,12 @@
-import Examples.Efficiency
-import Examples.GraphStorage
-import Examples.PreparedChecking
-import Examples.Frontend
-import Examples.FrontendRegression
-import Examples.Basic
-import Examples.Integration
-import Examples.Syntax
-import Examples.Words
-import Examples.SemanticLaws
-import Examples.RequestGrant
-import Examples.FiniteKripke
-import Examples.BuchiGraph
-import Examples.Buchi
-import Examples.BuchiTrust
-import Examples.TrafficLight
-import Examples.Normalization
-import Examples.GeneralizedBuchi
-import Examples.Tableau
-import Examples.TwoThreadLock
-import Examples.Translation
-import Examples.Checker
-import Examples.LassoGraph
-import Examples.Counterexample
+import Examples.Demos
+import Examples.Models
+import Examples.Theory
+import Examples.Regression
 
 /-!
 # Checked KILT examples
 
-Examples are imported here so that the default Lake build checks them.
+All four groups are checked by the default Examples target, including execution
+regressions and the axiom audit. Each group is also a separate Lake target.
+See `Examples/README.md` for reading order and focused build commands.
 -/

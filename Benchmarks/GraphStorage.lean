@@ -1,9 +1,9 @@
 import KILT.Kripke.OrderedCheck
 import KILT.Graph.Parents
-import Examples.Buchi
-import Examples.TrafficLight
-import Examples.Counterexample
-import Examples.Tableau
+import Examples.Regression.Buchi
+import Examples.Models.TrafficLight
+import Examples.Regression.Counterexample
+import Examples.Theory.Tableau
 
 /-! Explicit evaluation of the canonical graph backend, outside default builds.
 Historical cached/indexed comparisons are reproducible from commit 2535acf;

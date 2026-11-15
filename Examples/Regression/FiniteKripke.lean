@@ -1,4 +1,4 @@
-import Examples.RequestGrant
+import Examples.Models.RequestGrant
 
 /-!
 # Finite Kripke and reachability examples

@@ -1,6 +1,6 @@
 import KILT
-import Examples.Buchi
-import Examples.TrafficLight
+import Examples.Regression.Buchi
+import Examples.Models.TrafficLight
 
 /-!
 # Formula-input checker: proofs and execution tests

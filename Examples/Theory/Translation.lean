@@ -1,5 +1,5 @@
 import KILT
-import Examples.Tableau
+import Examples.Theory.Tableau
 
 /-!
 # Tableau and compiled word languages
