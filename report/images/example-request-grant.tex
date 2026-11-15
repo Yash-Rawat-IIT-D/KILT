@@ -1,0 +1,74 @@
+% example-request-grant.tex  --  Section 5.1, request/grant example.
+% Paired-figure fragment (about 158 mm x 44 mm): no preamble, caption or figure
+% environment. Needs only TikZ and the kilt* styles/colours of report/src/preamble.tex.
+% Facts follow Examples/Demos/Walkthrough.lean (State, label, model, eventuallyGrant).
+%   (a) two states, two variants; only "may-wait" has waiting -> waiting
+%   (b) the displayed system lasso for F grant: prefix = [], loop = [waiting]
+\begin{tikzpicture}[x=1mm, y=1mm,
+  rgstate/.style={kiltstage, circle, draw=kiltnavy, fill=kiltpale, line width=0.8pt,
+    minimum size=14mm, inner sep=0pt, font=\footnotesize\sffamily, text=kiltnavy},
+  rgviol/.style={rgstate, draw=kiltorange, fill=kiltpeach, text=kiltorange,
+    line width=1.2pt, minimum size=13mm},
+  rgprop/.style={font=\footnotesize, text=kiltblue, inner sep=1pt},
+  rgtext/.style={font=\footnotesize, text=kiltnavy, inner sep=0pt},
+  rgtitle/.style={font=\footnotesize\bfseries, text=kiltnavy, anchor=west, inner sep=0pt},
+  rgcex/.style={kiltarrow, draw=kiltorange, line width=1.3pt},
+]
+
+% =====================================================================
+% (a)  one model, two variants                         x = 0 .. 76 mm
+% =====================================================================
+\node[rgtitle] at (0,43) {(a) Two variants of one model};
+
+\node[rgstate] (w) at (22,21) {waiting};
+\node[rgstate] (g) at (56,21) {granted};
+
+\draw[kiltarrow] (3,21) -- (w.west);                                  % initial
+\draw[kiltarrow] (w) -- (g);                                          % waiting -> granted
+\draw[kiltarrow] (g.125) to[out=125,in=55,looseness=4] (g.55);      % granted -> granted
+\draw[kiltarrow, kiltdashed, kiltorange, line width=1.2pt]
+  (w.125) to[out=125,in=55,looseness=4] (w.55);                     % waiting -> waiting (may-wait only)
+\node[font=\footnotesize, text=kiltorange, inner sep=0pt] at (22,37.2) {may-wait only};
+
+\node[rgprop] at (22,11.2) {$\{\mathit{request}\}$};
+\node[rgprop] at (56,11.2) {$\{\mathit{grant}\}$};
+
+% legend + verdicts for F grant
+\draw[kiltnavy, line width=0.8pt] (0.5,6.3) -- (7.5,6.3);
+\node[rgtext, anchor=west] at (9.5,6.3) {healthy: solid edges only};
+\node[rgtext, anchor=east] at (76,6.3) {$\mathbf{F}\,\mathit{grant}$: true};
+\draw[kiltdashed, kiltorange, line width=1.2pt] (0.5,2.3) -- (7.5,2.3);
+\node[rgtext, anchor=west] at (9.5,2.3) {may-wait: adds dashed loop};
+\node[rgtext, anchor=east, text=kiltorange] at (76,2.3) {$\mathbf{F}\,\mathit{grant}$: false};
+
+% =====================================================================
+% (b)  displayed lasso for F grant (may-wait variant)   x = 82 .. 158 mm
+% =====================================================================
+\begin{scope}[shift={(82,0)}]
+\node[rgtitle] at (0,43) {(b) Displayed lasso for $\mathbf{F}\,\mathit{grant}$ (may-wait)};
+
+\node[rgviol] (e1) at (10.5,27) {waiting};
+\node[rgviol] (e2) at (29.5,27) {waiting};
+\node[rgviol] (e3) at (48.5,27) {waiting};
+\draw[rgcex] (e1) -- (e2);
+\draw[rgcex] (e2) -- (e3);
+% the execution never terminates
+\draw[rgcex, dotted, line cap=round, dash pattern=on 0pt off 2.5pt] (e3.east) -- (74,27);
+
+\node[rgprop] at (10.5,35.2) {$\{\mathit{request}\}$};
+\node[rgprop] at (29.5,35.2) {$\{\mathit{request}\}$};
+\node[rgprop] at (48.5,35.2) {$\{\mathit{request}\}$};
+
+% brace under the repeated states: "repeat forever"
+\draw[kiltorange, line width=0.8pt]
+  (4,19) to[out=-90,in=180] (5.5,17.5) -- (38,17.5) to[out=0,in=90] (39.5,16)
+         to[out=90,in=180] (41,17.5)   -- (73.5,17.5) to[out=0,in=-90] (75,19);
+\node[font=\footnotesize, text=kiltorange, inner sep=0pt] at (39.5,12.6) {repeat forever};
+
+\node[rgtext, anchor=west] at (0,7.4) {$\pi=\textsf{waiting}^{\omega}$};
+\node[rgtext, anchor=east, text=kiltorange] at (76,7.4) {$\mathit{grant}$ never holds};
+\node[rgtext, anchor=west, text=kiltblue] at (0,2.4)
+  {$\mathit{grant}$ remains possible: \textsf{waiting}$\,\to\,$\textsf{granted}, unused};
+\end{scope}
+
+\end{tikzpicture}

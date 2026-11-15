@@ -1,0 +1,86 @@
+% example-two-thread-lock.tex  --  Section 5.1, two-thread lock example.
+% Follows Examples/Models/TwoThreadLock.lean (raceSchedule, race_collision,
+% unfairSchedule, unfair_waits). These are explicit semantic constructions,
+% not output of the formula compiler or lasso extractor.
+%   state = (pc0, pc1, L);  I idle, T trying, C checked, K critical.
+%   (a) finite race: both threads test while L = 0, then both claim.
+%   (b) atomic test + claim: mutual exclusion holds, thread 0 starves.
+
+\begin{tikzpicture}[x=1mm, y=1mm,
+  ltbox/.style={kiltstage, draw=kiltnavy, fill=kiltpale, line width=0.8pt,
+    minimum width=17mm, minimum height=4.2mm, inner sep=0pt,
+    font=\footnotesize\sffamily, text=kiltnavy},
+  lttest/.style={ltbox, draw=kiltblue, line width=1.6pt},
+  ltbad/.style={ltbox, draw=kiltorange, fill=kiltpeach, text=kiltorange, line width=1.5pt},
+  ltloop/.style={ltbox, minimum width=14mm, minimum height=5mm,
+    draw=kiltorange, fill=kiltpeach, text=kiltorange, line width=1.2pt},
+  ltpos/.style={font=\footnotesize, text=kiltblue, inner sep=0pt},
+  lttxt/.style={font=\footnotesize, text=kiltnavy, inner sep=0pt, anchor=west},
+  ltnote/.style={font=\footnotesize, inner sep=0pt, anchor=west},
+  lttitle/.style={font=\footnotesize\bfseries, text=kiltnavy, anchor=west, inner sep=0pt},
+  ltcex/.style={kiltarrow, draw=kiltorange, line width=1.3pt},
+]
+
+% =====================================================================
+% (a)  both test before either claims                  x = 0 .. 76 mm
+% =====================================================================
+\node[lttitle] at (0,56) {(a) Test, then claim: no retest};
+\node[ltnote, text=kiltorange] at (0,52.4) {mutual exclusion fails at position 6};
+
+% position | state | transition into this position
+\node[ltpos] at (2.6,47)   {0}; \node[ltbox]  (p0) at (14,47)   {(I,\,I,\,0)};
+\node[lttxt] at (26,47)   {initial};
+\node[ltpos] at (2.6,40.8) {1}; \node[ltbox]  (p1) at (14,40.8) {(T,\,I,\,0)};
+\node[lttxt] at (26,40.8) {thread 0 requests};
+\node[ltpos] at (2.6,34.6) {2}; \node[lttest] (p2) at (14,34.6) {(C,\,I,\,0)};
+\node[lttxt, text=kiltblue, font=\footnotesize\bfseries] at (26,34.6) {thread 0 tests the free lock};
+\node[ltpos] at (2.6,28.4) {3}; \node[ltbox]  (p3) at (14,28.4) {(C,\,T,\,0)};
+\node[lttxt] at (26,28.4) {thread 1 requests};
+\node[ltpos] at (2.6,22.2) {4}; \node[lttest] (p4) at (14,22.2) {(C,\,C,\,0)};
+\node[lttxt, text=kiltblue, font=\footnotesize\bfseries] at (26,22.2) {thread 1 tests the free lock};
+\node[ltpos] at (2.6,16)   {5}; \node[ltbox]  (p5) at (14,16)   {(K,\,C,\,1)};
+\node[lttxt] at (26,16)   {thread 0 claims};
+\node[ltpos, text=kiltorange] at (2.6,9.8) {6}; \node[ltbad] (p6) at (14,9.8) {(K,\,K,\,1)};
+\node[lttxt, text=kiltorange, font=\footnotesize\bfseries] at (26,9.8) {thread 1 claims (no retest)};
+
+\foreach \a/\b in {p0/p1, p1/p2, p2/p3, p3/p4, p4/p5, p5/p6}
+  \draw[kiltarrow] (\a.south) -- (\b.north);
+% the execution goes on after this finite safety witness
+\draw[kiltarrow, kiltdashed, kiltblue] (p6.south) -- (14,4.2);
+
+% =====================================================================
+% (b)  atomic acquisition still permits starvation      x = 82 .. 158 mm
+% =====================================================================
+\begin{scope}[shift={(82,0)}]
+\node[lttitle] at (0,56) {(b) Atomic lock, unfair schedule};
+\node[ltnote, text=kiltblue] at (0,52.4) {test + claim in one step};
+
+\node[ltbox, minimum width=14mm, minimum height=5mm] (i0) at (13,40) {(I,\,I,\,0)};
+\node[ltloop] (a) at (38,40)   {(T,\,I,\,0)};
+\node[ltloop] (b) at (65,40)   {(T,\,T,\,0)};
+\node[ltloop] (c) at (51.5,18.5) {(T,\,K,\,1)};
+
+\draw[kiltarrow] (0.5,40) -- (i0.west);                         % initial
+\draw[kiltarrow] (i0) -- (a);                                   % thread 0, once
+\draw[ltcex] (a) -- (b);                                        % thread 1 requests
+\draw[ltcex] (b) -- (c);                                        % thread 1 test + claim
+\draw[ltcex] (c) -- (a);                                        % thread 1 releases
+
+\node[ltnote, anchor=south, text=kiltblue] at (25.5,44) {thread 0};
+\node[ltnote, anchor=north, text=kiltnavy] at (25.5,37.8) {prefix};
+\node[ltnote, anchor=south, text=kiltorange] at (51.5,41.8) {request};
+\node[ltnote, anchor=west, text=kiltorange] at (60.5,29) {acquire};
+\node[ltnote, anchor=east, text=kiltorange] at (40.5,29) {release};
+\node[ltnote, anchor=center, text=kiltorange, align=center] at (51.5,31) {repeats\\forever};
+
+\node[ltnote, text=kiltblue]   at (0,12.2) {mutual exclusion holds};
+\node[ltnote, text=kiltorange] at (0,8.3)  {thread 0 can starve: no fairness};
+\node[ltnote, text=kiltnavy]   at (0,4.4)  {all loop edges schedule thread 1};
+\end{scope}
+
+% shared legend
+\node[font=\footnotesize, text=kiltnavy, inner sep=0pt] at (79,0.2)
+  {state $=(\mathit{pc}_0,\mathit{pc}_1,L)$, $L$ the lock bit;\quad
+   I idle, T trying, C checked, K critical};
+
+\end{tikzpicture}

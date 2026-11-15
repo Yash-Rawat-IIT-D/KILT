@@ -1,0 +1,73 @@
+% example-traffic-light.tex  --  Section 5.1, traffic-light example.
+% Follows Examples/Models/TrafficLight.lean (label, controller, stuckController,
+% safety, eventuallyGreen, redResponds, stuckPath). Nodes are controller states;
+% {red}, {green}, {yellow} are proposition labels and not automaton states.
+%   (a) normal cycle   
+%   (b) the same cycle plus the single extra edge stop -> stop
+
+\begin{tikzpicture}[x=1mm, y=1mm,
+  tlstate/.style={kiltstage, circle, draw=kiltnavy, fill=kiltpale, line width=0.8pt,
+    minimum size=13mm, inner sep=0pt, font=\footnotesize\sffamily, text=kiltnavy},
+  tlprop/.style={font=\footnotesize, text=kiltblue, inner sep=1pt, anchor=west},
+  tlblock/.style={font=\footnotesize, text=kiltnavy, inner sep=0pt, align=left,
+    anchor=north west, text width=39mm},
+  tltitle/.style={font=\footnotesize\bfseries, text=kiltnavy, anchor=west, inner sep=0pt},
+]
+
+% =====================================================================
+% (a)  normal labelled cycle                           x = 0 .. 76 mm
+% =====================================================================
+\node[tltitle] at (0,41) {(a) Normal labelled cycle};
+
+\node[tlstate] (s) at (12.5,18)  {stop};
+\node[tlstate] (g) at (30.5,30.5) {go};
+\node[tlstate] (c) at (30.5,6.5)  {caution};
+
+\draw[kiltarrow] (0.3,18) -- (s.west);          % initial
+\draw[kiltarrow] (s) -- (g);
+\draw[kiltarrow] (g) -- (c);
+\draw[kiltarrow] (c) -- (s);
+
+\node[tlprop, anchor=north] at (12.5,10.5) {$\{\mathit{red}\}$};
+\node[tlprop] at (37.5,30.5) {$\{\mathit{green}\}$};
+\node[tlprop] at (37.5,6.5)  {$\{\mathit{yellow}\}$};
+
+\node[tlblock] at (38,26.5)
+  {exactly one colour\\
+   eventual green holds\\
+   red response holds};
+
+% =====================================================================
+% (b)  the added self-loop                              x = 82 .. 158 mm
+% =====================================================================
+\begin{scope}[shift={(82,0)}]
+\node[tltitle] at (0,41) {(b) One added self-loop};
+
+\node[tlstate, draw=kiltorange, fill=kiltpeach, text=kiltorange] (s) at (12.5,18) {stop};
+\node[tlstate] (g) at (30.5,30.5) {go};
+\node[tlstate] (c) at (30.5,6.5)  {caution};
+
+\draw[kiltarrow] (0.3,18) -- (s.west);          % initial
+\draw[kiltarrow, kiltblue!40] (s) -- (g);        % unchosen edge: faded, still visible
+\draw[kiltarrow] (g) -- (c);
+\draw[kiltarrow] (c) -- (s);
+\draw[kiltarrow, kiltdashed, kiltorange, line width=1.3pt]
+  (s.150) to[out=150,in=85,looseness=4.5] (s.85);                      % stop -> stop
+
+\node[font=\footnotesize, text=kiltorange, inner sep=0pt] at (7,36) {added loop};
+
+\node[tlprop, anchor=north] at (12.5,10.5) {$\{\mathit{red}\}$};
+\node[tlprop] at (37.5,30.5) {$\{\mathit{green}\}$};
+\node[tlprop] at (37.5,6.5)  {$\{\mathit{yellow}\}$};
+
+\node[tlblock] at (38,26.5)
+  {$\pi=\textsf{stop}^{\omega}$\\
+   one-colour safety holds\\
+   \textcolor{kiltorange}{eventual green fails}\\
+   \textcolor{kiltorange}{red response fails}};
+\end{scope}
+
+\node[font=\footnotesize, text=kiltblue, inner sep=0pt] at (79,-4)
+  {Both variants are serial; no fairness is assumed.};
+
+\end{tikzpicture}

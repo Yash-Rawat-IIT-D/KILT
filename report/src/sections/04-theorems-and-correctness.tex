@@ -1,11 +1,6 @@
-% STATE: DRAFT (awaiting human review).
 \clearpage
 \section{Main Theorems and Correctness}\label{sec:correctness}
 
-% PROV[user]: Correctness is an umbrella term whose subsystems have different contracts;
-% requested a hub-and-spoke diagram, mathematical notation and source references.
-% PROV[code]: KILT/LTL/Compile.lean:L62-L83; KILT/Automata/Product.lean:L32-L100;
-% KILT/Kripke/Check.lean:L34-L46; KILT/Kripke/Counterexample.lean:L36-L65.
 Correctness in KILT is a collection of connected claims.  A compiler must
 preserve the meaning of a formula; a product must represent compatible system
 and automaton runs; a finite search must decide the existence of an accepting
@@ -14,7 +9,6 @@ own execution.  \Cref{fig:correctness-hub} distinguishes these contracts.
 The displays below are informal mathematical readings of the named Lean
 declarations, rather than new specifications.
 
-% PROV[code]: The four boundaries named in the surrounding paragraph and subsections.
 \begin{figure}[ht]
   \centering
   \begin{tikzpicture}
@@ -39,8 +33,6 @@ declarations, rather than new specifications.
 
 \subsection{Semantic and Automata Correspondences}
 
-% PROV[code]: KILT/LTL/NormalForm.lean:L119-L133;
-% KILT/LTL/TableauCorrect.lean:L48-L84,L90-L145,L151-L240.
 First, correctness of translation means recognising exactly the declared trace
 semantics, for every infinite valuation word.  Write $w,i\models\varphi$ for
 \lean{Sat} at word $w$ and index $i$, and let $T_f$ be the generalised tableau of an NNF formula
@@ -60,8 +52,6 @@ shows that these states form an accepting run.  This semantic state is a
 noncomputable proof witness; the executable compiler enumerates finite
 assignments instead.
 
-% PROV[code]: KILT/Automata/GeneralizedBuchiCorrect.lean:L65-L135;
-% KILT/LTL/Compile.lean:L62-L83.
 \sourcefile{GeneralizedBuchiCorrect.lean} supplies the conversion theorem
 \lean{toFiniteBuchi_accepts}: adding the round-robin counter neither adds
 nor removes accepted words.  The proof lifts an original
@@ -80,17 +70,11 @@ Kripke structure or graph search is involved.
 \clearpage
 \subsection{Product and Finite-Search Correctness}
 
-% PROV[user]: Requested a clearer distinction between infinite paths, finite
-% state spaces, finite evidence of failure and lasso witnesses.
-% PROV[code]: KILT/Kripke/Path.lean, Path, fromState and exists_initial;
-% KILT/Kripke/Basic.lean, Serial.
 A path has infinitely many positions: $p:\mathbb{N}\to S$.  Finiteness means
 that the set $S$ of possible states is finite, not that execution stops after
 finitely many steps.  Seriality lets execution continue from every system
 state.  A finite route ending at a deadlock is not an infinite path.
 
-% PROV[code]: KILT/Automata/Product.lean:L21-L72;
-% KILT/Automata/Kripke.lean, toNA and run_iff_path.
 The monitor alone accepts words whether or not the system can produce them.
 Product correctness closes this gap.  In \sourcefile{Product.lean},
 \lean{product_run_iff} identifies a product execution with an initial system
@@ -103,9 +87,6 @@ position, including position zero.  With $P=M\otimes A$ and $w_p(i)=L(p(i))$,
   \quad\Longleftrightarrow\quad
   \exists p\in\operatorname{InitialPaths}(M),\ A\text{ accepts }w_p.
 \]
-% PROV[code]: KILT/Graph/Acceptance.lean:L24-L35,L83-L130;
-% KILT/Automata/Product.lean:L54-L72; KILT/LTL/Compile.lean:L80-L83;
-% KILT/Automata/ProductLasso.lean, productLassoPath_accepts.
 The finite product makes infinite violations detectable by a finite search.
 For a graph with starts $I$, edges $\to$ and acceptance $F$,
 \sourcefile{Acceptance.lean} proves
@@ -122,10 +103,6 @@ Repeating that segment forever gives an accepting lasso.  Conversely, such a
 lasso is an infinite accepting run because each repetition visits $q$.
 CSLib's finite recurrence and execution lemmas support this argument.
 
-% PROV[user]: Requested care over why arbitrary infinite counterexamples yield lassos.
-% PROV[code]: KILT/Graph/Acceptance.lean, hasAcceptingCycle_iff_hasAcceptingRun;
-% KILT/Automata/Product.lean, product_run_iff; KILT/LTL/Compile.lean,
-% violationAutomaton_accepts.
 Thus, if any violating execution exists, a lasso-shaped violating execution
 also exists.  The original execution need not itself settle into a fixed
 loop: the proof constructs a repeatable witness.  The repeated vertex is a
@@ -137,10 +114,6 @@ an accepting dead end, even when the underlying system is serial.
 
 \subsection{End-to-End Checker Correctness}
 
-% PROV[code]: KILT/Kripke/Check.lean:L16-L46;
-% KILT/Automata/Product.lean:L78-L100; KILT/Kripke/Semantics.lean:L17-L24;
-% KILT/Kripke/PreparedCheck.lean, check_correct;
-% KILT/Graph/Enumeration.lean, runInvariant and runInvariant_eq.
 \lean{check_correct} in \sourcefile{KILT/Kripke/Check.lean} composes the
 preceding contracts.  Negating the existence of an accepted violation becomes
 universal satisfaction of the original formula:
@@ -158,9 +131,6 @@ existence of an initial infinite path whose word violates $\varphi$.
 for the reusable prepared API.  Order invariance makes the Boolean result
 independent of the chosen traversal order.
 
-% PROV[code]: KILT/Kripke/Check.lean:L14-L17,L34-L46;
-% KILT/Kripke/Finite.lean, structure FiniteKripke;
-% KILT/Kripke/Basic.lean, Serial; KILT/Kripke/Semantics.lean:L17-L24.
 The public contract assumes finitely many states, decidable equality on states
 and atoms, nonempty initials and seriality
 ($\forall s,\exists t,\ s\to t$).  All initial infinite paths are considered,
@@ -171,10 +141,6 @@ the intended external system remains a modelling question.
 \clearpage
 \subsection{Counterexample Guarantees}
 
-% PROV[user]: Requested an explanation of violations settled after finitely many steps.
-% PROV[code]: KILT/LTL/Basic.lean, sat_globally and sat_eventually;
-% Examples/Models/TwoThreadLock.lean:L116-L140;
-% Examples/Models/RequestGrant.lean:L141-L161.
 An infinite counterexample can already be decisive after a few steps.
 For safety, reaching $\mathit{bad}$ once refutes
 $\mathbf{G}\neg\mathit{bad}$ regardless of the remaining execution.
@@ -186,9 +152,6 @@ never granting.  A lasso records an infinite continuation in both cases.
 The safety failure has a finite witness within its replay, whereas the
 waiting loop certifies that granting never occurs.
 
-% PROV[code]: KILT/Graph/Lasso.lean:L15-L38,L65-L70,L94-L128;
-% KILT/Automata/ProductLasso.lean:L60-L109;
-% KILT/Kripke/Counterexample.lean:L36-L51.
 A false verdict proves that a violation exists; extraction must additionally
 justify the particular finite object it returns.  A lasso $\ell=u\,v^\omega$
 has a finite prefix $u$ and a nonempty loop $v$.  In
@@ -209,8 +172,6 @@ the exact time sequence, as \lean{productLassoPath_states} in
 \sourcefile{ProductLasso.lean} establishes.  The accepting loop entry recurs
 forever, so the projected execution violates the formula from position zero.
 
-% PROV[code]: KILT/Kripke/Counterexample.lean:L53-L65;
-% KILT/Kripke/PreparedCheck.lean:L95-L120.
 Extraction is also complete relative to the Boolean verdict.
 \lean{counterexample?_isSome_iff} and
 \lean{counterexample?_eq_none_iff}, in the same file, give
@@ -229,12 +190,6 @@ witness but preserves its semantic guarantee.
 
 \subsection{Proof Techniques and Trust Boundary}
 
-% PROV[code]: KILT/LTL/NormalForm.lean:L119-L130;
-% KILT/LTL/TableauCorrect.lean:L48-L240;
-% KILT/Automata/GeneralizedBuchiCorrect.lean:L65-L135;
-% KILT/Graph/Acceptance.lean:L83-L130; KILT/Graph/Buchi.lean:L20-L90;
-% KILT/Graph/Correspondence.lean, initial_decode, step_decode and reachable_iff;
-% KILT/Graph/LassoExtraction.lean, acceptingLasso?_eq_spec.
 The proof structure follows these boundaries.  Structural induction handles
 normalisation and subformula soundness; temporal arguments recover until
 witnesses and propagate release obligations.  Completeness supplies exact
@@ -247,15 +202,6 @@ starts, edges and reachability, while \sourcefile{LassoExtraction.lean}
 relates parent reconstruction to its route specification.  The final checker
 proof composes these contracts.
 
-% PROV[code]: Examples/Regression/BuchiTrust.lean:L15-L37 and audit declaration list;
-% KILT/Frontend.lean:L14-L46; KILT/LTL/TableauCorrect.lean:L151-L175.
-% PROV[build]: 2026-11-15, GUI_LAUNCH=false LEAN_NUM_THREADS=1
-% ./scripts/build.sh Examples.Regression.BuchiTrust --verbose, exit 0;
-% .lake/logs/build-20261115T090926Z-dzArjQ.log.
-% PROV[build]: 2026-11-15, lake env lean --stdin, #print axioms for 13 boundary
-% results (normalisation, tableau, conversion, violation language, product/run,
-% graph cycle/search, verdict and counterexample contracts), exit 0;
-% each reports exactly [propext, Classical.choice, Quot.sound].
 Lean checks the resulting proof terms against their declared specifications.
 For the main boundary theorems above, direct \texttt{\#print axioms} checks report
 exactly \lean{propext}, \lean{Classical.choice} and \lean{Quot.sound}.
