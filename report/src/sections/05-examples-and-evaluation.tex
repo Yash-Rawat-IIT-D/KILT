@@ -1,4 +1,4 @@
-% STATE: DRAFT (5.1 and 5.2 awaiting human review; measurements deferred).
+% STATE: DRAFT (Section 5 awaiting human review).
 \section{Examples and Evaluation}\label{sec:evaluation}
 
 \subsection{Worked Examples}
@@ -37,11 +37,11 @@ for $\mathbf{G}(\mathit{request}\rightarrow\mathbf{F}\,\mathit{grant})$.
 These response displays are execution checks; the named verdict and
 returned-path theorems above concern the eventual-grant formula.
 
-% PROV[user]: Supplied report/images/example-request-grant.tex for integration.
+% PROV[user]: Supplied report/assets/example-request-grant.tex for integration.
 % PROV[code]: Examples/Demos/Walkthrough.lean, model, label and display.
 \begin{figure}[!ht]
   \centering
-  \resizebox{\linewidth}{!}{\input{../images/example-request-grant}}
+  \resizebox{\linewidth}{!}{\input{../assets/example-request-grant}}
   \caption{Request/grant: one added self-loop permits an infinite violation.}
   \label{fig:example-request-grant}
 \end{figure}
@@ -70,11 +70,11 @@ The false supplied-monitor verdict is derived from this semantic
 counterexample and checker correctness; a separate \texttt{\#eval}
 executes the search.
 
-% PROV[user]: Supplied report/images/example-two-thread-lock.tex for integration.
+% PROV[user]: Supplied report/assets/example-two-thread-lock.tex for integration.
 % PROV[code]: Examples/Models/TwoThreadLock.lean, raceSchedule and unfairSchedule.
 \begin{figure}[!ht]
   \centering
-  \resizebox{\linewidth}{!}{\input{../images/example-two-thread-lock}}
+  \resizebox{\linewidth}{!}{\input{../assets/example-two-thread-lock}}
   \caption{The lock example separates a finite safety violation from an
     infinite starvation execution.}
   \label{fig:example-lock}
@@ -96,11 +96,11 @@ by kernel computation. Language theorems transfer them to the declared
 semantics; the permanent-red path is also constructed explicitly.
 These calls use \lean{checkAgainst}, rather than automatic formula compilation.
 
-% PROV[user]: Supplied report/images/example-traffic-light.tex for integration.
+% PROV[user]: Supplied report/assets/example-traffic-light.tex for integration.
 % PROV[code]: Examples/Models/TrafficLight.lean, controller, stuckController and stuckPath.
 \begin{figure}[!ht]
   \centering
-  \resizebox{\linewidth}{!}{\input{../images/example-traffic-light}}
+  \resizebox{\linewidth}{!}{\input{../assets/example-traffic-light}}
   \caption{A serial controller can remain safe while failing liveness.}
   \label{fig:example-traffic}
 \end{figure}
@@ -198,5 +198,99 @@ The report and illustrations remain under review. This validation covers
 Lean targets; HTML documentation generation and final report approval are
 separate deliverables.
 
-\subsection{Measurements}
-\needsinput{Include reproducible measurements only if collected; otherwise omit this subsection.}
+\clearpage
+\subsection{Experimental Results and Complexity}\label{sec:experimental-cost}
+
+% PROV[user]: Approved the archived experiment results and requested a rough
+% complexity analysis, keeping measured results distinct from estimates.
+% Requested plain wording focused on the implementation, with benchmark
+% limitations stated together rather than repeated throughout.
+% Requested describing a one-off test repeatable against older commit versions,
+% without a visible citation to the benchmark archive.
+% PROV[code]: .ai/archive/benchmarks-2026-10-27-p3-p5/RESULTS.md;
+% baseline/environment.json; p5/environment.json; p5/source/Benchmarks/GraphStorage.lean.
+The one-off test in \cref{tab:historical-performance} compared versions on
+27 October 2026. The optimised version uses an array-based
+discovery queue, marks accepting states over the reachable graph, and checks
+source literals before enumerating tableau successors. A common script ran
+each version three times as a native executable on an x86-64 Linux virtual
+machine, pinned to one virtual CPU with one Lean thread. Executable
+compilation time was excluded. The timed calls include LTL translation and
+product preparation. The comparison can be repeated by checking out older
+commit versions and running the same test script.
+
+% PROV[code]: baseline/metrics.json and p5/metrics.json in the experiment archive.
+% PROV[build]: 2026-11-16, extracted four native sample arrays per snapshot with jq;
+% recomputed each median by numerical sorting and taking the middle of three;
+% rounded to two decimal places. No new benchmark execution.
+\begin{table}[!ht]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabular}{@{}lrrrr@{}}
+    \toprule
+    & \multicolumn{2}{c}{Check (ms)}
+    & \multicolumn{2}{c}{Extract counterexample (ms)} \\
+    Workload & Baseline & Optimised & Baseline & Optimised \\
+    \midrule
+    Waiting-response & 21.54 & 10.19 & 21.84 & 10.29 \\
+    Traffic-response & 25.13 & 10.99 & 24.67 & 11.66 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Median execution times before and after optimisation, three runs per version.}
+  \label{tab:historical-performance}
+\end{table}
+
+% PROV[code]: Experiment RESULTS.md, Variability and follow-up;
+% paired-native/RESULTS.md; KILT/LTL/Tableau.lean:L159-L178.
+The main checks took about half as long after the changes. The successor
+function skips candidate enumeration when the label is incompatible, and
+the prepared graph stores each discovered state's successors for reuse. The versions returned
+the same verdicts and selected witnesses. A further comparison immediately
+before and after the literal-check change used eight pairs of native runs;
+both main checks were faster in every pair. The compatible-label test was
+$6.36\%$ slower by median paired change, while sparse-product preparation was
+$9.22\%$ slower. The cause of the latter increase was not isolated.
+
+% PROV[code]: Experiment RESULTS.md, methodology and Variability and follow-up;
+% paired-native/RESULTS.md, limitations of the short-duration comparisons.
+These measurements describe the tested models on this virtual machine.
+The baseline briefly overlapped separate proof checks, and the short-duration
+tests were sensitive to variation between runs.
+
+% PROV[code]: KILT/LTL/Compile.lean:L89-L98, card_automatonState_le;
+% KILT/LTL/Tableau.lean, State and successors; KILT/Automata/Product.lean:L21-L29.
+% PROV[build]: card_automatonState_le passed the standard-axiom audit in
+% .lake/logs/build-20261115T140749Z-0o5nGo.log.
+For the size bound, let $Q$ be the compiled automaton's state set, $n$ the
+number of subformulas after normalising the negated property, $m$ its until
+obligations and $N$ the number of model states.
+With $k=\max(1,m)$, \sourcefile{LTL/Compile.lean} proves the automaton bound below; the product
+bound follows by counting pairs:
+\[
+  |Q|\le k\,2^n,\qquad V\le N|Q|\le Nk\,2^n.
+\]
+Here $V$ counts reachable product vertices. The compiler enumerates subsets
+of the formula's subformulas, giving exponential growth in the worst case.
+Literal filtering saves enumeration work when the input label is incompatible.
+
+% PROV[code]: KILT/Graph/Basic.lean, FiniteGraph.row and edge;
+% KILT/Graph/Traversal.lean, Visits.advance and Visits.search;
+% KILT/Graph/Buchi.lean, PreparedReachable.hasAcceptingCycle;
+% KILT/Graph/Internal/Parents.lean, Parents and unwind;
+% KILT/Graph/Prepare.lean, Buffer.advance and prepareFromWork.
+% PROV[code-derived estimate]: Frontiers contain newly visited vertices only.
+% Across a return search, each source enters a frontier once; checking its
+% adjacency row for at most V targets costs O(V*E) in total. Per-level array
+% scans contribute O(V^2). Assumes unit-cost dense-ID equality/array access;
+% excludes compiler/preparation costs and is not a Lean-proved runtime theorem.
+For a rough operation count, assume constant-cost comparisons of vertex IDs
+and array access. A prepared graph with $E$ edges stores $O(V+E)$ graph
+entries; visited or parent arrays add $O(V)$. Frontier search in
+\sourcefile{Graph/Traversal.lean} scans possible target vertices and tests
+membership in stored successor rows. Each vertex enters a frontier once,
+and its row can be tested against up to $V$ targets, giving a return-query
+estimate of $O(V(V+E))$. With $a\le V$ reachable accepting vertices, the
+checker can perform up to $a$ such queries. Preparation additionally includes
+formula-state enumeration, state-order lookups and finite-set operations.
+\clearpage

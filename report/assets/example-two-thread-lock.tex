@@ -31,17 +31,17 @@
 \node[ltpos] at (2.6,47)   {0}; \node[ltbox]  (p0) at (14,47)   {(I,\,I,\,0)};
 \node[lttxt] at (26,47)   {initial};
 \node[ltpos] at (2.6,40.8) {1}; \node[ltbox]  (p1) at (14,40.8) {(T,\,I,\,0)};
-\node[lttxt] at (26,40.8) {thread 0 requests};
+\node[lttxt] at (26,40.8) {$T_0$ requests};
 \node[ltpos] at (2.6,34.6) {2}; \node[lttest] (p2) at (14,34.6) {(C,\,I,\,0)};
-\node[lttxt, text=kiltblue, font=\footnotesize\bfseries] at (26,34.6) {thread 0 tests the free lock};
+\node[lttxt, text=kiltblue, font=\footnotesize\bfseries] at (26,34.6) {$T_0$ tests the free lock};
 \node[ltpos] at (2.6,28.4) {3}; \node[ltbox]  (p3) at (14,28.4) {(C,\,T,\,0)};
-\node[lttxt] at (26,28.4) {thread 1 requests};
+\node[lttxt] at (26,28.4) {$T_1$ requests};
 \node[ltpos] at (2.6,22.2) {4}; \node[lttest] (p4) at (14,22.2) {(C,\,C,\,0)};
-\node[lttxt, text=kiltblue, font=\footnotesize\bfseries] at (26,22.2) {thread 1 tests the free lock};
+\node[lttxt, text=kiltblue, font=\footnotesize\bfseries] at (26,22.2) {$T_1$ tests the free lock};
 \node[ltpos] at (2.6,16)   {5}; \node[ltbox]  (p5) at (14,16)   {(K,\,C,\,1)};
-\node[lttxt] at (26,16)   {thread 0 claims};
+\node[lttxt] at (26,16)   {$T_0$ claims};
 \node[ltpos, text=kiltorange] at (2.6,9.8) {6}; \node[ltbad] (p6) at (14,9.8) {(K,\,K,\,1)};
-\node[lttxt, text=kiltorange, font=\footnotesize\bfseries] at (26,9.8) {thread 1 claims (no retest)};
+\node[lttxt, text=kiltorange, font=\footnotesize\bfseries] at (26,9.8) {$T_1$ claims (no retest)};
 
 \foreach \a/\b in {p0/p1, p1/p2, p2/p3, p3/p4, p4/p5, p5/p6}
   \draw[kiltarrow] (\a.south) -- (\b.north);
@@ -66,7 +66,7 @@
 \draw[ltcex] (b) -- (c);                                        % thread 1 test + claim
 \draw[ltcex] (c) -- (a);                                        % thread 1 releases
 
-\node[ltnote, anchor=south, text=kiltblue] at (25.5,44) {thread 0};
+\node[ltnote, anchor=south, text=kiltblue] at (25.5,44) {$T_0$};
 \node[ltnote, anchor=north, text=kiltnavy] at (25.5,37.8) {prefix};
 \node[ltnote, anchor=south, text=kiltorange] at (51.5,41.8) {request};
 \node[ltnote, anchor=west, text=kiltorange] at (60.5,29) {acquire};
@@ -74,8 +74,8 @@
 \node[ltnote, anchor=center, text=kiltorange, align=center] at (51.5,31) {repeats\\forever};
 
 \node[ltnote, text=kiltblue]   at (0,12.2) {mutual exclusion holds};
-\node[ltnote, text=kiltorange] at (0,8.3)  {thread 0 can starve: no fairness};
-\node[ltnote, text=kiltnavy]   at (0,4.4)  {all loop edges schedule thread 1};
+\node[ltnote, text=kiltorange] at (0,8.3)  {$T_0$ can starve: no fairness};
+\node[ltnote, text=kiltnavy]   at (0,4.4)  {all loop edges schedule $T_1$};
 \end{scope}
 
 % shared legend
