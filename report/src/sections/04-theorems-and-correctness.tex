@@ -1,36 +1,26 @@
 \clearpage
 \section{Main Theorems and Correctness}\label{sec:correctness}
 
-Correctness in KILT is a collection of connected claims.  A compiler must
-preserve the meaning of a formula; a product must represent compatible system
-and automaton runs; a finite search must decide the existence of an accepting
-infinite run.  A returned counterexample needs a further guarantee about its
-own execution.  \Cref{fig:correctness-hub} distinguishes these contracts.
-The displays below are informal mathematical readings of the named Lean
-declarations, rather than new specifications.
+\subsection{From User Inputs to a Checked Theorem}
 
-\begin{figure}[ht]
+Correctness connects several contracts: formula meaning, compatible runs,
+finite search, the verdict and the returned witness.
+\Cref{fig:correctness-map} places these alongside the executable stages and
+the user API. The equations here and below are informal readings of the
+named Lean declarations. The contracts are generic; the proof frontend
+instantiates them for a concrete goal.
+
+\begin{figure}[!ht]
   \centering
-  \begin{tikzpicture}
-    \node[kiltemphasis,text width=38mm,minimum height=17mm] (hub) at (0,0)
-      {KILT correctness\\agreement with\\trace semantics};
-    \node[kiltstage,text width=38mm] (language) at (-5.2,0.95)
-      {Formula language\\semantics $\leftrightarrow$ acceptance};
-    \node[kiltstage,text width=38mm] (graph) at (5.2,0.95)
-      {Product and graph\\infinite run $\leftrightarrow$ cycle};
-    \node[kiltstage,text width=38mm] (verdict) at (-5.2,-0.95)
-      {Checker verdict\\\texttt{true} $\leftrightarrow$ satisfaction};
-    \node[kiltstage,text width=38mm] (witness) at (5.2,-0.95)
-      {Returned witness\\replayed execution\\violates the property};
-    \draw[draw=kiltblue,line width=0.8pt] (hub.north west) -- (language.east);
-    \draw[draw=kiltblue,line width=0.8pt] (hub.north east) -- (graph.west);
-    \draw[draw=kiltblue,line width=0.8pt] (hub.south west) -- (verdict.east);
-    \draw[draw=kiltblue,line width=0.8pt] (hub.south east) -- (witness.west);
-  \end{tikzpicture}
-  \caption{Different correctness contracts support the public checker and its evidence.}
-  \label{fig:correctness-hub}
+  \input{../assets/correctness-map}
+  \caption{From user inputs to execution and proof. Solid arrows show operational
+    stages; dashed arrows show supporting contracts. This is a selected
+    contract map, rather than an import graph. The proof frontend rewrites to a
+    finite specification before \lean{decide}.}
+  \label{fig:correctness-map}
 \end{figure}
 
+\clearpage
 \subsection{Semantic and Automata Correspondences}
 
 First, correctness of translation means recognising exactly the declared trace
@@ -67,7 +57,6 @@ The ordinary B\"uchi automaton is interpreted through CSLib's acceptance
 interface.  This establishes the meaning of the violation monitor before any
 Kripke structure or graph search is involved.
 
-\clearpage
 \subsection{Product and Finite-Search Correctness}
 
 A path has infinitely many positions: $p:\mathbb{N}\to S$.  Finiteness means
@@ -138,7 +127,6 @@ without fairness: an available grant need not be taken.  Correctness is
 relative to the declared trace semantics; whether a model or formula captures
 the intended external system remains a modelling question.
 
-\clearpage
 \subsection{Counterexample Guarantees}
 
 An infinite counterexample can already be decisive after a few steps.

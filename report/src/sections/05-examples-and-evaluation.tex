@@ -1,12 +1,7 @@
-% STATE: DRAFT (Section 5 awaiting human review).
 \section{Examples and Evaluation}\label{sec:evaluation}
 
 \subsection{Worked Examples}
 
-% PROV[user]: Approved request/grant, two-thread lock and traffic-light examples
-% with reserved illustration space and TikZ artist briefs.
-% PROV[code]: Examples/Demos/Walkthrough.lean; Examples/Demos/Frontend.lean;
-% Examples/Models/TwoThreadLock.lean; Examples/Models/TrafficLight.lean.
 The examples exercise different parts of the interface and proof pipeline.
 Request/grant follows a formula through checking and executable extraction.
 The lock model contrasts safety with starvation, while the traffic light
@@ -15,8 +10,6 @@ infinite-path semantics described in \cref{sec:correctness}.
 
 \subsubsection{Request and Grant: a Complete User Session}
 
-% PROV[code]: Examples/Demos/Walkthrough.lean:L30-L78,L114-L186;
-% Examples/Demos/Frontend.lean:L36-L50.
 The system in \sourcefile{Examples/Demos/Walkthrough.lean} has the two
 variants shown in \cref{fig:example-request-grant}. Both are serial, but the
 waiting self-loop permits an infinite execution without a grant. Only the
@@ -25,9 +18,6 @@ path. The concrete true and false verdicts are proved with
 \lean{kilt_decide}; \sourcefile{Examples/Demos/Frontend.lean} additionally
 proves healthy satisfaction with \lean{kilt_verify}.
 
-% PROV[code]: Examples/Demos/Walkthrough.lean:L157-L186,L192-L235.
-% PROV[build]: 2026-11-15, ./scripts/verify-examples.sh --verbose, exit 0;
-% .lake/logs/build-20261115T140749Z-0o5nGo.log, walkthrough output.
 The displayed healthy result has no counterexample. The waiting variant
 returns a system lasso with empty prefix and loop $[\mathit{waiting}]$:
 granting remains possible but is never chosen. The theorem
@@ -37,8 +27,6 @@ for $\mathbf{G}(\mathit{request}\rightarrow\mathbf{F}\,\mathit{grant})$.
 These response displays are execution checks; the named verdict and
 returned-path theorems above concern the eventual-grant formula.
 
-% PROV[user]: Supplied report/assets/example-request-grant.tex for integration.
-% PROV[code]: Examples/Demos/Walkthrough.lean, model, label and display.
 \begin{figure}[!ht]
   \centering
   \resizebox{\linewidth}{!}{\input{../assets/example-request-grant}}
@@ -48,7 +36,6 @@ returned-path theorems above concern the eventual-grant formula.
 
 \subsubsection{Two Threads: Mutual Exclusion and Starvation}
 
-% PROV[code]: Examples/Models/TwoThreadLock.lean:L3-L16,L28-L90,L114-L168.
 The model in \sourcefile{Examples/Models/TwoThreadLock.lean} has two thread
 program counters and one shared lock bit. Each transition schedules one
 logical instruction of either thread; reads and writes observe that shared
@@ -60,7 +47,6 @@ $\mathbf{G}\neg(\mathit{critical}_0\land\mathit{critical}_1)$.
 The atomic variant combines test and claim; an invariant proves mutual
 exclusion along every initial execution.
 
-% PROV[code]: Examples/Models/TwoThreadLock.lean:L179-L233.
 Without fairness, atomicity still permits starvation. An explicit schedule
 lets thread zero request once, then schedules only thread one forever.
 Thread zero remains waiting, violating
@@ -70,8 +56,6 @@ The false supplied-monitor verdict is derived from this semantic
 counterexample and checker correctness; a separate \texttt{\#eval}
 executes the search.
 
-% PROV[user]: Supplied report/assets/example-two-thread-lock.tex for integration.
-% PROV[code]: Examples/Models/TwoThreadLock.lean, raceSchedule and unfairSchedule.
 \begin{figure}[!ht]
   \centering
   \resizebox{\linewidth}{!}{\input{../assets/example-two-thread-lock}}
@@ -82,7 +66,6 @@ executes the search.
 
 \subsubsection{Traffic Light: Safety Does Not Force Progress}
 
-% PROV[code]: Examples/Models/TrafficLight.lean:L28-L85,L144-L173,L191-L244.
 The controller in \sourcefile{Examples/Models/TrafficLight.lean} starts at
 \lean{stop} and cycles through \lean{go} and \lean{caution}, with labels red,
 green and yellow respectively. Its second variant adds a \lean{stop}
@@ -96,8 +79,6 @@ by kernel computation. Language theorems transfer them to the declared
 semantics; the permanent-red path is also constructed explicitly.
 These calls use \lean{checkAgainst}, rather than automatic formula compilation.
 
-% PROV[user]: Supplied report/assets/example-traffic-light.tex for integration.
-% PROV[code]: Examples/Models/TrafficLight.lean, controller, stuckController and stuckPath.
 \begin{figure}[!ht]
   \centering
   \resizebox{\linewidth}{!}{\input{../assets/example-traffic-light}}
@@ -108,11 +89,6 @@ These calls use \lean{checkAgainst}, rather than automatic formula compilation.
 \clearpage
 \subsection{Verification and Deliverable Status}
 
-% PROV[code]: Examples.lean; Examples/Regression/BuchiTrust.lean:L27-L37;
-% scripts/verify-examples.sh; lean-toolchain.
-% PROV[build]: 2026-11-15, LEAN_NUM_THREADS=1 ./scripts/verify-examples.sh --verbose,
-% exit 0, 1857 jobs, 405 axiom-audit messages, no warning/error diagnostics;
-% .lake/logs/build-20261115T140749Z-0o5nGo.log.
 Validation used the pinned Lean toolchain with the command
 \begin{quote}\small
 \begin{verbatim}
@@ -124,11 +100,6 @@ The examples target and its library dependencies built successfully on
 This was an incremental build: Lake can reuse up-to-date elaboration and
 execution results. It is build evidence, not a performance measurement.
 
-% PROV[code]: Examples/Regression/BuchiTrust.lean:L27-L37 and declaration list;
-% KILT/LTL/Compile.lean; KILT/Kripke/Check.lean; KILT/Kripke/Counterexample.lean.
-% PROV[build]: 2026-11-15, rg for sorry/custom axiom declarations in KILT and Examples
-% returned no matches; direct #print axioms checks on 15 selected example results
-% each reported exactly [propext, Classical.choice, Quot.sound], exit 0.
 The audit permits only \lean{propext}, \lean{Classical.choice} and
 \lean{Quot.sound} in its named results and fails on unfinished-proof
 dependencies or additional axioms. Direct inspections of selected example
@@ -138,8 +109,6 @@ In \cref{tab:deliverable-status}, \emph{verified} refers to the cited Lean
 contracts under their stated assumptions. Concrete execution checks
 exercise examples and regressions; they do not replace those contracts.
 
-% PROV[user]: Proposal-aligned deliverables approved in Section 1 and requested
-% verification/deliverable table for Section 5.2.
 \begin{table}[!ht]
   \centering
   \small
@@ -151,36 +120,26 @@ exercise examples and regressions; they do not replace those contracts.
     \toprule
     Deliverable & Principal source & Status in this validation \\
     \midrule
-    % PROV[code]: KILT/LTL/Syntax.lean; KILT/LTL/Semantics.lean; KILT/LTL/Basic.lean.
     LTL basis &
       \sourcefile{LTL/Syntax.lean}, \sourcefile{LTL/Semantics.lean};
       laws in \sourcefile{LTL/Basic.lean} &
       Defined; semantic laws checked \\
-    % PROV[code]: KILT/LTL/TableauCorrect.lean; KILT/LTL/Compile.lean;
-    % KILT/Automata/GeneralizedBuchiCorrect.lean; current audit log.
     Formula compilation &
       \sourcefile{LTL/TableauCorrect.lean}, \sourcefile{LTL/Compile.lean},
       \sourcefile{Automata/GeneralizedBuchiCorrect.lean} &
       Verified language equivalences \\
-    % PROV[code]: KILT/Automata/Product.lean; KILT/Graph/Acceptance.lean;
-    % KILT/Graph/Buchi.lean; current audit log.
     Product and emptiness &
       \sourcefile{Automata/Product.lean}, \sourcefile{Graph/Acceptance.lean},
       \sourcefile{Graph/Buchi.lean} &
       Verified run/cycle and search correspondences \\
-    % PROV[code]: KILT/Kripke/Check.lean; KILT/Kripke/PreparedCheck.lean; current audit log.
     Public checker &
       \sourcefile{Kripke/Check.lean},
       \sourcefile{Kripke/PreparedCheck.lean} &
       Verified verdict equivalence \\
-    % PROV[code]: KILT/Automata/ProductLasso.lean; KILT/Kripke/Counterexample.lean;
-    % current audit log.
     Lasso extraction &
       \sourcefile{Automata/ProductLasso.lean},
       \sourcefile{Kripke/Counterexample.lean} &
       Verified returned trace and witness presence \\
-    % PROV[code]: KILT/Frontend.lean; Examples/Demos; Examples/Models;
-    % Examples/Regression/FrontendRegression.lean; current examples build.
     User interface and examples &
       \sourcefile{Frontend.lean}; \lean{Examples/Demos/},
       \lean{Examples/Models/}, \lean{Examples/Regression/} &
@@ -192,8 +151,6 @@ exercise examples and regressions; they do not replace those contracts.
   \label{tab:deliverable-status}
 \end{table}
 
-% PROV[user]: Section-by-section report review and deferred final submission.
-% PROV[code]: scripts/verify-examples.sh and scripts/compile-report.sh are separate targets.
 The report and illustrations remain under review. This validation covers
 Lean targets; HTML documentation generation and final report approval are
 separate deliverables.
@@ -201,14 +158,6 @@ separate deliverables.
 \clearpage
 \subsection{Experimental Results and Complexity}\label{sec:experimental-cost}
 
-% PROV[user]: Approved the archived experiment results and requested a rough
-% complexity analysis, keeping measured results distinct from estimates.
-% Requested plain wording focused on the implementation, with benchmark
-% limitations stated together rather than repeated throughout.
-% Requested describing a one-off test repeatable against older commit versions,
-% without a visible citation to the benchmark archive.
-% PROV[code]: .ai/archive/benchmarks-2026-10-27-p3-p5/RESULTS.md;
-% baseline/environment.json; p5/environment.json; p5/source/Benchmarks/GraphStorage.lean.
 The one-off test in \cref{tab:historical-performance} compared versions on
 27 October 2026. The optimised version uses an array-based
 discovery queue, marks accepting states over the reachable graph, and checks
@@ -219,10 +168,6 @@ compilation time was excluded. The timed calls include LTL translation and
 product preparation. The comparison can be repeated by checking out older
 commit versions and running the same test script.
 
-% PROV[code]: baseline/metrics.json and p5/metrics.json in the experiment archive.
-% PROV[build]: 2026-11-16, extracted four native sample arrays per snapshot with jq;
-% recomputed each median by numerical sorting and taking the middle of three;
-% rounded to two decimal places. No new benchmark execution.
 \begin{table}[!ht]
   \centering
   \small
@@ -241,8 +186,6 @@ commit versions and running the same test script.
   \label{tab:historical-performance}
 \end{table}
 
-% PROV[code]: Experiment RESULTS.md, Variability and follow-up;
-% paired-native/RESULTS.md; KILT/LTL/Tableau.lean:L159-L178.
 The main checks took about half as long after the changes. The successor
 function skips candidate enumeration when the label is incompatible, and
 the prepared graph stores each discovered state's successors for reuse. The versions returned
@@ -252,16 +195,10 @@ both main checks were faster in every pair. The compatible-label test was
 $6.36\%$ slower by median paired change, while sparse-product preparation was
 $9.22\%$ slower. The cause of the latter increase was not isolated.
 
-% PROV[code]: Experiment RESULTS.md, methodology and Variability and follow-up;
-% paired-native/RESULTS.md, limitations of the short-duration comparisons.
 These measurements describe the tested models on this virtual machine.
 The baseline briefly overlapped separate proof checks, and the short-duration
 tests were sensitive to variation between runs.
 
-% PROV[code]: KILT/LTL/Compile.lean:L89-L98, card_automatonState_le;
-% KILT/LTL/Tableau.lean, State and successors; KILT/Automata/Product.lean:L21-L29.
-% PROV[build]: card_automatonState_le passed the standard-axiom audit in
-% .lake/logs/build-20261115T140749Z-0o5nGo.log.
 For the size bound, let $Q$ be the compiled automaton's state set, $n$ the
 number of subformulas after normalising the negated property, $m$ its until
 obligations and $N$ the number of model states.
@@ -274,16 +211,6 @@ Here $V$ counts reachable product vertices. The compiler enumerates subsets
 of the formula's subformulas, giving exponential growth in the worst case.
 Literal filtering saves enumeration work when the input label is incompatible.
 
-% PROV[code]: KILT/Graph/Basic.lean, FiniteGraph.row and edge;
-% KILT/Graph/Traversal.lean, Visits.advance and Visits.search;
-% KILT/Graph/Buchi.lean, PreparedReachable.hasAcceptingCycle;
-% KILT/Graph/Internal/Parents.lean, Parents and unwind;
-% KILT/Graph/Prepare.lean, Buffer.advance and prepareFromWork.
-% PROV[code-derived estimate]: Frontiers contain newly visited vertices only.
-% Across a return search, each source enters a frontier once; checking its
-% adjacency row for at most V targets costs O(V*E) in total. Per-level array
-% scans contribute O(V^2). Assumes unit-cost dense-ID equality/array access;
-% excludes compiler/preparation costs and is not a Lean-proved runtime theorem.
 For a rough operation count, assume constant-cost comparisons of vertex IDs
 and array access. A prepared graph with $E$ edges stores $O(V+E)$ graph
 entries; visited or parent arrays add $O(V)$. Frontier search in

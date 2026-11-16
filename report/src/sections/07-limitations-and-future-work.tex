@@ -1,12 +1,7 @@
-% STATE: DRAFT (awaiting human review).
 \section{Limitations and Future Work}\label{sec:limitations}
 
 \subsection{Limitations}
 
-% PROV[user]: Scope discussion: finite LTL checker, explicit seriality and
-% no deadlock completion; CTL* deferred. Earlier learning discussion: model guarantees.
-% PROV[code]: KILT/Kripke/Check.lean:L14-L44;
-% KILT/Kripke/PreparedCheck.lean:L19-L31.
 The checker handles LTL properties of finite Kripke structures with explicit
 initial states and a separate seriality proof. Deadlocked models remain
 representable, but the public checking contract requires every state to have
@@ -15,10 +10,6 @@ The correctness results concern the declared transitions, labels and trace
 semantics. Their application to a particular system therefore depends on the
 chosen model describing that system appropriately.
 
-% PROV[user]: 16 November challenges discussion: larger stress tests needed;
-% VM resources and time restricted evaluation.
-% PROV[code]: KILT/LTL/Compile.lean, card_automatonState_le;
-% report/src/sections/05-examples-and-evaluation.tex, experimental-cost subsection.
 Tableau state enumeration is exponential in the number of subformulas, and
 product construction combines automaton states with system states.
 Reachable-state preparation and cached successor rows reduce work, but larger
@@ -26,10 +17,6 @@ models still need stress testing. The VM resource limits and time constraints
 described in \cref{sec:learning} restricted this part of the evaluation;
 \cref{sec:experimental-cost} records the measurements and their scope.
 
-% PROV[user]: Current request: explain failure conditions and what to do when
-% metaprogramming fails; prior API-friction discussion requested a lightweight API.
-% PROV[code]: KILT/Frontend.lean:L14-L46;
-% Examples/Demos/Frontend.lean, symbolic_manual and final computational-cost note.
 \paragraph{When automation fails.}
 The macros target small, concrete goals. A failure of \lean{kilt_verify}
 does not itself establish that a property is false: the labels may be
@@ -46,8 +33,6 @@ are described in \cref{sec:correctness}.
 
 \subsection{Future Work}
 
-% PROV[user]: Current request: seek Zulip review and feedback; develop a serious
-% library, possibly on a new branch; files too fragmented for assignment clarity.
 \textbf{Review and library structure.}
 A next step is to seek feedback on Zulip from the Lean and CSLib communities,
 covering the definitions, theorem interfaces and project organisation. A
@@ -57,12 +42,6 @@ present individual stages, but some files now feel unnecessarily fragmented.
 Consolidation should make related results easier to find while keeping the
 main subsystem interfaces clear.
 
-% PROV[user]: Current request and earlier scope discussion: pursue CSLib
-% contributions from the independent generalized-Buchi, tableau and graph layers.
-% PROV[code]: KILT/Automata/GeneralizedBuchi.lean;
-% KILT/Automata/GeneralizedBuchiCorrect.lean; KILT/Automata/RoundRobin.lean;
-% KILT/LTL/TableauCorrect.lean; KILT/Graph/Prepare.lean;
-% KILT/Automata/ProductLasso.lean.
 \textbf{Contributions as separate components.}
 KILT contains several components that can be reviewed independently:
 generalised B\"uchi automata and their round-robin conversion, the LTL tableau
@@ -70,8 +49,6 @@ construction, and finite graph search with lasso extraction. These provide
 concrete starting points for proposed CSLib contributions, subject to review
 and adaptation to the upstream interfaces and conventions.
 
-% PROV[user]: Current request: metaprogramming failure handling; earlier frontend
-% discussion and .ai/human/MAYBE_BETTER.md, section 11, user-centred error reporting.
 \textbf{Frontend and evaluation.}
 Further metaprogramming work should make failure easier to interpret:
 distinguish an unsuccessful proof attempt from a computed negative verdict,
@@ -80,8 +57,6 @@ as appropriate. This would improve the existing thin frontend. Larger stress
 tests, with more time and suitable hardware, would also give a better basis
 for choosing subsequent caching and search improvements.
 
-% PROV[user]: Current request and clarification: CTL*, not LTL*; improve
-% under-documented parts. Earlier scope discussion explicitly deferred CTL*.
 \textbf{Broader scope and documentation.}
 CTL* remains a longer-term extension beyond the current LTL toolkit.
 Improving the explanations of under-documented modules is also part of the

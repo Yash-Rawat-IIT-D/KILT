@@ -1,0 +1,133 @@
+\begin{tikzpicture}[
+  contractnode/.style={kiltstage,text width=43mm,minimum height=15mm,
+    inner sep=2pt,font=\fontsize{8}{9.6}\selectfont},
+  contractarrow/.style={kiltarrow,dashed,draw=kiltblue},
+  contractgroup/.style={rounded corners=3pt,draw=kiltblue!65,
+    fill=kiltpale!45,line width=0.6pt},
+  grouptitle/.style={font=\fontsize{9}{11}\selectfont\bfseries,
+    text=kiltnavy,align=center}
+]
+  \node[kiltstage,text width=150mm,minimum height=14mm,
+    font=\fontsize{9}{11}\selectfont] (inputs) at (0,0) {
+    \textbf{User supplies the model and the question}\\
+    $M$: nonempty initial states, successors and labels; formula $\varphi$;
+    seriality proof $h_{\mathrm{serial}}$.\\
+    Finite states; decidable equality on states and atoms;
+    order $o$ for the prepared API.
+  };
+
+  \draw[contractgroup] (-7.8,-1.25) rectangle (-2.8,-9.95);
+  \draw[contractgroup] (-2.5,-1.25) rectangle (2.5,-9.95);
+  \draw[contractgroup] (2.8,-1.25) rectangle (7.8,-9.95);
+  \node[grouptitle] at (-5.3,-1.65) {LTL / Automata\\Language contracts};
+  \node[grouptitle] at (0,-1.65) {Executable checker};
+  \node[grouptitle] at (5.3,-1.65) {Automata / Graph\\Run and search contracts};
+
+  \node[contractnode] (normalize) at (-5.3,-2.85) {
+    Normalisation\\
+    \texttt{sat\_normalize}\\
+    preserves indexed word semantics
+  };
+  \node[contractnode] (tableau) at (-5.3,-4.85) {
+    Tableau language\\
+    \texttt{accepts\_iff\_sat}\\
+    NNF truth $\leftrightarrow$ generalised acceptance
+  };
+  \node[contractnode] (counter) at (-5.3,-6.85) {
+    Round-robin conversion\\
+    \texttt{toFiniteBuchi\_accepts}\\
+    generalised $\leftrightarrow$ CSLib B\"uchi language
+  };
+  \node[contractnode] (language) at (-5.3,-8.85) {
+    Violation-language boundary\\
+    \texttt{violationAutomaton\_accepts}\\
+    $B_{\neg\varphi}\text{ accepts }w
+      \leftrightarrow \neg\operatorname{WordSat}(w,\varphi)$
+  };
+
+  \node[contractnode] (compile) at (0,-2.85) {
+    Negate and compile $\varphi$\\
+    tableau $+$ round-robin counter\\
+    \texttt{Compile.lean / Compiled.lean}
+  };
+  \node[contractnode] (product) at (0,-4.85) {
+    Synchronous product $(s,q)$\\
+    consume the source label $L(s)$\\
+    \texttt{Product.lean}
+  };
+  \node[contractnode] (prepared) at (0,-6.85) {
+    Reachable graph and cached rows\\
+    one \texttt{PreparedCheck} value\\
+    \texttt{PreparedCheck.lean}
+  };
+  \node[contractnode] (queries) at (0,-8.85) {
+    Separate public queries\\
+    \texttt{check}: Boolean verdict\\
+    \texttt{counterexample?}: optional lasso
+  };
+
+  \node[contractnode] (runs) at (5.3,-2.85) {
+    Product correspondence\\
+    \texttt{product\_run\_iff}\\
+    system path $+$ monitor run on its labels
+  };
+  \node[contractnode] (recurrence) at (5.3,-4.85) {
+    Finite recurrence\\
+    infinite accepting run\\
+    $\leftrightarrow$ reachable accepting cycle\\
+    \texttt{Acceptance.lean}
+  };
+  \node[contractnode] (refinement) at (5.3,-6.85) {
+    Executable refinement\\
+    \texttt{hasAcceptingCycle\_eq\_spec}\\
+    finite search $\leftrightarrow$ cycle specification
+  };
+  \node[contractnode] (accepted) at (5.3,-8.85) {
+    Accepted-path boundary\\
+    \texttt{hasAcceptedPath\_eq\_true\_iff}\\
+    search $\leftrightarrow$ some initial accepted path
+  };
+
+  \draw[kiltarrow] (inputs.south) -- (0,-1.25);
+  \foreach \a/\b in {compile/product,product/prepared,prepared/queries}
+    \draw[kiltarrow] (\a.south) -- (\b.north);
+  \foreach \a/\b in {normalize/tableau,tableau/counter,counter/language,
+    runs/recurrence,recurrence/refinement,refinement/accepted}
+    \draw[contractarrow] (\a.south) -- (\b.north);
+
+  \node[kiltemphasis,text width=150mm,minimum height=13mm,
+    font=\fontsize{9}{11}\selectfont] (contract) at (0,-11.05) {
+    \textbf{End-to-end contract:} \texttt{check\_correct}
+    in \texttt{Kripke/Check.lean}\\
+    $\operatorname{check}(M,\varphi,h_{\mathrm{serial}})=\mathtt{true}
+       \quad\Longleftrightarrow\quad M\models\varphi$
+  };
+  \draw[contractarrow] (language.south) -- (-5.3,-10.3)
+    -- (-3.9,-10.3) -- (contract.north -| -3.9,0);
+  \draw[contractarrow] (queries.south) -- (contract.north);
+  \draw[contractarrow] (accepted.south) -- (5.3,-10.3)
+    -- (3.9,-10.3) -- (contract.north -| 3.9,0);
+
+  \node[font=\fontsize{9}{11}\selectfont,text=kiltblue]
+    at (0,-12.2) {Two public uses of the verified contracts};
+
+  \node[kiltstage,text width=70mm,minimum height=28mm,
+    font=\fontsize{9}{11}\selectfont] (execution) at (-4.05,-14) {
+    \textbf{Execution and returned evidence}\\
+    \texttt{\#eval}: verdict and optional system lasso\\
+    \texttt{counterexample?\_sound}: its trace violates $\varphi$\\
+    \texttt{counterexample?\_isSome\_iff}: some $\leftrightarrow$ false\\
+    Printed values are execution evidence.
+  };
+  \node[kiltemphasis,text width=70mm,minimum height=28mm,
+    font=\fontsize{9}{11}\selectfont] (proof) at (4.05,-14) {
+    \textbf{Proof-producing frontend: goal $M\models\varphi$}\\
+    \texttt{kilt\_verify} $h_{\mathrm{serial}}$
+      $\longrightarrow$ apply \texttt{check\_correct}\\
+    \texttt{kilt\_decide}: rewrite to the finite specification\\
+    \texttt{decide} $\longrightarrow$ kernel checks the resulting proof\\
+    Symbolic or cost failures are not negative verdicts.
+  };
+  \draw[contractarrow] (contract.south -| -4.05,0) -- (execution.north);
+  \draw[contractarrow,draw=kiltorange] (contract.south -| 4.05,0) -- (proof.north);
+\end{tikzpicture}

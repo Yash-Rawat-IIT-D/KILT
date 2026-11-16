@@ -1,10 +1,7 @@
-% STATE: DRAFT (awaiting human review).
 \section{What I Learned about Lean beyond Class}\label{sec:learning}
 
 \subsection{Learning beyond the Course Material}
 
-% PROV[user]: 16 November learning discussion and replies: familiar course basics;
-% decide and metaprogramming introduced; choosing definitions was a main lesson.
 The main step beyond class was learning how to organise a larger verified
 program. Basic proof techniques were already familiar, and decision procedures
 and metaprogramming had been introduced for further exploration. KILT made
@@ -14,8 +11,6 @@ proofs manageable. Translating a natural-language deliverable into a collection
 of compatible definitions and theorem statements took more work than its
 high-level description suggested.
 
-% PROV[user]: 16 November replies: preserving correctness through engineering
-% changes, caching and tableau work; improved understanding of simp.
 A second lesson was how closely implementation changes and correctness
 arguments interact. Caching successors or changing the representation of
 reachable states also creates obligations about what the stored data means.
@@ -26,11 +21,6 @@ without repeatedly exposing their implementation details.
 
 \subsection{Concrete Examples from the Project}
 
-% PROV[user]: 16 November discussion: no prior automata-theory background;
-% NA, generalized acceptance and specifying round-robin were difficult.
-% PROV[code]: KILT/LTL/Tableau.lean:L25-L77;
-% KILT/LTL/TableauAcceptance.lean:L70-L92;
-% KILT/LTL/TableauCorrect.lean:L39-L64.
 \paragraph{Definitions that separate different obligations.}
 The tableau made this lesson concrete. A state carries an assignment together
 with a proof of static consistency; transitions check neighbouring positions;
@@ -42,10 +32,6 @@ make that separation explicit. Understanding CSLib's automaton runs and
 specifying the round-robin conversion were particularly demanding because
 I had no prior background in automata theory.
 
-% PROV[user]: 16 November replies: correctness during representation changes and
-% caching was a main learning point and a challenge.
-% PROV[code]: KILT/Graph/Prepare.lean:L15-L30,L46-L90;
-% KILT/Kripke/PreparedCheck.lean:L27-L70.
 \paragraph{Optimisation with an explicit meaning.}
 In \sourcefile{Graph/Prepare.lean}, the work-queue invariant records that
 discovered states are reachable and that each completed row equals the
@@ -55,9 +41,6 @@ from a state that has not yet been processed. At the public boundary,
 back to the checking contract. This is a concrete example of preserving a
 specification while changing how its computation is organised.
 
-% PROV[user]: 16 November reply: deeper understanding of simp; earlier review
-% requested the non-simp unfolding explanation in LTL/Basic.lean.
-% PROV[code]: KILT/LTL/Basic.lean:L122-L141.
 \paragraph{Choosing what simplification should do.}
 The temporal unfolding laws in \sourcefile{LTL/Basic.lean} illustrate why a
 useful equality need not be a useful automatic rewrite. Unfolding a global
@@ -67,11 +50,6 @@ Keeping these laws out of the default simplifier leaves the amount of
 unfolding under explicit control. This made the role of rewrite rules easier
 to understand than treating \lean{simp} as a general finishing tactic.
 
-% PROV[user]: 16 November replies: deeper understanding of decide and kernel;
-% metaprogramming exploration through the frontend.
-% PROV[code]: KILT/Frontend.lean:L14-L46;
-% Examples/Demos/Frontend.lean:L44-L56;
-% pinned Lean Init/Prelude.lean:L1130-L1140 (decide and proof extraction).
 \paragraph{Building automation from existing proofs.}
 The small macros in \sourcefile{Frontend.lean} show how this scales into a
 user-facing interface. The tactic \lean{kilt_decide} rewrites a concrete
@@ -85,10 +63,6 @@ theorems can support automation without exposing the whole pipeline to a user.
 
 \subsection{Challenges and Lessons}
 
-% PROV[user]: 16 November discussion: reusable graph layer felt gruelling and
-% excessive initially but enabled easier lasso extension; examples were hard.
-% PROV[build]: Python pathlib line count, 16 November 2026: KILT/Graph/**/*.lean
-% 3254 lines; all KILT/**/*.lean 6402 lines, including comments and blank lines.
 Maintaining a separate reusable graph layer initially felt like excessive
 work. It accounts for more than half of the library's Lean source lines,
 and exposes operations needed across several stages of KILT. In hindsight,
@@ -97,9 +71,6 @@ the graph machinery already available. Maintaining examples was another
 challenge. They had to communicate what KILT could do while getting the
 models, properties and claims about their verification right.
 
-% PROV[user]: 16 November discussion: natural-language specifications, consistent
-% API, tableau and caching were hard; Lean required planning and trial and error.
-% 16 November reply: would separate deliverables and interfaces earlier.
 The hardest work combined understanding the mathematics with keeping a
 consistent API as the implementation developed. Lean is also a programming
 language, but this project required more planning and trial and error than
@@ -109,8 +80,6 @@ construction and graph algorithms, and state their interfaces earlier.
 Discovering these boundaries from the top down was a learning experience;
 the separation is much easier to see in hindsight.
 
-% PROV[user]: 16 November follow-up: transferable engineering patterns around
-% contracts, theorem guarantees and the limits of system modelling.
 Several lessons extend beyond Lean. Stating contracts, separating assumptions
 from guarantees, and keeping the meaning of an interface stable are habits
 that carry over to work in other programming languages. Formalisation also
@@ -120,9 +89,6 @@ choices faithfully describe the intended system is a separate modelling
 question. Any substantial engineering task involves decisions of this kind,
 even when its contracts are not expressed as Lean theorems.
 
-% PROV[user]: 16 November follow-up: need for larger stress tests; development
-% VM alongside Windows 11 had limited RAM and threads; repeated bottlenecks
-% and crashes; native/more capable hardware, fewer deliverables, more testing time.
 Testing also needed more room in the schedule. The small worked examples
 communicate the checker well, but larger models are needed to stress its
 execution and memory use. Development took place in a virtual machine on a
@@ -132,8 +98,6 @@ work. Running natively or on a more capable machine, reducing the number of
 deliverables, and reserving more time for larger tests would be priorities
 if repeating the project.
 
-% PROV[user]: 16 November follow-up: irregular time commitments after the minor
-% exams because of other coursework; reduce emphasis on documentation tooling.
 Time commitments were also uneven. After the minor examinations, balancing
 the project with other coursework made regular progress difficult. This
 reinforced the need for a smaller, clearly separated set of deliverables and

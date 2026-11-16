@@ -1,4 +1,41 @@
-% STATE: SCAFFOLD (no report prose approved).
 \section{Reproducibility}\label{sec:appendix-reproducibility}
 
-\needsinput{Add the final source snapshot, pins, exact commands, verification logs and artifact paths.}
+Install Git and \href{https://github.com/leanprover/elan}{elan}, the Lean
+toolchain manager, with \lean{lake} available on the command line. Clone the
+\href{https://github.com/Yash-Rawat-IIT-D/KILT}{KILT repository} and enter it:
+\begin{quote}\small
+\begin{verbatim}
+git clone https://github.com/Yash-Rawat-IIT-D/KILT.git
+cd KILT
+\end{verbatim}
+\end{quote}
+
+The checkout pins Lean~4.35.0-rc4 and the dependency revisions. Keep these
+pins when reproducing the build. The first build needs network access to
+obtain the toolchain and dependencies. The scripts use one Lean thread by
+default.
+
+\textbf{Build the library.} Disable the optional terminal menu to run directly:
+\begin{quote}\small
+\begin{verbatim}
+$ GUI_LAUNCH=false ./scripts/build.sh
+Build completed successfully (1827 jobs).
+Build exit status: 0
+\end{verbatim}
+\end{quote}
+
+\textbf{Check the examples separately.} This builds their proofs, executable
+checks and axiom audits, together with the required library dependencies:
+\begin{quote}\small
+\begin{verbatim}
+$ ./scripts/verify-examples.sh
+Build completed successfully (1857 jobs).
+Build exit status: 0
+\end{verbatim}
+\end{quote}
+
+These are output excerpts from incremental runs on 16 November 2026; Lake
+reuses up-to-date modules. Add \lean{--rebuild} to the examples command to
+rerun the project checks on an existing checkout. To build this report, use
+\lean{./scripts/build.sh --report} with a pdfLaTeX installation including
+TikZ, KOMA-Script and BibTeX.
