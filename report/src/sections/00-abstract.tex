@@ -1,3 +1,43 @@
 \addsec{Abstract}\label{sec:abstract}
 
-\needsinput{Write last, after the body is reviewed and approved.}
+I would like to thank my supervisor, my friends and my family for their
+support throughout this project.
+
+I chose KILT as a natural extension of my previous introductory coursework
+in Automated Verification. I wanted to explore the mathematical
+specifications behind graphs and automata while using Lean to build and
+verify a substantial program. I saw the project as an opportunity to bring
+together ideas from verification with the practical work of implementing a
+model checker.
+
+Through KILT, I developed an LTL toolkit connecting infinite-trace semantics,
+automata construction, finite graph search and counterexample extraction.
+I established the correspondence between the checker's verdict and the
+declared semantics for finite serial Kripke structures, together with
+guarantees about the violating executions represented by returned lassos.
+
+I expected a good learning experience, and I found one. Working in Lean
+required more planning and trial and error than I was used to in C++ or
+Python. I also came away with lessons that extend beyond the language such as
+choosing definitions carefully, stating contracts clearly, and preserving
+their meaning as the implementation changes. I learned to ask not only whether
+an algorithm meets its formal specification but also whether that specification
+captures the behaviour I intended to describe.
+
+I now see tools such as Lean as increasingly valuable as more of the effort
+in programming shifts towards checking that code agrees with the intended
+requirements. I have tried to carry that care into this report by separating
+what I have proved, what I have tested and what I believe. I would like to
+close with Richard Feynman's reminder from his 1974 Caltech commencement
+address:
+
+\vspace{1.5em}
+
+\begin{quote}
+  \itshape
+  ``The first principle is that you must not fool yourself---and you are the
+  easiest person to fool.''
+\end{quote}
+\hfill Richard P.~Feynman, \emph{Cargo Cult Science} (1974).\footnote{%
+  As per original text preserved by Caltech Library:
+  \url{https://calteches.library.caltech.edu/51/2/CargoCult.htm}.}
