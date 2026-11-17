@@ -4,10 +4,10 @@
 \subsection{From User Inputs to a Checked Theorem}
 
 Correctness connects several contracts: formula meaning, compatible runs,
-finite search, the verdict and the returned witness.
+finite search, the verdict and the returned witness (in case of counter-example).
 \Cref{fig:correctness-map} places these alongside the executable stages and
-the user API. The equations here and below are informal readings of the
-named Lean declarations. The contracts are generic; the proof frontend
+the user API. The equations below are informal descriptions of the
+named Lean declarations. The contracts are generic and the proof frontend
 instantiates them for a concrete goal.
 
 \begin{figure}[!ht]

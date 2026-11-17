@@ -293,8 +293,8 @@ The original semester plan was:
 | 15–31 October | Product construction, emptiness, central correctness theorem |
 | 1–15 November | Verified examples, evaluation, write-up; frontend if time permits |
 
-See my [project proposal](Proposal/build/KILT_Proposal-1.pdf) for the full scope
-and schedule, or the [LaTeX source](Proposal/src/KILT_Proposal.tex).
+See my [project proposal](Proposal/src/KILT_Proposal.tex) for the full scope
+and original schedule.
 
 ## References
 

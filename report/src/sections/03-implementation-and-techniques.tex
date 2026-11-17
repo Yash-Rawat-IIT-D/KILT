@@ -88,7 +88,7 @@ round-robin machinery is the bridge between the tableau's multiple liveness
 obligations and the single accepting set expected by the B\"uchi backend, and
 it adds a factor of $\max(1,m)$ rather than another powerset construction.
 
-\subsection{Product Construction and Graph Search}
+\subsection{Product Construction and Graph Search}\label{sec:indexed-search}
 
 The violation automaton describes words that break the property, but it does
 not know which words the model can generate.  \sourcefile{Product.lean}
@@ -140,12 +140,15 @@ Finiteness turns infinite B\"uchi acceptance into the graph condition
  \exists x\in F_P.\quad
    \operatorname{Reach}(I_P,x)\ \land\ x\rightarrow^{+}x.
 \]
-\sourcefile{Prepare.lean} caches one successor row per reachable product vertex
-and assigns dense identifiers. Its traversal order still enumerates the full
-Cartesian product. \sourcefile{Buchi.lean} tests positive return paths with
-visited arrays and frontiers over cached adjacency.  This separates the
-mathematical cycle criterion from the executable representation and avoids
-re-evaluating the original product-successor function during each query.
+\sourcefile{Prepare.lean} assigns reachable product states dense identifiers in
+$\operatorname{Fin}(V)$, where $V$ is their number, and caches one successor row
+per vertex. Moving traversal to this indexed representation allows adjacency,
+visited information and parent records to use arrays; a decoder recovers the
+original states. Traversal order separately controls deterministic witness
+selection and need not match discovery identifiers. Changing it can select a
+different counterexample, but preserves the verdict. The order still enumerates
+the full Cartesian product. \sourcefile{Buchi.lean} searches cached adjacency
+without re-evaluating the original product successors.
 
 Witness extraction needs more information than the Boolean query, but storing a
 complete route at every discovered vertex would duplicate prefixes.

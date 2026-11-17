@@ -15,7 +15,7 @@ variants shown in \cref{fig:example-request-grant}. Both are serial, but the
 waiting self-loop permits an infinite execution without a grant. Only the
 healthy variant satisfies $\mathbf{F}\,\mathit{grant}$ on every initial
 path. The concrete true and false verdicts are proved with
-\lean{kilt_decide}; \sourcefile{Examples/Demos/Frontend.lean} additionally
+\lean{kilt_decide}. \sourcefile{Examples/Demos/Frontend.lean} additionally
 proves healthy satisfaction with \lean{kilt_verify}.
 
 The displayed healthy result has no counterexample. The waiting variant
@@ -24,7 +24,7 @@ granting remains possible but is never chosen. The theorem
 \lean{returned_path_violates} concerns the returned lasso's own infinite
 projection. Executed assertions also check the same verdict/witness outcomes
 for $\mathbf{G}(\mathit{request}\rightarrow\mathbf{F}\,\mathit{grant})$.
-These response displays are execution checks; the named verdict and
+These response displays are execution checks and separate from the named verdict and
 returned-path theorems above concern the eventual-grant formula.
 
 \begin{figure}[!ht]
@@ -44,7 +44,7 @@ steps. Both threads can therefore pass the test before either claims it.
 \lean{race_collision} establishes that both are critical at position six of
 the explicit execution, refuting
 $\mathbf{G}\neg(\mathit{critical}_0\land\mathit{critical}_1)$.
-The atomic variant combines test and claim; an invariant proves mutual
+The atomic variant combines test and claim and an invariant proves mutual
 exclusion along every initial execution.
 
 Without fairness, atomicity still permits starvation. An explicit schedule
@@ -53,7 +53,7 @@ Thread zero remains waiting, violating
 $\mathbf{G}(\mathit{request}_0\rightarrow
 \mathbf{F}\,\mathit{critical}_0)$.
 The false supplied-monitor verdict is derived from this semantic
-counterexample and checker correctness; a separate \texttt{\#eval}
+counterexample and checker correctness and a separate \texttt{\#eval}
 executes the search.
 
 \begin{figure}[!ht]
