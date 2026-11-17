@@ -26,9 +26,9 @@ its language theorem from the same normalised root.
     \node[kiltstage,text width=24mm,right=of formula] (nnf)
       {NNF\\literal negation\\[-1mm]{\scriptsize\ttfamily NormalForm.lean}};
     \node[kiltstage,text width=28mm,right=of nnf] (closure)
-      {Subformula closure\\consistent assignments\\[-1mm]{\scriptsize\ttfamily Subformulas.lean}};
+      {Subformula closure\\finite indexing\\[-1mm]{\scriptsize\ttfamily Subformulas.lean}};
     \node[kiltstage,text width=27mm,right=of closure] (tableau)
-      {Valuation-labelled\\tableau\\[-1mm]{\scriptsize\ttfamily Tableau.lean}};
+      {Consistent states\\labelled edges\\[-1mm]{\scriptsize\ttfamily Tableau.lean}};
     \node[kiltstage,text width=31mm,below=9mm of tableau] (gba)
       {Generalised B\"uchi\\until obligations\\[-1mm]{\tiny\ttfamily TableauAcceptance.lean}};
     \node[kiltstage,text width=31mm,left=of gba] (counter)
@@ -65,7 +65,7 @@ until formulas.  For an obligation $g=a\,\mathsf{U}\,b$, its accepting set is
  F_g=\{s\mid \neg\operatorname{holds}_s(g)\ \lor\
                     \operatorname{holds}_s(b)\}.
 \]
-Thus a run cannot keep $g$ active while postponing $b$ on an entire suffix.  To
+Thus an accepting run cannot keep $g$ active while postponing $b$ on an entire suffix. To
 reuse the ordinary B\"uchi interfaces and accepting-cycle search, KILT converts
 a generalised automaton with family $\mathcal F=[F_0,\ldots,F_{m-1}]$ into one
 with states
@@ -140,10 +140,9 @@ Finiteness turns infinite B\"uchi acceptance into the graph condition
  \exists x\in F_P.\quad
    \operatorname{Reach}(I_P,x)\ \land\ x\rightarrow^{+}x.
 \]
-Rather than materialising every pair in the full Cartesian product,
-\sourcefile{Prepare.lean} discovers only vertices reachable from $I_P$, computes
-each discovered successor row once, and reindexes the result with dense finite
-identifiers.  \sourcefile{Buchi.lean} can then test positive return paths with
+\sourcefile{Prepare.lean} caches one successor row per reachable product vertex
+and assigns dense identifiers. Its traversal order still enumerates the full
+Cartesian product. \sourcefile{Buchi.lean} tests positive return paths with
 visited arrays and frontiers over cached adjacency.  This separates the
 mathematical cycle criterion from the executable representation and avoids
 re-evaluating the original product-successor function during each query.
@@ -182,7 +181,7 @@ reachable adjacency, a dense query order and the accepting mask.
     \node[kiltstage,text width=31mm,below=9mm of compiled] (checker)
       {Checker for $M$\\model order $+$ seriality\\[-1mm]{\scriptsize\ttfamily PreparedCheck.lean}};
     \node[kiltstage,text width=38mm,right=24mm of $(compiled)!0.5!(checker)$] (prepared)
-      {PreparedCheck $M\,\varphi$\\one reachable product\\[-1mm]{\scriptsize\ttfamily PreparedSearch.lean}};
+      {PreparedCheck $M\,\varphi$\\one reachable product\\[-1mm]{\scriptsize\ttfamily PreparedCheck.lean}};
     \node[kiltstage,text width=29mm,above right=7mm and 13mm of prepared] (bool)
       {\lean{check}\\Boolean only};
     \node[kiltemphasis,text width=31mm,right=13mm of prepared] (cex)

@@ -17,7 +17,7 @@ This follows the standard presentation in Baier and
 Katoen~\cite{BaierKatoen2008}; the separation of syntax from trace semantics
 was also informed by LeanLTL~\cite{VinMillerFremont2025}.
 
-For a B\"uchi automaton $A=(Q,\Sigma,\delta,Q_0,F)$, a run
+For a finite B\"uchi automaton $A=(Q,\Sigma,\delta,Q_0,F)$, a run
 $\rho=q_0q_1\ldots$ is accepting when
 \[
   \operatorname{Inf}(\rho) \cap F \neq \varnothing,
@@ -25,9 +25,11 @@ $\rho=q_0q_1\ldots$ is accepting when
 where $\operatorname{Inf}(\rho)$ is the set of states occurring infinitely
 often.  Generalised B\"uchi acceptance replaces $F$ by
 $\{F_1,\ldots,F_n\}$ and requires
-$\operatorname{Inf}(\rho)\cap F_i\neq\varnothing$ for every $i$.  In a finite
-graph this reduces to a reachable accepting cycle, represented by a finite
-prefix and a non-empty loop---a \emph{lasso}---repeated forever.
+$\operatorname{Inf}(\rho)\cap F_i\neq\varnothing$ for every $i$.
+In a finite graph, a generalised accepting loop must visit every $F_i$ and
+may repeat vertices. After conversion to ordinary B\"uchi acceptance, a
+reachable non-empty return through one accepting vertex suffices.
+A finite prefix followed by the loop repeated forever is a \emph{lasso}.
 
 \subsection{Overall Architecture}
 
@@ -46,21 +48,19 @@ infinite execution.
 \begin{figure}[ht]
   \centering
   \resizebox{0.76\linewidth}{!}{\input{../assets/kilt-lasso-product-panel}}
-  \caption{A reachable accepting cycle yields a lasso; an accepting dead end does not.}
+  \caption{Schematic product using an illustrative two-state monitor (selected
+    edges). Double circles mark acceptance; orange marks a lasso.}
   \label{fig:product-lasso-panel}
 \end{figure}
 
 \subsection{Design Choices and Reused Libraries}
 
-I kept the construction modular: declarative LTL semantics, formula
-compilation, automata-language preservation, product construction and finite
-graph search have separate interfaces and correspondence theorems.  This makes
-``correctness'' a chain of precise claims rather than one monolithic assertion.
-CSLib supplies omega sequences and the underlying nondeterministic and B\"uchi
-run semantics~\cite{CSLib}; KILT adds the executable finite automata, explicit
-tableau, generalised-to-ordinary B\"uchi conversion, product, lasso search and
-their connecting proofs.  The tableau follows the obligation-based idea of
-Gerth, Peled, Vardi and Wolper~\cite{GerthPeledVardiWolper1995}, but is built
-explicitly rather than on demand.  Keeping the graph layer independent of LTL
-also isolates the finite reasoning that makes both safety and liveness checking
-executable.
+I kept semantics, compilation, automata languages, products and finite search
+modular, with separate interfaces and correspondence theorems. Correctness
+therefore connects several precise contracts. CSLib supplies omega sequences
+and nondeterministic and B\"uchi run semantics~\cite{CSLib}; KILT adds executable
+finite automata, the tableau, generalised-to-ordinary conversion, product and
+lasso search, with connecting proofs. The tableau follows the obligation-based
+idea of Gerth, Peled, Vardi and Wolper~\cite{GerthPeledVardiWolper1995}, built
+explicitly rather than on demand. The independent graph layer isolates the
+finite reasoning needed for safety and liveness checking.

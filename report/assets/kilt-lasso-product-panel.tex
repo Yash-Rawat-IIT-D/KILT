@@ -30,13 +30,11 @@
   \draw[lassoCounterexample] (wq1.55) to[out=55,in=125,looseness=4]
     (wq1.125);
   \draw[lassoFaded] (wq0.35) to[out=35,in=145,looseness=4] (wq0.145);
-  \draw[lassoFaded] (wq0) -- (gq0);
+  \draw[lassoFaded] (wq0.east) .. controls +(1.4,-1.8) and +(-1.4,-1.8) .. (gq0.west);
   \draw[lassoFaded] (wq0.south east) to[out=-25,in=-155] (gq1.south west);
-  \draw[lassoFaded] (wq1) -- (gq1);
+  \draw[lassoFaded] (wq1.east) .. controls +(1.4,1.8) and +(-1.4,1.8) .. (gq1.west);
 
   \node[lassoNote,text=kiltorange] at (1.7,-0.5) {finite prefix};
-  \node[lassoNote,text=kiltorange,align=center] at (6.8,-1.45)
-    {accepting cycle\\repeated forever};
   \node[lassoNote,text=kiltblue,align=center] at (13.6,-1.45)
     {accepting dead end:\\not a cycle witness};
 \end{tikzpicture}

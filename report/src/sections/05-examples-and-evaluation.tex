@@ -161,8 +161,12 @@ source literals before enumerating tableau successors. A common script ran
 each version three times as a native executable on an x86-64 Linux virtual
 machine, pinned to one virtual CPU with one Lean thread. Executable
 compilation time was excluded. The timed calls include LTL translation and
-product preparation. The comparison can be repeated by checking out older
-commit versions and running the same test script.
+product preparation. The measured stages were retained as source snapshots
+with their working-tree patches.
+
+Waiting-response uses the waiting request/grant model: the response property
+fails and the counterexample query returns a lasso. Traffic-response uses
+the normal controller: red response holds and the query returns \lean{none}.
 
 \begin{table}[!ht]
   \centering
@@ -171,7 +175,7 @@ commit versions and running the same test script.
   \begin{tabular}{@{}lrrrr@{}}
     \toprule
     & \multicolumn{2}{c}{Check (ms)}
-    & \multicolumn{2}{c}{Extract counterexample (ms)} \\
+    & \multicolumn{2}{c}{Counterexample query (ms)} \\
     Workload & Baseline & Optimised & Baseline & Optimised \\
     \midrule
     Waiting-response & 21.54 & 10.19 & 21.84 & 10.29 \\
