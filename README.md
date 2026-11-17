@@ -1,7 +1,7 @@
 # KILT — Kripke in Lean Toolkit
 
 KILT is my semester project for **COL876: Special Topics in Formal Methods**.
-My goal is to build a verified LTL model-checking toolkit in Lean 4, connecting
+It provides a verified LTL model-checking toolkit in Lean 4, connecting
 trace semantics, Büchi automata, finite Kripke structures, and kernel-checked
 correctness proofs.
 
@@ -12,25 +12,21 @@ followed by a grant.
 
 ## Project scope
 
-I will develop a reusable, CSLib-oriented path from a **bounded LTL fragment**
-to a verified model-checking result:
+KILT provides a reusable, CSLib-oriented path from LTL formulas to a verified
+model-checking result:
 
 1. Define the formula interface, trace semantics, and Kripke execution model.
-2. Translate the selected fragment to Büchi or generalized Büchi automata.
+2. Translate formulas to Büchi or generalized Büchi automata.
 3. Construct the system/property product and an executable accepting-run
    emptiness check.
 4. Prove the correspondence between the checker and the declared semantics.
 5. Demonstrate representative safety and liveness properties and document the
    design, trust boundary, and limitations.
 
-I will first audit CSLib, LeanLTL, LeanearTemporalLogic, and Veil to select the
-supported fragment and decide which existing interfaces to reuse. I plan to
-build on CSLib's automata foundations and use LeanLTL as a semantic comparison
-point, proving compatibility with its trace semantics where feasible.
-
-I will prioritize the semantic correspondence and verified checker. If time
-permits, I will add a lightweight Lean frontend for writing properties and
-running checks, then explore proof-producing automation and CTL*.
+KILT builds on CSLib's automata interfaces. Lightweight proof
+automation is available through `kilt_serial`, `kilt_decide` and `kilt_verify`.
+Broader frontend facilities, formal compatibility with external LeanLTL and
+CTL* remain future work.
 
 ## Getting started
 
@@ -110,9 +106,8 @@ Open this folder in VS Code to use the pinned toolchain. See
 
 ## Working report
 
-The report source is [report/src/main.tex](report/src/main.tex), with section
-files and a dated working-notes appendix for collecting material during review.
-See [report/README.md](report/README.md) for the drafting workflow.
+The report source is [report/src/main.tex](report/src/main.tex), with individual
+section files. See [report/README.md](report/README.md) for build instructions.
 
 ```sh
 ./scripts/build.sh --report             # Build report/build/main.pdf
@@ -287,9 +282,9 @@ lake-manifest.json      Lake dependency lockfile
 .github/workflows/      Automated build on pushes and pull requests
 ```
 
-## Planned milestones
+## Original milestones
 
-My plan for the semester is:
+The original semester plan was:
 
 | Period (2026) | Primary focus |
 | --- | --- |

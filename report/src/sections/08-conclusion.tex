@@ -1,3 +1,28 @@
 \section{Conclusion}\label{sec:conclusion}
 
-\needsinput{Write last, summarising only reviewed results, assumptions and limitations.}
+KILT connects LTL trace semantics to an executable model checker through
+formula compilation, automata products and finite graph search. The
+correctness results establish that the Boolean verdict agrees with universal
+satisfaction over initial infinite executions. Counterexample extraction adds
+a further guarantee: the particular returned lasso describes a valid initial
+execution that violates the supplied property. These results compose contracts
+for normalisation, tableau acceptance, generalised B\"uchi conversion and graph
+search into a public checking interface.
+
+The guarantees apply to the declared finite Kripke model, with nonempty
+initial states and an explicit seriality proof; they impose no fairness
+assumption. The worked examples illustrate safety violations, indefinite
+waiting and the difference between reachability and guaranteed progress.
+The performance evaluation covers small models, and larger stress tests
+remain necessary to assess practical scalability. Choosing a model and
+formula that describe the intended system remains part of the specification
+work.
+
+The project also made the engineering role of definitions and theorem
+interfaces concrete. Separating the automata, tableau and graph components
+helped preserve their contracts through implementation changes and supported
+the later addition of lasso extraction and lightweight proof automation.
+The next steps are community review, clearer module organisation and
+documentation, larger evaluations, and proposed CSLib contributions from
+the reusable components. CTL* remains a longer-term extension beyond the
+current LTL toolkit.
